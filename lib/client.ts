@@ -1,7 +1,7 @@
 'use client'
 
 import { supabase } from './supabase-browser'
-import type { AllergenKey, Severity } from './allergens'
+import type { AllergenKey, ConditionKey, Severity } from './allergens'
 
 export interface FamilyProfile {
   id: string
@@ -9,6 +9,7 @@ export interface FamilyProfile {
   birth_year: number | null
   allergens: { key: AllergenKey; severity: Severity }[]
   custom_terms: string[]
+  conditions: ConditionKey[]
 }
 
 export const AVATAR_COLORS = [
@@ -25,9 +26,13 @@ export function avatarStyle(i: number) {
 }
 
 export async function postScan(body: Record<string, unknown>): Promise<{ id: string; flag: string }> {
+  return apiPost('/api/scan', body)
+}
+
+export async function apiPost<T = any>(path: string, body: Record<string, unknown>): Promise<T> {
   const { data } = await supabase().auth.getSession()
   const token = data.session?.access_token
-  const res = await fetch('/api/scan', {
+  const res = await fetch(path, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
     body: JSON.stringify(body)

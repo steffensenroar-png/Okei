@@ -2,17 +2,20 @@ import { NextResponse } from 'next/server'
 import { HttpError, userClient } from '@/lib/server/auth'
 import { lookupBarcode } from '@/lib/server/products'
 import { guessFood, readLabel } from '@/lib/server/vision'
-import { evaluate, Mode, ProductData, ProfileAllergen } from '@/lib/rules'
+import { evaluateFamily, Mode, ProductData, ProfileAllergen } from '@/lib/rules'
+import type { ConditionKey } from '@/lib/allergens'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
 
 const MAX_IMAGE_BYTES = 3_500_000
+const MAX_PROFILES = 8
 const MEDIA = ['image/jpeg', 'image/png', 'image/webp'] as const
 
 interface Body {
   mode: Mode
-  profileId: string
+  profileIds?: string[]
+  profileId?: string
   ean?: string
   image?: string
   mediaType?: (typeof MEDIA)[number]
@@ -24,14 +27,16 @@ export async function POST(req: Request) {
     const body = (await req.json()) as Body
 
     if (!['barcode', 'label', 'food'].includes(body.mode)) throw new HttpError(400, 'Ukjent modus')
-    if (!body.profileId) throw new HttpError(400, 'Velg en profil')
+    const ids = [...new Set((body.profileIds?.length ? body.profileIds : body.profileId ? [body.profileId] : []).map(String))]
+    if (!ids.length) throw new HttpError(400, 'Velg minst én profil')
+    if (ids.length > MAX_PROFILES) throw new HttpError(400, 'For mange profiler')
 
-    const { data: profile, error: pErr } = await db
+    const { data: rows, error: pErr } = await db
       .from('family_profiles')
-      .select('id, name, allergens, custom_terms')
-      .eq('id', body.profileId)
-      .single()
-    if (pErr || !profile) throw new HttpError(404, 'Fant ikke profilen')
+      .select('id, name, allergens, custom_terms, conditions, created_at')
+      .in('id', ids)
+      .order('created_at')
+    if (pErr || !rows?.length) throw new HttpError(404, 'Fant ikke profilene')
 
     let product: ProductData
     if (body.mode === 'barcode') {
@@ -46,26 +51,34 @@ export async function POST(req: Request) {
       product = body.mode === 'label' ? await readLabel(image, media) : await guessFood(image, media)
     }
 
-    const evaluation = evaluate(product, {
-      name: profile.name,
-      allergens: (profile.allergens ?? []) as ProfileAllergen[],
-      customTerms: profile.custom_terms ?? []
-    })
+    const family = evaluateFamily(
+      product,
+      rows.map((r) => ({
+        id: r.id,
+        name: r.name,
+        allergens: (r.allergens ?? []) as ProfileAllergen[],
+        customTerms: r.custom_terms ?? [],
+        conditions: (r.conditions ?? []) as ConditionKey[]
+      }))
+    )
 
     const { data: scan, error: sErr } = await db
       .from('scans')
       .insert({
         owner_id: user.id,
-        profile_id: profile.id,
-        profile_name: profile.name,
+        profile_id: rows[0].id,
+        profile_ids: rows.map((r) => r.id),
+        profile_name: rows.map((r) => r.name).join(', '),
         mode: body.mode,
         ean: product.ean ?? null,
         product_name: product.name ?? null,
         source: product.source,
-        flag: evaluation.flag,
-        headline: evaluation.headline,
+        flag: family.flag,
+        headline: family.headline,
         result: {
-          evaluation,
+          family: family.people.length > 1,
+          people: family.people,
+          evaluation: family.people[0].evaluation,
           product: {
             name: product.name,
             brand: product.brand ?? null,
@@ -81,7 +94,7 @@ export async function POST(req: Request) {
       .single()
     if (sErr || !scan) throw new HttpError(500, 'Kunne ikke lagre resultatet')
 
-    return NextResponse.json({ id: scan.id, flag: evaluation.flag })
+    return NextResponse.json({ id: scan.id, flag: family.flag })
   } catch (e) {
     const status = e instanceof HttpError ? e.status : 500
     const message = e instanceof HttpError ? e.message : 'Noe gikk galt. Prøv igjen.'

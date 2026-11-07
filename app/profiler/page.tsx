@@ -4,18 +4,20 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import AuthGate, { useSession } from '@/components/AuthGate'
 import { supabase } from '@/lib/supabase-browser'
-import { ALLERGENS, ALLERGEN_BY_KEY, AllergenKey, Severity, SEVERITY_LABEL } from '@/lib/allergens'
+import { ALLERGENS, ALLERGEN_BY_KEY, AllergenKey, CONDITIONS, ConditionKey, Severity, SEVERITY_LABEL } from '@/lib/allergens'
 import { avatarStyle, FamilyProfile } from '@/lib/client'
+import AllergenIcon from '@/components/AllergenIcon'
 
 type Draft = {
   id?: string
   name: string
   birth_year: string
   allergens: Partial<Record<AllergenKey, Severity>>
+  conditions: ConditionKey[]
   custom: string
 }
 
-const empty = (): Draft => ({ name: '', birth_year: '', allergens: {}, custom: '' })
+const empty = (): Draft => ({ name: '', birth_year: '', allergens: {}, conditions: [], custom: '' })
 
 function toDraft(p: FamilyProfile): Draft {
   return {
@@ -23,6 +25,7 @@ function toDraft(p: FamilyProfile): Draft {
     name: p.name,
     birth_year: p.birth_year ? String(p.birth_year) : '',
     allergens: Object.fromEntries(p.allergens.map((a) => [a.key, a.severity])),
+    conditions: p.conditions ?? [],
     custom: (p.custom_terms ?? []).join(', ')
   }
 }
@@ -32,7 +35,8 @@ function summary(p: FamilyProfile) {
     const label = ALLERGEN_BY_KEY[a.key]?.label ?? a.key
     return a.severity === 'severe' ? `${label} (alvorlig)` : label
   })
-  return [...parts, ...(p.custom_terms ?? [])].join(' · ') || 'Ingen allergier registrert'
+  const conds = (p.conditions ?? []).map((c) => CONDITIONS.find((x) => x.key === c)?.label ?? c)
+  return [...conds, ...parts, ...(p.custom_terms ?? [])].join(' · ') || 'Ingen allergier registrert'
 }
 
 function Profiles() {
@@ -46,7 +50,7 @@ function Profiles() {
   async function load() {
     const { data } = await supabase()
       .from('family_profiles')
-      .select('id, name, birth_year, allergens, custom_terms')
+      .select('id, name, birth_year, allergens, custom_terms, conditions')
       .order('created_at')
     setProfiles((data ?? []) as FamilyProfile[])
     return (data ?? []) as FamilyProfile[]
@@ -63,8 +67,15 @@ function Profiles() {
     if (!draft) return
     const next = { ...draft.allergens }
     if (next[key]) delete next[key]
-    else next[key] = 'moderate'
+    // Sikker standard: alvorlig. Da regnes også «kan inneholde spor» som rødt til forelderen velger noe annet.
+    else next[key] = 'severe'
     setDraft({ ...draft, allergens: next })
+  }
+
+  function toggleCondition(key: ConditionKey) {
+    if (!draft) return
+    const has = draft.conditions.includes(key)
+    setDraft({ ...draft, conditions: has ? draft.conditions.filter((c) => c !== key) : [...draft.conditions, key] })
   }
 
   function setSeverity(key: AllergenKey, sev: Severity) {
@@ -86,6 +97,7 @@ function Profiles() {
       name,
       birth_year: year,
       allergens: Object.entries(draft.allergens).map(([key, severity]) => ({ key, severity })),
+      conditions: draft.conditions,
       custom_terms: draft.custom.split(',').map((s) => s.trim()).filter(Boolean).slice(0, 20)
     }
     const q = draft.id
@@ -124,6 +136,26 @@ function Profiles() {
           </div>
 
           <div className="stack">
+            <h2>Sykdommer og intoleranser</h2>
+            {CONDITIONS.map((c) => (
+              <button
+                type="button"
+                key={c.key}
+                className="card row"
+                aria-pressed={draft.conditions.includes(c.key)}
+                onClick={() => toggleCondition(c.key)}
+                style={{ textAlign: 'left', cursor: 'pointer', gap: 12, borderWidth: draft.conditions.includes(c.key) ? 2 : 1, borderColor: draft.conditions.includes(c.key) ? 'var(--brand)' : 'var(--line)' }}
+              >
+                <AllergenIcon k={c.key === 'lactose' ? 'lactose' : 'coeliac'} size={36} />
+                <span className="stack" style={{ gap: 2 }}>
+                  <span style={{ fontWeight: 700 }}>{c.label}</span>
+                  <span className="small muted">{c.hint}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+
+          <div className="stack">
             <div className="row" style={{ justifyContent: 'space-between' }}>
               <h2>Allergier</h2>
               <span className="tiny">{selected.length} valgt</span>
@@ -131,6 +163,7 @@ function Profiles() {
             <div className="chips">
               {ALLERGENS.map((a) => (
                 <button type="button" key={a.key} className="chip" aria-pressed={!!draft.allergens[a.key]} onClick={() => toggle(a.key)}>
+                  <AllergenIcon k={a.key} size={30} />
                   {a.label}
                 </button>
               ))}
@@ -142,7 +175,7 @@ function Profiles() {
               <h2>Hvor alvorlig?</h2>
               {selected.map((a) => (
                 <div key={a.key} className="stack" style={{ gap: 6 }}>
-                  <span className="small" style={{ fontWeight: 600 }}>{a.label}</span>
+                  <span className="small row" style={{ fontWeight: 700, gap: 8 }}><AllergenIcon k={a.key} size={22} />{a.label}</span>
                   <div className="seg" role="group" aria-label={`Alvorlighetsgrad for ${a.label}`}>
                     {(['mild', 'moderate', 'severe'] as Severity[]).map((s) => (
                       <button type="button" key={s} aria-pressed={draft.allergens[a.key] === s} onClick={() => setSeverity(a.key, s)}>
@@ -152,7 +185,7 @@ function Profiles() {
                   </div>
                 </div>
               ))}
-              <p className="tiny">Alvorlig (anafylaksi): også «kan inneholde spor» gir rødt flagg.</p>
+              <p className="tiny">Står som <b>Alvorlig</b> til du endrer det. Velg Alvorlig hvis personen har adrenalinpenn eller har hatt en alvorlig reaksjon. Da gir også «kan inneholde spor» rødt flagg.</p>
             </div>
           )}
 

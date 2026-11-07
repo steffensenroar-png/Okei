@@ -102,7 +102,9 @@ export const ALLERGENS: AllergenDef[] = [
         'rugmel', 'rågmjöl', 'rugbrød', 'byggmel', 'byggryn', 'bygmel', 'kornmel'),
       ...st('rug', 'råg', 'rye', 'bygg', 'barley', 'malt', 'maltekstrakt', 'maltextrakt', 'graham', 'farro')
     ],
-    exclude: ['bokhvete', 'buckwheat', 'bovete', 'boghvede', 'glutenfri', 'gluten-free', 'gluten free',
+    // Merket glutenfri havre tåles av de fleste med cøliaki (Norsk cøliakiforening). Må stå før «glutenfri».
+    exclude: ['glutenfri havre', 'glutenfrie havregryn', 'glutenfrie havre', 'gluten-free oats', 'glutenfri havremel',
+      'bokhvete', 'buckwheat', 'bovete', 'boghvede', 'glutenfri', 'gluten-free', 'gluten free',
       'uten gluten', 'maltodekstrin', 'maltodextrin', 'maltitol', 'maltose', 'maltol', 'isomalt']
   },
   {
@@ -183,6 +185,38 @@ export const ALLERGENS: AllergenDef[] = [
     exclude: ['uten lupin']
   }
 ]
+
+// Tilstander: sykdommer og intoleranser som regelmotoren oversetter til hva man må passe på.
+export type ConditionKey = 'coeliac' | 'lactose'
+
+export const CONDITIONS: { key: ConditionKey; label: string; hint: string }[] = [
+  { key: 'coeliac', label: 'Cøliaki', hint: 'Gluten regnes som alvorlig. Også «kan inneholde spor» gir rødt.' },
+  { key: 'lactose', label: 'Laktoseintoleranse', hint: 'Ser etter laktose. Laktosefrie varer er OK.' }
+]
+
+// Laktose: melkeprodukter med laktose. Kasein og myseprotein er protein, ikke laktose, men myse inneholder laktose.
+export const LACTOSE_DEF: AllergenDef = {
+  key: 'milk',
+  label: 'Laktose',
+  terms: [
+    ...s('laktose', 'lactose', 'laktos', 'melk', 'mælk', 'mjölk', 'milk', 'fløte', 'fløde', 'grädde', 'cream', 'smør',
+      'smör', 'butter', 'myse', 'valle', 'whey', 'yoghurt', 'yogurt', 'kefir', 'rømme', 'creme fraiche',
+      'crème fraîche', 'kvarg', 'quark', 'kesam', 'iskrem', 'gräddfil'),
+    ...st('ost', 'oste', 'cheese', 'brunost')
+  ],
+  exclude: [
+    'myseprotein', 'whey protein', 'melkeprotein', 'milk protein', 'kasein', 'casein', 'kokosmelk', 'kokosmælk',
+    'kokosmjölk', 'coconut milk', 'coconut cream', 'kokosfløte', 'mandelmelk', 'havremelk', 'soyamelk', 'sojamelk',
+    'rismelk', 'melkesyre', 'mælkesyre', 'mjölksyra', 'lactic acid', 'kakaosmør', 'kakaosmör', 'cocoa butter',
+    'peanøttsmør', 'peanut butter', 'sheasmør', 'shea butter', 'melkefri', 'uten melk', 'dairy free', 'dairy-free',
+    'nøttesmør', 'mandelsmør'
+  ]
+}
+
+/** Laktosefrie produkter er OK ved laktoseintoleranse. */
+export function isLactoseFree(text: string): boolean {
+  return /laktosefri|laktosfri|lactose[\s-]free|laktosefritt/.test(normalize(text))
+}
 
 export const ALLERGEN_BY_KEY: Record<AllergenKey, AllergenDef> = Object.fromEntries(
   ALLERGENS.map((a) => [a.key, a])

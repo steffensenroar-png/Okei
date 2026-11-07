@@ -43,7 +43,7 @@ h2 { margin: 0; font-size: 17px; font-weight: 700; }
 p { margin: 0; line-height: 1.5; }
 .muted { color: var(--muted); }
 .small { font-size: 13px; }
-.tiny { font-size: 12px; color: var(--quiet); line-height: 1.5; }
+.tiny { font-size: 13px; color: var(--quiet); line-height: 1.5; }
 .row { display: flex; gap: 10px; align-items: center; }
 .stack { display: flex; flex-direction: column; gap: 10px; }
 .spacer { flex: 1; }
@@ -72,15 +72,16 @@ p { margin: 0; line-height: 1.5; }
 }
 textarea.input { height: auto; min-height: 90px; padding: 12px 14px; resize: vertical; }
 
-.chips { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.chips { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .chip {
-  min-height: 44px; border-radius: 12px; border: 1px solid var(--line-strong); background: #fff;
-  font-size: 14px; font-weight: 600; cursor: pointer; padding: 0 6px;
+  min-height: 56px; border-radius: 14px; border: 1px solid var(--line-strong); background: #fff;
+  font-size: 15px; font-weight: 700; cursor: pointer; padding: 0 12px;
+  display: flex; align-items: center; gap: 10px; text-align: left;
 }
 .chip[aria-pressed='true'] { background: var(--brand); border-color: var(--brand); color: #fff; }
 
 .seg { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 4px; background: #eceae2; border-radius: 14px; padding: 4px; }
-.seg button { min-height: 40px; border: 0; border-radius: 10px; background: transparent; color: var(--muted); font-weight: 600; font-size: 14px; cursor: pointer; }
+.seg button { min-height: 48px; border: 0; border-radius: 10px; background: transparent; color: var(--muted); font-weight: 600; font-size: 14px; cursor: pointer; }
 .seg button[aria-pressed='true'] { background: #fff; color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,0.12); }
 .seg.dark { background: rgba(255,255,255,0.1); }
 .seg.dark button { color: #fff; }
@@ -89,14 +90,16 @@ textarea.input { height: auto; min-height: 90px; padding: 12px 14px; resize: ver
 .avatar { width: 40px; height: 40px; border-radius: 20px; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; flex: none; background: #f3d9c9; color: #6b3a1f; }
 .profile-pill { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px 0 4px; border-radius: 22px; border: 1px solid var(--line-strong); background: #fff; font-weight: 600; font-size: 14px; cursor: pointer; }
 .profile-pill .avatar { width: 34px; height: 34px; font-size: 14px; }
-.profile-pill[aria-pressed='true'] { border: 2px solid var(--brand); padding-left: 3px; }
+.profile-pill[aria-pressed='true'] { border: 2px solid var(--brand); padding-left: 3px; background: var(--brand); color: #fff; }
+.profile-pill .check { display: none; }
+.profile-pill[aria-pressed='true'] .check { display: inline-flex; }
 
 .nav {
   position: fixed; left: 0; right: 0; bottom: 0; background: rgba(255,255,255,0.96); border-top: 1px solid var(--line);
   padding: 6px 12px calc(6px + env(safe-area-inset-bottom)); backdrop-filter: blur(8px); z-index: 10;
 }
 .nav-inner { max-width: 480px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); }
-.nav a { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 0; font-size: 12px; font-weight: 600; color: var(--quiet); text-decoration: none; }
+.nav a { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 0; font-size: 13px; font-weight: 600; color: var(--quiet); text-decoration: none; }
 .nav a[aria-current='page'] { color: var(--brand); }
 
 .camera { position: relative; width: 100%; aspect-ratio: 1 / 1; border-radius: 24px; overflow: hidden; background: #101614; }
@@ -121,7 +124,7 @@ textarea.input { height: auto; min-height: 90px; padding: 12px 14px; resize: ver
 .yellow .tag { background: rgba(61,38,0,0.1); }
 
 mark.hit { background: var(--red-tint); color: var(--red); font-weight: 700; border-bottom: 2px solid var(--red); padding: 0 2px; }
-mark.hit-amber { background: var(--amber-tint); color: var(--amber); font-weight: 700; border-bottom: 2px solid #e0a100; padding: 0 2px; }
+mark.hit-amber { background: var(--amber-tint); color: var(--amber); font-weight: 700; border-bottom: 2px dashed #b07800; padding: 0 2px; }
 .ingredients { font-size: 14px; line-height: 1.7; color: #2a3530; }
 
 .finding { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; }
@@ -144,3 +147,22 @@ mark.hit-amber { background: var(--amber-tint); color: var(--amber); font-weight
 .spinner { width: 28px; height: 28px; border-radius: 50%; border: 3px solid rgba(14,107,87,0.2); border-top-color: var(--brand); animation: spin 0.8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2s; } }
+
+.person-card { display: flex; gap: 12px; align-items: flex-start; background: #fff; border: 1px solid var(--line); border-left-width: 6px; border-radius: var(--radius); padding: 14px; }
+.person-card.red { border-left-color: var(--red); }
+.person-card.yellow { border-left-color: #e0a100; }
+.person-card.green { border-left-color: var(--green); }
+.person-badge { width: 44px; height: 44px; border-radius: 22px; display: flex; align-items: center; justify-content: center; flex: none; }
+.person-badge.red { background: var(--red-tint); }
+.person-badge.yellow { background: var(--amber-ink); }
+.person-badge.green { background: var(--green-tint); }
+.person-word { font-size: 13px; font-weight: 800; border-radius: 10px; padding: 3px 10px; }
+.person-word.red { background: var(--red); color: #fff; }
+.person-word.yellow { background: var(--amber-bg); color: var(--amber-ink); }
+.person-word.green { background: var(--green); color: #fff; }
+
+.btn-dark { background: var(--ink); color: #fff; border-color: var(--ink); }
+.btn-dark:hover { background: #000; color: #fff; }
+.flag-icon.big { width: 64px; height: 64px; border-radius: 32px; }
+.flag-word { font-size: 15px; font-weight: 900; letter-spacing: 0.8px; }
+.flag-action { font-size: 16px; font-weight: 700; }

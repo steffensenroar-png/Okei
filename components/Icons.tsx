@@ -16,22 +16,22 @@ export function Logo() {
   )
 }
 
-export function FlagIcon({ flag }: { flag: 'red' | 'yellow' | 'green' }) {
+export function FlagIcon({ flag, size = 26 }: { flag: 'red' | 'yellow' | 'green'; size?: number }) {
   if (flag === 'red')
     return (
-      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+      <svg width={size} height={size} viewBox="0 0 26 26" aria-hidden="true">
         <path d="M7 7l12 12M19 7L7 19" stroke="#B42318" strokeWidth="3.2" strokeLinecap="round" />
       </svg>
     )
   if (flag === 'yellow')
     return (
-      <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+      <svg width={size} height={size} viewBox="0 0 26 26" aria-hidden="true">
         <path d="M13 6v9" stroke="#FFE3A3" strokeWidth="3.2" strokeLinecap="round" />
         <circle cx="13" cy="20" r="2" fill="#FFE3A3" />
       </svg>
     )
   return (
-    <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+    <svg width={size} height={size} viewBox="0 0 26 26" aria-hidden="true">
       <path d="M6 13.5l4.5 4.5L20 8.5" fill="none" stroke="#18794E" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )

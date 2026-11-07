@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { evaluate, splitTraces, ProductData, ProfileInput } from './rules'
+import { evaluate, evaluateFamily, splitTraces, ProductData, ProfileInput } from './rules'
 import { keyFromName, matchAllergen, ALLERGEN_BY_KEY } from './allergens'
 
 const emma: ProfileInput = {
@@ -104,10 +104,11 @@ describe('tvetydige ingredienser og usikkerhet', () => {
   })
   it('uemballert mat gir aldri grønt', () => {
     expect(evaluate({ mode: 'food', source: 'ai', found: true, likely: [] }, emma).flag).toBe('yellow')
-    expect(evaluate({ mode: 'food', source: 'ai', found: true, likely: ['milk'] }, emma).flag).toBe('yellow')
+    expect(evaluate({ mode: 'food', source: 'ai', found: true, likely: ['milk'] }, emma).flag).not.toBe('green')
+    expect(evaluate({ mode: 'food', source: 'ai', found: true, likely: ['peanut'] }, emma).flag).toBe('yellow')
   })
-  it('profil uten allergier gir ikke grønt', () => {
-    expect(evaluate(label('Sukker.'), { name: 'A', allergens: [] }).flag).toBe('yellow')
+  it('profil uten allergier gir grønt med tydelig overskrift', () => {
+    expect(evaluate(label('Sukker.'), { name: 'A', allergens: [] })).toMatchObject({ flag: 'green', headline: 'Ingen registrerte allergier' })
   })
 })
 
@@ -131,5 +132,67 @@ describe('egne ingredienser og navn', () => {
   it('genitiv for navn på s', () => {
     const p: ProfileInput = { name: 'Jonas', allergens: [{ key: 'egg', severity: 'moderate' }] }
     expect(evaluate(label('Sukker.'), p).headline).toBe("Ingen av Jonas' allergener funnet")
+  })
+})
+
+describe('tilstander', () => {
+  it('cøliaki gjør spor av gluten rødt', () => {
+    const p: ProfileInput = { name: 'Marte', allergens: [], conditions: ['coeliac'] }
+    const r = evaluate(label('Rismel, sukker. Kan inneholde spor av hvete.'), p)
+    expect(r.flag).toBe('red')
+    expect(r.findings[0].label).toBe('Gluten (cøliaki)')
+  })
+  it('laktoseintoleranse: melk gir rødt, laktosefri melk er OK, kasein er ikke laktose', () => {
+    const p: ProfileInput = { name: 'A', allergens: [], conditions: ['lactose'] }
+    expect(evaluate(label('Melk, sukker.'), p).flag).toBe('red')
+    expect(evaluate(label('Laktosefri melk, sukker.'), p).flag).toBe('green')
+    expect(evaluate(label('Natriumkaseinat, sukker.'), p).flag).toBe('green')
+  })
+  it('melkeallergi overstyrer laktosesjekken', () => {
+    const p: ProfileInput = { name: 'A', allergens: [{ key: 'milk', severity: 'severe' }], conditions: ['lactose'] }
+    const r = evaluate(label('Laktosefri melk.'), p)
+    expect(r.flag).toBe('red')
+    expect(r.findings).toHaveLength(1)
+  })
+})
+
+describe('familievurdering', () => {
+  it('grønnsakspostei: OK for Roar, ikke for Marte og Elise', () => {
+    const product = label('Grønnsaker (gulrot, erter), hvetemel, rapsolje, egg, salt.')
+    const r = evaluateFamily(product, [
+      { id: '1', name: 'Roar', allergens: [] , customTerms: ['kiwi'] },
+      { id: '2', name: 'Marte', allergens: [], conditions: ['coeliac'] },
+      { id: '3', name: 'Elise', allergens: [{ key: 'egg', severity: 'moderate' }] }
+    ])
+    expect(r.flag).toBe('red')
+    expect(r.headline).toBe('Ikke for Marte og Elise')
+    expect(r.people.find((p) => p.name === 'Roar')?.evaluation.flag).toBe('green')
+  })
+  it('alle grønne gir «OK for alle»', () => {
+    const r = evaluateFamily(label('Ris, vann.'), [
+      { id: '1', name: 'A', allergens: [{ key: 'milk', severity: 'mild' }] },
+      { id: '2', name: 'B', allergens: [{ key: 'egg', severity: 'mild' }] }
+    ])
+    expect(r).toMatchObject({ flag: 'green', headline: 'OK for alle' })
+  })
+})
+
+describe('sikkerhetsregler fra designgjennomgangen', () => {
+  it('uemballert mat ved alvorlig allergi gir rødt', () => {
+    const p: ProfileInput = { name: 'A', allergens: [{ key: 'milk', severity: 'severe' }] }
+    const r = evaluate({ mode: 'food', source: 'ai', found: true, likely: ['milk'] }, p)
+    expect(r.flag).toBe('red')
+    expect(r.headline).toBe('Sannsynligvis melk. Ikke spis.')
+  })
+  it('glutenfri havre er OK ved cøliaki, vanlig havre er ikke', () => {
+    const p: ProfileInput = { name: 'A', allergens: [], conditions: ['coeliac'] }
+    expect(evaluate(label('Glutenfri havre, salt.'), p).flag).toBe('green')
+    expect(evaluate(label('Havregryn, salt.'), p).flag).toBe('red')
+  })
+  it('viser allergener som ikke står på profilen', () => {
+    const p: ProfileInput = { name: 'A', allergens: [{ key: 'milk', severity: 'moderate' }] }
+    const r = evaluate(label('Sukker, kakao. Kan inneholde spor av hasselnøtter.'), p)
+    expect(r.flag).toBe('green')
+    expect(r.others).toEqual([{ label: 'Nøtter', kind: 'traces' }])
   })
 })

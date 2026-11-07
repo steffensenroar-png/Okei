@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import AuthGate from '@/components/AuthGate'
 import { supabase } from '@/lib/supabase-browser'
+import { StatusIcon } from '@/components/AllergenIcon'
 
 interface Row {
   id: string
@@ -51,7 +52,7 @@ function History() {
         <div className="card" style={{ paddingTop: 2, paddingBottom: 2 }}>
           {rows.map((r) => (
             <Link key={r.id} href={`/resultat/${r.id}`} className="list-item">
-              <span className={`dot ${r.flag}`} style={{ marginTop: 0, width: 12, height: 12, borderRadius: 6 }} />
+              <StatusIcon status={r.flag} size={24} />
               <span className="stack" style={{ gap: 2, flex: 1, minWidth: 0 }}>
                 <span style={{ fontWeight: 700, fontSize: 15 }}>{r.headline}</span>
                 <span className="small muted" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

@@ -8,7 +8,19 @@
 // - Grønt: bare når vi har data for hvert av profilens allergener og ingen treff.
 // - Foto av uemballert mat gir aldri grønt.
 
-import { ALLERGEN_BY_KEY, AllergenKey, Severity, matchAllergen, findTerms, normalize, blankOut } from './allergens'
+import {
+  ALLERGEN_BY_KEY,
+  AllergenDef,
+  AllergenKey,
+  ConditionKey,
+  LACTOSE_DEF,
+  Severity,
+  blankOut,
+  findTerms,
+  isLactoseFree,
+  matchAllergen,
+  normalize
+} from './allergens'
 
 export type Mode = 'barcode' | 'label' | 'food'
 export type Flag = 'red' | 'yellow' | 'green'
@@ -25,6 +37,7 @@ export interface ProfileInput {
   name: string
   allergens: ProfileAllergen[]
   customTerms?: string[]
+  conditions?: ConditionKey[]
 }
 
 export interface ProductData {
@@ -51,11 +64,18 @@ export interface Finding {
   note?: string
 }
 
+export interface OtherAllergen {
+  label: string
+  kind: 'contains' | 'traces'
+}
+
 export interface Evaluation {
   flag: Flag
   headline: string
   reasons: string[]
   findings: Finding[]
+  /** Allergener i produktet som ikke står på profilen (til informasjon). */
+  others?: OtherAllergen[]
 }
 
 const TRACE_PATTERNS = [
@@ -95,6 +115,48 @@ function listLabels(fs: Finding[]): string {
 
 const cap = (x: string) => x.charAt(0).toUpperCase() + x.slice(1)
 
+interface Check {
+  key: string
+  label: string
+  severity: Severity
+  def: AllergenDef
+  dataKey: AllergenKey
+  lactose?: boolean
+}
+
+function otherAllergens(product: ProductData, main: string, traces: string, findings: Finding[]): OtherAllergen[] {
+  if (product.mode === 'food') return []
+  const covered = new Set(findings.map((f) => (f.key === 'lactose' ? 'milk' : f.key)))
+  const out: OtherAllergen[] = []
+  for (const def of Object.values(ALLERGEN_BY_KEY)) {
+    if (covered.has(def.key)) continue
+    const st = product.structured?.[def.key]
+    if ((main && matchAllergen(main, def).hits.length) || st === 'contains') out.push({ label: def.label, kind: 'contains' })
+    else if ((traces && matchAllergen(traces, def).hits.length) || st === 'traces') out.push({ label: def.label, kind: 'traces' })
+  }
+  return out
+}
+
+/** Oversett profilens allergier og tilstander til konkrete sjekker. */
+export function buildChecks(profile: ProfileInput): Check[] {
+  const conditions = profile.conditions ?? []
+  const coeliac = conditions.includes('coeliac')
+  const checks: Check[] = []
+  for (const pa of profile.allergens) {
+    const def = ALLERGEN_BY_KEY[pa.key]
+    if (!def) continue
+    if (pa.key === 'gluten' && coeliac) continue
+    checks.push({ key: pa.key, label: def.label, severity: pa.severity, def, dataKey: pa.key })
+  }
+  if (coeliac) {
+    checks.push({ key: 'gluten', label: 'Gluten (cøliaki)', severity: 'severe', def: ALLERGEN_BY_KEY.gluten, dataKey: 'gluten' })
+  }
+  if (conditions.includes('lactose') && !profile.allergens.some((a) => a.key === 'milk')) {
+    checks.push({ key: 'lactose', label: 'Laktose', severity: 'moderate', def: LACTOSE_DEF, dataKey: 'milk', lactose: true })
+  }
+  return checks
+}
+
 export function evaluate(product: ProductData, profile: ProfileInput): Evaluation {
   const reasons: string[] = []
   const findings: Finding[] = []
@@ -106,20 +168,24 @@ export function evaluate(product: ProductData, profile: ProfileInput): Evaluatio
   const hasText = text.length > 0
   const legible = product.legibility ? product.legibility === 'good' : true
 
-  for (const pa of profile.allergens) {
-    const def = ALLERGEN_BY_KEY[pa.key]
-    if (!def) continue
-    const f: Finding = { key: pa.key, label: def.label, severity: pa.severity, status: 'none', evidence: [] }
+  for (const c of buildChecks(profile)) {
+    const def = c.def
+    const f: Finding = { key: c.key, label: c.label, severity: c.severity, status: 'none', evidence: [] }
 
     if (product.mode === 'food') {
-      f.status = product.likely?.includes(pa.key) ? 'likely' : 'unknown'
+      f.status = product.likely?.includes(c.dataKey) ? 'likely' : 'unknown'
+      findings.push(f)
+      continue
+    }
+
+    if (c.lactose && hasText && isLactoseFree(text)) {
       findings.push(f)
       continue
     }
 
     const inMain = hasText ? matchAllergen(main, def) : { hits: [], ambiguous: [] }
     const inTraces = tracesAll ? matchAllergen(tracesAll, def) : { hits: [], ambiguous: [] }
-    const st = product.structured?.[pa.key]
+    const st = product.structured?.[c.dataKey]
 
     if (inMain.hits.length || st === 'contains') {
       f.status = 'contains'
@@ -161,6 +227,7 @@ export function evaluate(product: ProductData, profile: ProfileInput): Evaluatio
     findings.push(f)
   }
 
+  const others = otherAllergens(product, main, tracesAll, findings)
   const contains = findings.filter((f) => f.status === 'contains')
   const severeTraces = findings.filter((f) => f.status === 'traces' && f.severity === 'severe')
   const otherTraces = findings.filter((f) => f.status === 'traces' && f.severity !== 'severe')
@@ -168,32 +235,36 @@ export function evaluate(product: ProductData, profile: ProfileInput): Evaluatio
   const unknown = findings.filter((f) => f.status === 'unknown')
   const likely = findings.filter((f) => f.status === 'likely')
 
-  // Uemballert mat: aldri grønt, maks gult.
+  // Uemballert mat: aldri grønt. Sannsynlig allergen ved alvorlig allergi gir rødt.
   if (product.mode === 'food') {
     reasons.push('Vi kan ikke se ingrediensene. Spør den som har laget maten.')
-    if (likely.length) {
-      return { flag: 'yellow', headline: `Inneholder vanligvis ${listLabels(likely)}`, reasons, findings }
+    const severeLikely = likely.filter((f) => f.severity === 'severe')
+    if (severeLikely.length) {
+      return { flag: 'red', headline: `Sannsynligvis ${listLabels(severeLikely)}. Ikke spis.`, reasons, findings, others: [] }
     }
-    return { flag: 'yellow', headline: 'Usikkert – gjetning fra bilde', reasons, findings }
+    if (likely.length) {
+      return { flag: 'yellow', headline: `Inneholder vanligvis ${listLabels(likely)}`, reasons, findings, others: [] }
+    }
+    return { flag: 'yellow', headline: 'Usikkert – gjetning fra bilde', reasons, findings, others: [] }
   }
 
   if (!product.found && !hasText) {
     reasons.push('Fant ikke produktet eller ingredienslisten. Ta bilde av ingredienslisten i stedet.')
-    return { flag: 'yellow', headline: 'Fant ikke nok produktdata', reasons, findings }
+    return { flag: 'yellow', headline: 'Fant ikke nok produktdata', reasons, findings, others }
   }
 
   if (contains.length) {
     if (!legible) reasons.push('Deler av etiketten var vanskelig å lese.')
-    return { flag: 'red', headline: `Inneholder ${listLabels(contains)}`, reasons, findings }
+    return { flag: 'red', headline: `Inneholder ${listLabels(contains)}`, reasons, findings, others }
   }
   if (severeTraces.length) {
     reasons.push('Ved alvorlig allergi regnes «kan inneholde spor» som rødt.')
-    return { flag: 'red', headline: `Kan inneholde spor av ${listLabels(severeTraces)}`, reasons, findings }
+    return { flag: 'red', headline: `Kan inneholde spor av ${listLabels(severeTraces)}`, reasons, findings, others }
   }
 
   if (product.mode === 'label' && product.legibility === 'poor') {
     reasons.push('Bildet var for utydelig til å lese ingredienslisten sikkert. Ta et nytt bilde nærmere.')
-    return { flag: 'yellow', headline: 'Kunne ikke lese etiketten', reasons, findings }
+    return { flag: 'yellow', headline: 'Kunne ikke lese etiketten', reasons, findings, others }
   }
 
   if (otherTraces.length || ambiguous.length || unknown.length || !legible) {
@@ -206,16 +277,57 @@ export function evaluate(product: ProductData, profile: ProfileInput): Evaluatio
       : ambiguous.length
         ? `Usikker ingrediens: ${ambiguous[0].evidence[0]}`
         : 'Usikkert'
-    return { flag: 'yellow', headline: cap(headline), reasons, findings }
+    return { flag: 'yellow', headline: cap(headline), reasons, findings, others }
   }
 
   if (!findings.length) {
-    reasons.push('Profilen har ingen allergier registrert. Legg dem til under Profiler.')
-    return { flag: 'yellow', headline: 'Ingen allergier i profilen', reasons, findings }
+    reasons.push('Profilen har ingen allergier eller tilstander registrert.')
+    return { flag: 'green', headline: 'Ingen registrerte allergier', reasons, findings, others }
   }
 
   reasons.push('Sjekk alltid etiketten. Oppskrifter kan endres.')
   const n = profile.name?.trim()
   const who = n ? (/[sxz]$/i.test(n) ? `${n}'` : `${n}s`) : 'dine'
-  return { flag: 'green', headline: `Ingen av ${who} allergener funnet`, reasons, findings }
+  return { flag: 'green', headline: `Ingen av ${who} allergener funnet`, reasons, findings, others }
+}
+
+// ---------- Familievurdering: én skann mot flere profiler ----------
+
+export interface PersonResult {
+  profileId: string
+  name: string
+  evaluation: Evaluation
+}
+
+export interface FamilyEvaluation {
+  flag: Flag
+  headline: string
+  people: PersonResult[]
+}
+
+const RANK: Record<Flag, number> = { green: 0, yellow: 1, red: 2 }
+
+function joinNames(names: string[]): string {
+  if (names.length <= 1) return names.join('')
+  return names.slice(0, -1).join(', ') + ' og ' + names[names.length - 1]
+}
+
+export function evaluateFamily(
+  product: ProductData,
+  profiles: (ProfileInput & { id: string })[]
+): FamilyEvaluation {
+  const people = profiles.map((p) => ({ profileId: p.id, name: p.name, evaluation: evaluate(product, p) }))
+  if (people.length === 1) {
+    return { flag: people[0].evaluation.flag, headline: people[0].evaluation.headline, people }
+  }
+  const flag = people.reduce<Flag>((w, p) => (RANK[p.evaluation.flag] > RANK[w] ? p.evaluation.flag : w), 'green')
+  const red = people.filter((p) => p.evaluation.flag === 'red').map((p) => p.name)
+  const yellow = people.filter((p) => p.evaluation.flag === 'yellow').map((p) => p.name)
+  let headline: string
+  if (flag === 'green') headline = 'OK for alle'
+  else if (red.length === people.length) headline = 'Ikke for noen av dere'
+  else if (red.length) headline = `Ikke for ${joinNames(red)}`
+  else if (yellow.length === people.length) headline = 'Usikkert for alle'
+  else headline = `Usikkert for ${joinNames(yellow)}`
+  return { flag, headline, people }
 }
