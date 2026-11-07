@@ -33,7 +33,7 @@ async function get(url: string): Promise<string | null> {
 export async function GET() {
   const list: Recall[] = []
   const seen = new Set<string>()
-  for (const page of [0, 1]) {
+  for (const page of [0, 1, 2, 3]) {
     const html = await get(`${BASE}/tilbakekallinger${page ? `?index=${page}` : ''}`)
     if (!html) continue
     const re = /href="((?:https:\/\/www\.mattilsynet\.no)?\/tilbakekallinger\/[a-z0-9\-]+)"[^>]*>([\s\S]*?)<\/a>/g

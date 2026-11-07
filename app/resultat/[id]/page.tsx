@@ -77,7 +77,9 @@ function Highlighted({ text, red, amber, who }: { text: string; red: string[]; a
   const parts = useMemo(() => {
     const words = [...red, ...amber].filter((w) => w && w.length > 1)
     if (!words.length) return [text]
-    const re = new RegExp(`(${[...new Set(words)].sort((a, b) => b.length - a.length).map(escapeRe).join('|')})`, 'gi')
+    // Bare hele ord: «hvete» skal ikke markeres inne i «hvetestivelse».
+    const L = 'a-zA-Z0-9æøåÆØÅäöüÄÖÜéè'
+    const re = new RegExp(`(?<![${L}])(${[...new Set(words)].sort((a, b) => b.length - a.length).map(escapeRe).join('|')})(?![${L}])`, 'gi')
     return text.split(re)
   }, [text, red, amber])
   const lowerRed = red.map((w) => w.toLowerCase())

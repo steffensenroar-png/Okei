@@ -34,6 +34,7 @@ const A: Record<AllergenKey, Record<Lang, string>> = {
 const T: Record<Lang, {
   title: string
   intro: (name: string) => string
+  needs: (name: string) => string
   severe: string
   coeliac: string
   coeliacStrict: string
@@ -46,6 +47,7 @@ const T: Record<Lang, {
   no: {
     title: 'Til den som lager maten',
     intro: (n) => `${n} har matallergi og kan ikke spise:`,
+    needs: (n) => `${n} må passe på dette i maten:`,
     severe: 'alvorlig – også spor',
     coeliac: 'Cøliaki: ingen hvete, rug, bygg, spelt eller vanlig havre. Glutenfri havre og glutenfri hvetestivelse er OK.',
     coeliacStrict: 'Reagerer også på små spor av gluten.',
@@ -58,6 +60,7 @@ const T: Record<Lang, {
   en: {
     title: 'To the person preparing my food',
     intro: (n) => `${n} has a food allergy and cannot eat:`,
+    needs: (n) => `${n} has special dietary needs:`,
     severe: 'severe – even traces',
     coeliac: 'Coeliac disease: no wheat, rye, barley, spelt or ordinary oats. Gluten-free oats and gluten-free wheat starch are fine.',
     coeliacStrict: 'Also reacts to small traces of gluten.',
@@ -70,6 +73,7 @@ const T: Record<Lang, {
   de: {
     title: 'An die Person, die mein Essen zubereitet',
     intro: (n) => `${n} hat eine Lebensmittelallergie und darf nicht essen:`,
+    needs: (n) => `${n} muss beim Essen auf Folgendes achten:`,
     severe: 'schwer – auch Spuren',
     coeliac: 'Zöliakie: kein Weizen, Roggen, Gerste, Dinkel oder normaler Hafer. Glutenfreier Hafer und glutenfreie Weizenstärke sind in Ordnung.',
     coeliacStrict: 'Reagiert auch auf kleine Spuren von Gluten.',
@@ -82,6 +86,7 @@ const T: Record<Lang, {
   es: {
     title: 'Para la persona que prepara mi comida',
     intro: (n) => `${n} tiene alergia alimentaria y no puede comer:`,
+    needs: (n) => `${n} tiene necesidades alimentarias especiales:`,
     severe: 'grave – incluso trazas',
     coeliac: 'Celiaquía: sin trigo, centeno, cebada, espelta ni avena normal. La avena sin gluten y el almidón de trigo sin gluten están bien.',
     coeliacStrict: 'También reacciona a pequeñas trazas de gluten.',
@@ -94,6 +99,7 @@ const T: Record<Lang, {
   fr: {
     title: 'À la personne qui prépare mon repas',
     intro: (n) => `${n} a une allergie alimentaire et ne peut pas manger :`,
+    needs: (n) => `${n} a des besoins alimentaires particuliers :`,
     severe: 'grave – même des traces',
     coeliac: 'Maladie cœliaque : pas de blé, seigle, orge, épeautre ni avoine ordinaire. L’avoine sans gluten et l’amidon de blé sans gluten conviennent.',
     coeliacStrict: 'Réagit aussi à de petites traces de gluten.',
@@ -106,6 +112,7 @@ const T: Record<Lang, {
   it: {
     title: 'Per chi prepara il mio pasto',
     intro: (n) => `${n} ha un’allergia alimentare e non può mangiare:`,
+    needs: (n) => `${n} ha esigenze alimentari particolari:`,
     severe: 'grave – anche tracce',
     coeliac: 'Celiachia: niente frumento, segale, orzo, farro o avena normale. Avena senza glutine e amido di frumento senza glutine vanno bene.',
     coeliacStrict: 'Reagisce anche a piccole tracce di glutine.',
@@ -118,6 +125,7 @@ const T: Record<Lang, {
   sv: {
     title: 'Till den som lagar min mat',
     intro: (n) => `${n} har matallergi och kan inte äta:`,
+    needs: (n) => `${n} behöver tänka på detta i maten:`,
     severe: 'svår – även spår',
     coeliac: 'Celiaki: inget vete, råg, korn, dinkel eller vanlig havre. Glutenfri havre och glutenfri vetestärkelse går bra.',
     coeliacStrict: 'Reagerar även på små spår av gluten.',
@@ -151,5 +159,5 @@ export function buildChefCard(
   if (p.conditions.includes('birch')) notes.push(t.birch)
   if (p.custom_terms?.length) notes.push(`${t.also} ${p.custom_terms.join(', ')}`)
   if (items.length || p.conditions.includes('coeliac')) notes.push(t.cross)
-  return { title: t.title, intro: t.intro(p.name), items, notes, thanks: t.thanks }
+  return { title: t.title, intro: items.length ? t.intro(p.name) : t.needs(p.name), items, notes, thanks: t.thanks }
 }
