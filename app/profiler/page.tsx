@@ -8,6 +8,7 @@ import { ALLERGENS, ALLERGEN_BY_KEY, AllergenKey, CONDITIONS, ConditionKey, Seve
 import { FamilyProfile } from '@/lib/client'
 import AllergenIcon from '@/components/AllergenIcon'
 import { Animal, ANIMALS, animalFor, Mascot } from '@/components/Art'
+import { Accent, ACCENTS, getAccent, getTheme, saveTheme, Theme, THEMES } from '@/lib/theme'
 
 type Draft = {
   id?: string
@@ -42,6 +43,133 @@ function summary(p: FamilyProfile) {
   return [...conds, ...parts, ...(p.custom_terms ?? [])].join(' · ') || 'Ingen allergier registrert'
 }
 
+interface Link_ { id: string; child_email: string | null; created_at: string }
+
+function ChildPhone({ profileId, name }: { profileId: string; name: string }) {
+  const [links, setLinks] = useState<Link_[]>([])
+  const [code, setCode] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+  const [copied, setCopied] = useState(false)
+
+  async function load() {
+    const { data } = await supabase()
+      .from('family_links')
+      .select('id, child_email, created_at')
+      .eq('profile_id', profileId)
+      .order('created_at')
+    setLinks((data ?? []) as Link_[])
+  }
+
+  useEffect(() => {
+    load()
+  }, [profileId])
+
+  async function makeCode() {
+    setBusy(true)
+    setError('')
+    const { data, error } = await supabase().from('family_invites').insert({ profile_id: profileId }).select('code').single()
+    setBusy(false)
+    if (error || !data) return setError('Kunne ikke lage kode. Prøv igjen.')
+    setCode(data.code)
+  }
+
+  async function share() {
+    if (!code) return
+    const url = `${window.location.origin}/koble?kode=${code}`
+    const text = `Åpne lenken på telefonen din og logg inn for å koble deg til familien i Okei. Koden er ${code}.`
+    try {
+      if (navigator.share) return await navigator.share({ title: 'Okei', text, url })
+      await navigator.clipboard.writeText(`${text} ${url}`)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2500)
+    } catch {
+      /* avbrutt */
+    }
+  }
+
+  async function unlink(id: string) {
+    if (!window.confirm('Fjerne koblingen? Du ser ikke lenger skannene fra den telefonen.')) return
+    await supabase().from('family_links').delete().eq('id', id)
+    load()
+  }
+
+  return (
+    <div className="card stack" style={{ gap: 12 }}>
+      <h2>{name} sin egen telefon</h2>
+      <p className="small muted">
+        Lag en kode og send den til {name}. Når {name} logger inn med egen konto og bruker koden, sjekker telefonen mat mot denne profilen, og du ser alt som skannes i historikken din.
+      </p>
+      {links.map((l) => (
+        <div key={l.id} className="row" style={{ justifyContent: 'space-between', gap: 8 }}>
+          <span className="small" style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis' }}>Koblet: {l.child_email ?? 'ukjent konto'}</span>
+          <button type="button" className="btn btn-small btn-danger" onClick={() => unlink(l.id)}>Fjern</button>
+        </div>
+      ))}
+      {code ? (
+        <div className="stack" style={{ gap: 8 }}>
+          <div className="code-box" aria-label={`Kode ${code.split('').join(' ')}`}>{code}</div>
+          <p className="tiny">Gjelder i 7 dager og kan brukes én gang.</p>
+          <button type="button" className="btn btn-primary" onClick={share}>{copied ? 'Lenken er kopiert' : 'Send koden'}</button>
+        </div>
+      ) : (
+        <button type="button" className="btn" onClick={makeCode} disabled={busy}>{busy ? 'Lager kode…' : 'Lag koblingskode'}</button>
+      )}
+      {error && <div className="alert error" role="alert">{error}</div>}
+    </div>
+  )
+}
+
+function Appearance() {
+  const [theme, setTheme] = useState<Theme>('auto')
+  const [accent, setAccent] = useState<Accent>('green')
+
+  useEffect(() => {
+    setTheme(getTheme())
+    setAccent(getAccent())
+  }, [])
+
+  function pick(t: Theme, a: Accent) {
+    setTheme(t)
+    setAccent(a)
+    saveTheme(t, a)
+  }
+
+  return (
+    <div className="card stack" style={{ gap: 14 }}>
+      <div className="row" style={{ justifyContent: 'space-between' }}>
+        <div className="stack" style={{ gap: 2 }}>
+          <h2>Utseende</h2>
+          <p className="tiny">Gjelder bare denne telefonen.</p>
+        </div>
+        <Mascot mood="happy" size={64} />
+      </div>
+      <div className="seg" role="group" aria-label="Tema">
+        {THEMES.map((t) => (
+          <button key={t.id} type="button" aria-pressed={theme === t.id} onClick={() => pick(t.id, accent)}>{t.label}</button>
+        ))}
+      </div>
+      <div className="swatches" role="radiogroup" aria-label="Farge">
+        {ACCENTS.map((a) => (
+          <button
+            key={a.id}
+            type="button"
+            role="radio"
+            aria-checked={accent === a.id}
+            aria-label={a.label}
+            title={a.label}
+            className="swatch"
+            style={{ background: a.color }}
+            onClick={() => pick(theme, a.id)}
+          >
+            {accent === a.id ? '✓' : ''}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function ShareButton() {
   const [copied, setCopied] = useState(false)
   async function share() {
@@ -66,6 +194,7 @@ function ShareButton() {
 function Profiles() {
   const session = useSession()
   const [profiles, setProfiles] = useState<FamilyProfile[]>([])
+  const [linked, setLinked] = useState<(FamilyProfile & { parent: string | null })[]>([])
   const [draft, setDraft] = useState<Draft | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -73,17 +202,32 @@ function Profiles() {
   async function load() {
     const { data } = await supabase()
       .from('family_profiles')
-      .select('id, name, birth_year, allergens, custom_terms, conditions, avatar')
+      .select('id, owner_id, name, birth_year, allergens, custom_terms, conditions, avatar')
       .order('created_at')
-    setProfiles((data ?? []) as FamilyProfile[])
-    return (data ?? []) as FamilyProfile[]
+    const all = (data ?? []) as FamilyProfile[]
+    const own = all.filter((p) => p.owner_id === session.user.id)
+    const others = all.filter((p) => p.owner_id !== session.user.id)
+    let parents: Record<string, string | null> = {}
+    if (others.length) {
+      const { data: links } = await supabase().from('family_links').select('profile_id, parent_email').eq('child_id', session.user.id)
+      parents = Object.fromEntries((links ?? []).map((l: { profile_id: string; parent_email: string | null }) => [l.profile_id, l.parent_email]))
+    }
+    setProfiles(own)
+    setLinked(others.map((p) => ({ ...p, parent: parents[p.id] ?? null })))
+    return { own, others }
   }
 
   useEffect(() => {
-    load().then((list) => {
-      if (!list.length || new URLSearchParams(window.location.search).has('ny')) setDraft(empty(list.length))
+    load().then(({ own, others }) => {
+      if ((!own.length && !others.length) || new URLSearchParams(window.location.search).has('ny')) setDraft(empty(own.length))
     })
   }, [])
+
+  async function unlinkSelf(profileId: string, name: string) {
+    if (!window.confirm(`Koble fra ${name}? Du kan ikke lenger sjekke mat mot denne profilen.`)) return
+    await supabase().from('family_links').delete().eq('child_id', session.user.id).eq('profile_id', profileId)
+    load()
+  }
 
   function toggle(key: AllergenKey) {
     if (!draft) return
@@ -231,6 +375,8 @@ function Profiles() {
             <input className="input" placeholder="F.eks. kiwi, erter (skill med komma)" value={draft.custom} onChange={(e) => setDraft({ ...draft, custom: e.target.value })} />
           </label>
 
+          {draft.id && <ChildPhone profileId={draft.id} name={draft.name || 'barnet'} />}
+
           {error && <div className="alert error" role="alert">{error}</div>}
           <button className="btn btn-primary" type="submit" disabled={saving}>{saving ? 'Lagrer…' : 'Lagre profil'}</button>
           <div className="row">
@@ -266,6 +412,24 @@ function Profiles() {
         ))}
         <button className="btn" onClick={() => setDraft(empty(profiles.length))}>+ Legg til profil</button>
       </div>
+      {linked.length > 0 && (
+        <div className="stack">
+          <h2>Koblet til familien</h2>
+          {linked.map((p, i) => (
+            <div key={p.id} className="card row" style={{ gap: 14 }}>
+              <Animal id={animalFor(p.avatar, i)} size={52} />
+              <span className="stack" style={{ gap: 4, flex: 1, minWidth: 0 }}>
+                <span style={{ fontSize: 16, fontWeight: 700 }}>{p.name}</span>
+                <span className="small muted">{summary(p)}</span>
+                <span className="tiny">Styres av {p.parent ?? 'en forelder'}, som ser det du skanner.</span>
+              </span>
+              <button className="btn btn-small" onClick={() => unlinkSelf(p.id, p.name)}>Koble fra</button>
+            </div>
+          ))}
+        </div>
+      )}
+      <Link className="linkbtn" href="/koble">Har du fått en kode? Koble til en familie</Link>
+      <Appearance />
       <div className="spacer" />
       <ShareButton />
       <Link className="linkbtn" href="/personvern">Personvern</Link>

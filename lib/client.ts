@@ -5,6 +5,7 @@ import type { AllergenKey, ConditionKey, Severity } from './allergens'
 
 export interface FamilyProfile {
   id: string
+  owner_id?: string
   name: string
   birth_year: number | null
   allergens: { key: AllergenKey; severity: Severity }[]
@@ -92,3 +93,6 @@ export function storeSet(key: string, value: string) {
     /* privat modus o.l. */
   }
 }
+
+/** Koblingskode som venter på at barnet logger inn. */
+export const PENDING_KEY = 'okei.pendingCode'

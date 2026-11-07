@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import AuthGate from '@/components/AuthGate'
+import AuthGate, { useSession } from '@/components/AuthGate'
 import { Animal, animalFor, Mascot } from '@/components/Art'
 import { FlagIcon } from '@/components/Icons'
 import AllergenIcon, { StatusIcon } from '@/components/AllergenIcon'
@@ -21,6 +21,7 @@ interface Scan {
   flag: Flag
   headline: string
   feedback: string | null
+  owner_id: string
   created_at: string
   result: {
     family?: boolean
@@ -180,6 +181,7 @@ function Alternatives({ scanId, many }: { scanId: string; many: boolean }) {
 }
 
 function Result() {
+  const session = useSession()
   const params = useParams<{ id: string }>()
   const [scan, setScan] = useState<Scan | null | undefined>(undefined)
   const [avatars, setAvatars] = useState<Record<string, { id: string | null; i: number }>>({})
@@ -327,7 +329,9 @@ function Result() {
 
         <Link className="btn btn-dark" href="/skann">Skann en til</Link>
 
-        {sent ? (
+        {scan.owner_id !== session.user.id ? (
+          <p className="kid-badge" style={{ alignSelf: 'flex-start' }}>Skannet av {scan.profile_name ?? 'barnet'} på egen telefon</p>
+        ) : sent ? (
           <p className="small muted">Takk! Tilbakemeldingen er lagret.</p>
         ) : open ? (
           <form onSubmit={sendFeedback} className="stack">

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import AuthGate from '@/components/AuthGate'
+import AuthGate, { useSession } from '@/components/AuthGate'
 import BarcodeScanner from '@/components/BarcodeScanner'
 import { CameraIcon, Logo } from '@/components/Icons'
 import { supabase } from '@/lib/supabase-browser'
@@ -19,12 +19,22 @@ const MODES: { id: Mode; label: string; hint: string; busy: string }[] = [
 
 function Scan() {
   const router = useRouter()
+  const session = useSession()
+  const [sharedWith, setSharedWith] = useState<string[]>([])
   const [profiles, setProfiles] = useState<FamilyProfile[] | null>(null)
   const [selected, setSelected] = useState<string[]>([])
   const [mode, setMode] = useState<Mode>('barcode')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    supabase()
+      .from('family_links')
+      .select('parent_email')
+      .eq('child_id', session.user.id)
+      .then(({ data }) => setSharedWith([...new Set((data ?? []).map((l: { parent_email: string | null }) => l.parent_email ?? 'en forelder'))]))
+  }, [session.user.id])
 
   useEffect(() => {
     supabase()
@@ -147,6 +157,12 @@ function Scan() {
           ))}
         </div>
       </div>
+
+      {sharedWith.length > 0 && (
+        <p className="share-note">
+          <span aria-hidden="true">👀</span> Det du skanner, ser {sharedWith.join(' og ')}.
+        </p>
+      )}
 
       <div className="mode-tiles" role="group" aria-label="Hva vil du sjekke?">
         {MODES.map((m) => (

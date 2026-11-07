@@ -1,8 +1,8 @@
 export function LogoMark({ size = 34 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 36 36" aria-hidden="true">
-      <circle cx="18" cy="18" r="16" fill="#0E6B57" />
-      <path d="M11 18.5l4.5 4.5L25 13.5" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+      <circle className="logo-dot" cx="18" cy="18" r="16" fill="#0E6B57" />
+      <path className="logo-check" d="M11 18.5l4.5 4.5L25 13.5" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
 }

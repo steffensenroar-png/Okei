@@ -8,10 +8,10 @@ const BODY = '#3DB47A'
 export type Mood = 'happy' | 'unsure' | 'stop' | 'wave'
 
 export function Mascot({ mood = 'wave', size = 120, title }: { mood?: Mood; size?: number; title?: string }) {
-  const arm = { fill: 'none', stroke: OUT, strokeWidth: 3.2, strokeLinecap: 'round' as const }
-  const hand = { fill: BODY, stroke: OUT, strokeWidth: 2.6 }
+  const arm = { className: 'mo', fill: 'none', stroke: OUT, strokeWidth: 3.2, strokeLinecap: 'round' as const }
+  const hand = { className: 'mb mo', fill: BODY, stroke: OUT, strokeWidth: 2.6 }
   return (
-    <svg width={size} height={size} viewBox="0 0 120 120" role={title ? 'img' : undefined} aria-hidden={title ? undefined : true} aria-label={title}>
+    <svg className="mascot" width={size} height={size} viewBox="0 0 120 120" role={title ? 'img' : undefined} aria-hidden={title ? undefined : true} aria-label={title}>
       {/* armer bak kroppen */}
       {mood === 'happy' && (
         <>
@@ -27,7 +27,7 @@ export function Mascot({ mood = 'wave', size = 120, title }: { mood?: Mood; size
           <circle cx="16" cy="96" r="5.5" {...hand} />
           <path d="M94 64 Q108 56 107 42" {...arm} />
           <circle cx="107" cy="40" r="5.5" {...hand} />
-          <path d="M114 30 q4 6 2 12 M118 24 q6 9 3 19" fill="none" stroke={OUT} strokeWidth="2" strokeLinecap="round" opacity=".55" />
+          <path className="mo" d="M114 30 q4 6 2 12 M118 24 q6 9 3 19" fill="none" stroke={OUT} strokeWidth="2" strokeLinecap="round" opacity=".55" />
         </>
       )}
       {mood === 'unsure' && (
@@ -35,8 +35,8 @@ export function Mascot({ mood = 'wave', size = 120, title }: { mood?: Mood; size
           <path d="M24 76 Q14 84 16 94" {...arm} />
           <circle cx="16" cy="96" r="5.5" {...hand} />
           <path d="M95 74 Q108 70 106 58" {...arm} />
-          <line x1="104" y1="52" x2="106" y2="60" stroke={OUT} strokeWidth="4" strokeLinecap="round" />
-          <circle cx="102" cy="41" r="11" fill="#E4F3FB" fillOpacity=".85" stroke={OUT} strokeWidth="3" />
+          <line className="mo" x1="104" y1="52" x2="106" y2="60" stroke={OUT} strokeWidth="4" strokeLinecap="round" />
+          <circle className="mo" cx="102" cy="41" r="11" fill="#E4F3FB" fillOpacity=".85" stroke={OUT} strokeWidth="3" />
           <path d="M96 37 q3 -4 7 -4" fill="none" stroke="#fff" strokeWidth="2.4" strokeLinecap="round" />
           <circle cx="106" cy="60" r="5" {...hand} />
         </>
@@ -46,21 +46,21 @@ export function Mascot({ mood = 'wave', size = 120, title }: { mood?: Mood; size
           <path d="M24 76 Q14 84 16 94" {...arm} />
           <circle cx="16" cy="96" r="5.5" {...hand} />
           <path d="M94 70 Q104 66 104 56" {...arm} />
-          <rect x="93" y="32" width="22" height="26" rx="10" fill="#fff" stroke={OUT} strokeWidth="3" />
-          <path d="M99 36v8 M104 34v10 M109 36v8" stroke={OUT} strokeWidth="2" strokeLinecap="round" opacity=".5" />
+          <rect className="mo" x="93" y="32" width="22" height="26" rx="10" fill="#fff" stroke={OUT} strokeWidth="3" />
+          <path className="mo" d="M99 36v8 M104 34v10 M109 36v8" stroke={OUT} strokeWidth="2" strokeLinecap="round" opacity=".5" />
         </>
       )}
 
       {/* føtter */}
-      <ellipse cx="47" cy="105" rx="10" ry="5.5" fill="#2A8F5E" stroke={OUT} strokeWidth="2.6" />
-      <ellipse cx="73" cy="105" rx="10" ry="5.5" fill="#2A8F5E" stroke={OUT} strokeWidth="2.6" />
+      <ellipse className="mf mo" cx="47" cy="105" rx="10" ry="5.5" fill="#2A8F5E" stroke={OUT} strokeWidth="2.6" />
+      <ellipse className="mf mo" cx="73" cy="105" rx="10" ry="5.5" fill="#2A8F5E" stroke={OUT} strokeWidth="2.6" />
 
       {/* spire */}
-      <path d="M60 31 C60 23 62 17 66 13" fill="none" stroke={OUT} strokeWidth="3" strokeLinecap="round" />
-      <path d="M66 14 C72 5 83 7 86 10 C81 19 72 21 66 14Z" fill="#8FDCA6" stroke={OUT} strokeWidth="2.6" strokeLinejoin="round" />
+      <path className="mo" d="M60 31 C60 23 62 17 66 13" fill="none" stroke={OUT} strokeWidth="3" strokeLinecap="round" />
+      <path className="ml mo" d="M66 14 C72 5 83 7 86 10 C81 19 72 21 66 14Z" fill="#8FDCA6" stroke={OUT} strokeWidth="2.6" strokeLinejoin="round" />
 
       {/* kropp */}
-      <ellipse cx="60" cy="68" rx="40" ry="38" fill={BODY} stroke={OUT} strokeWidth="3.2" />
+      <ellipse className="mb mo" cx="60" cy="68" rx="40" ry="38" fill={BODY} stroke={OUT} strokeWidth="3.2" />
       <ellipse cx="44" cy="50" rx="11" ry="6" fill="#fff" opacity=".28" transform="rotate(-28 44 50)" />
 
       {/* øyne */}
@@ -71,8 +71,8 @@ export function Mascot({ mood = 'wave', size = 120, title }: { mood?: Mood; size
         </>
       ) : (
         <>
-          <ellipse cx="47" cy="62" rx="8" ry="9.5" fill="#fff" stroke={OUT} strokeWidth="2.4" />
-          <ellipse cx="73" cy="62" rx="8" ry="9.5" fill="#fff" stroke={OUT} strokeWidth="2.4" />
+          <ellipse className="mo" cx="47" cy="62" rx="8" ry="9.5" fill="#fff" stroke={OUT} strokeWidth="2.4" />
+          <ellipse className="mo" cx="73" cy="62" rx="8" ry="9.5" fill="#fff" stroke={OUT} strokeWidth="2.4" />
           <circle cx={mood === 'unsure' ? 50 : 48} cy={mood === 'unsure' ? 61 : 64} r="4.2" fill={DARK} />
           <circle cx={mood === 'unsure' ? 76 : 74} cy={mood === 'unsure' ? 61 : 64} r="4.2" fill={DARK} />
           <circle cx={mood === 'unsure' ? 51.5 : 49.5} cy={mood === 'unsure' ? 59.5 : 62.5} r="1.4" fill="#fff" />

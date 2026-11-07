@@ -1,6 +1,9 @@
 import type { Metadata, Viewport } from 'next'
 import '@fontsource-variable/plus-jakarta-sans'
 import './globals.css'
+import ThemeSync from '@/components/ThemeSync'
+
+const THEME_BOOT = `(function(){try{var t=localStorage.getItem('okei.theme')||'auto',a=localStorage.getItem('okei.accent')||'green';var d=t==='dark'||(t==='auto'&&window.matchMedia('(prefers-color-scheme: dark)').matches);var h=document.documentElement;h.dataset.theme=d?'dark':'light';h.dataset.accent=a;}catch(e){}})();`
 
 export const metadata: Metadata = {
   title: 'Okei – allergisjekk',
@@ -18,8 +21,12 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="no">
+    <html lang="no" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
+      </head>
       <body>
+        <ThemeSync />
         <div className="shell">{children}</div>
       </body>
     </html>

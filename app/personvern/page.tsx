@@ -27,6 +27,11 @@ export default function Personvern() {
       </section>
 
       <section className="stack">
+        <h2>Familiekobling</h2>
+        <p>En forelder kan gi et barn en kode. Når barnet logger inn med egen konto og bruker koden, sjekker barnets telefon mat mot profilen forelderen har laget. Forelderen ser da barnets skann: produkt, flagg og tidspunkt. Barnet ser i appen hvem som ser skannene. Begge kan fjerne koblingen når som helst, og da slutter delingen.</p>
+      </section>
+
+      <section className="stack">
         <h2>Hvorfor og på hvilket grunnlag</h2>
         <p>Vi bruker opplysningene bare for å vise deg om maten passer profilen, og for å forbedre treffsikkerheten i betaen. Helseopplysningene behandles på grunnlag av ditt uttrykkelige samtykke, som du gir før første bruk. Du kan trekke samtykket ved å slette profilene og historikken.</p>
       </section>

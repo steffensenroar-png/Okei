@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase-browser'
+import { PENDING_KEY, storeGet } from '@/lib/client'
 import { Logo } from './Icons'
 import Nav from './Nav'
 
@@ -37,6 +38,8 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
       const { data: settings } = await sb.from('user_settings').select('accepted_terms_at').maybeSingle()
       if (!alive) return
       setState(settings?.accepted_terms_at ? 'ok' : 'terms')
+      const pending = storeGet(PENDING_KEY)
+      if (pending && window.location.pathname !== '/koble') router.replace(`/koble?kode=${encodeURIComponent(pending)}`)
     }
 
     sb.auth.getSession().then(({ data }) => check(data.session))
