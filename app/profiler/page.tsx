@@ -432,6 +432,7 @@ function Profiles() {
       <Appearance />
       <div className="spacer" />
       <ShareButton />
+      <Link className="linkbtn" href="/?om=1">Om Okei</Link>
       <Link className="linkbtn" href="/personvern">Personvern</Link>
       <button className="linkbtn" onClick={() => supabase().auth.signOut()}>Logg ut ({session.user.email})</button>
     </main>

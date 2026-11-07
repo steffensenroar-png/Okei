@@ -27,7 +27,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
     async function check(s: Session | null) {
       if (!alive) return
       if (!s) {
-        router.replace('/')
+        router.replace('/logg-inn')
         return
       }
       setSession(s)
@@ -44,7 +44,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
 
     sb.auth.getSession().then(({ data }) => check(data.session))
     const { data: sub } = sb.auth.onAuthStateChange((event, s) => {
-      if (event === 'SIGNED_OUT') router.replace('/')
+      if (event === 'SIGNED_OUT') router.replace('/logg-inn')
       else if (s) setSession(s)
     })
     return () => {
@@ -64,7 +64,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
 
   async function signOut() {
     await supabase().auth.signOut()
-    router.replace('/')
+    router.replace('/logg-inn')
   }
 
   if (state === 'loading') {
