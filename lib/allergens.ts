@@ -188,6 +188,130 @@ export const ALLERGENS: AllergenDef[] = [
   }
 ]
 
+// ---------- Flere språk: tysk, spansk, fransk, italiensk og finsk ----------
+// Lagt til separat for oversikt. Unntak som må gjelde før andre unntak (f.eks. «glutenfri havre» før «glutenfri»)
+// står i «first».
+
+interface Extra {
+  terms: Term[]
+  exclude?: string[]
+  first?: string[]
+  ambiguous?: Term[]
+  ambiguousExclude?: string[]
+}
+
+const EXTRA: Partial<Record<AllergenKey, Extra>> = {
+  milk: {
+    terms: [
+      ...s('milch', 'sahne', 'molke', 'käse', 'joghurt', 'buttermilch', 'milchzucker', 'leche', 'mantequilla', 'queso',
+        'suero de leche', 'lactosa', 'caseína', 'yogur', 'crème', 'beurre', 'fromage', 'lactosérum', 'petit-lait',
+        'caséine', 'yaourt', 'babeurre', 'formaggio', 'siero di latte', 'lattosio', 'caseina', 'maito', 'kerma',
+        'juusto', 'laktoosi', 'kaseiini', 'jogurtti', 'piimä', 'rahka', 'heraproteiini'),
+      ...st('rahm', 'lait', 'latte', 'panna', 'burro', 'hera'),
+      ...w('nata', 'voi', 'voita')
+    ],
+    exclude: ['kokosmilch', 'milchsäure', 'kakaobutter', 'erdnussbutter', 'milchfrei', 'ohne milch', 'leche de coco',
+      'ácido láctico', 'manteca de cacao', 'mantequilla de cacahuete', 'sin leche', 'lait de coco', 'acide lactique',
+      'beurre de cacao', 'beurre de cacahuète', 'sans lait', 'laitue', 'crème de coco', 'latte di cocco', 'acido lattico',
+      'burro di cacao', 'burro di arachidi', 'senza latte', 'kookosmaito', 'maitohappo', 'kaakaovoi', 'maidoton',
+      'kauramaito', 'soijamaito', 'mantelimaito', 'riisimaito']
+  },
+  egg: {
+    terms: [
+      ...s('kananmuna', 'huevo', 'ovoalbúmina', 'œuf', 'oeuf', 'uovo', 'uova', 'tuorlo', 'albume', 'munankeltuainen',
+        'munanvalkuainen'),
+      ...st('eigelb', 'eiklar', 'eiweiß', 'eiweiss', 'vollei', 'hühnerei', 'eipulver', 'yema', 'muna'),
+      // Ikke «ei» alene: på finsk betyr det «ikke».
+      ...w('eier')
+    ],
+    exclude: ['ohne ei', 'sin huevo', 'sans œuf', 'sans oeuf', 'senza uova', 'munaton']
+  },
+  peanut: {
+    terms: s('erdnuss', 'erdnüss', 'cacahuete', 'cacahuate', 'maní', 'arachide', 'arachid', 'cacahuète', 'cacahouète',
+      'maapähkinä'),
+    exclude: ['sin cacahuete', 'sans arachide', 'senza arachidi', 'ohne erdnüsse']
+  },
+  nuts: {
+    terms: [
+      ...s('haselnuss', 'haselnüss', 'walnuss', 'walnüss', 'pekannuss', 'paranuss', 'pistazie', 'nüsse', 'schalenfrüchte',
+        'almendra', 'avellana', 'nuez', 'nueces', 'anacardo', 'pistacho', 'frutos de cáscara', 'frutos secos', 'amande',
+        'noisette', 'pistache', 'fruits à coque', 'noix', 'mandorl', 'nocciol', 'anacardi', 'pistacchi', 'frutta a guscio',
+        'manteli', 'hasselpähkinä', 'saksanpähkinä', 'cashewpähkinä', 'pekaanipähkinä', 'parapähkinä', 'pistaasi',
+        'makadamia', 'pähkinä'),
+      ...st('nuss'),
+      ...w('noce', 'noci')
+    ],
+    first: ['nuez moscada', 'nuez de coco', 'noix de coco', 'noix de muscade', 'noce di cocco', 'noce moscata',
+      'kokosnuss', 'muskatnuss', 'erdnuss', 'erdnüss', 'cacahuete', 'arachide', 'arachid', 'cacahuète', 'maapähkinä',
+      'kookospähkinä', 'muskottipähkinä'],
+    exclude: ['sin frutos de cáscara', 'sans fruits à coque', 'senza frutta a guscio', 'pähkinätön', 'ohne nüsse']
+  },
+  gluten: {
+    terms: [
+      ...s('weizen', 'roggen', 'gerste', 'hafer', 'grünkern', 'trigo', 'centeno', 'cebada', 'avena', 'espelta', 'sémola',
+        'seigle', 'avoine', 'épeautre', 'froment', 'semoule', 'frumento', 'segale', 'semola', 'vehnä', 'ruis', 'ohra',
+        'kaura', 'mallas'),
+      ...st('malz', 'malta', 'malto', 'blé', 'orge', 'orzo'),
+      ...w('grano')
+    ],
+    first: ['glutenfreier hafer', 'glutenfreie haferflocken', 'avena sin gluten', 'avoine sans gluten',
+      'avena senza glutine', 'gluteeniton kaura', 'gluteenittomat kaurahiutaleet', 'glutenfreie weizenstärke',
+      'weizenstärke (glutenfrei)', 'almidón de trigo sin gluten', 'amidon de blé sans gluten',
+      'amido di frumento senza glutine', 'gluteeniton vehnätärkkelys'],
+    exclude: ['glutenfrei', 'sin gluten', 'sans gluten', 'senza glutine', 'gluteeniton', 'gluteenittomat', 'buchweizen',
+      'trigo sarraceno', 'blé noir', 'sarrasin', 'grano saraceno', 'granoturco', 'tattari', 'maltodextrina',
+      'maltodextrine', 'maltodestrin', 'maltosa', 'maltitolo', 'trigonella']
+  },
+  soy: {
+    terms: s('soia', 'soija'),
+    exclude: ['sin soja', 'sans soja', 'senza soia', 'ohne soja', 'soijaton'],
+    ambiguous: s('lécithine', 'lezithin', 'lesitiini'),
+    ambiguousExclude: ['sonnenblumenlecithin', 'sonnenblumenlezithin', 'lecitina de girasol', 'lécithine de tournesol',
+      'lecitina di girasole', 'auringonkukkalesitiini', 'rapslezithin', 'lécithine de colza', 'lecitina de colza',
+      'lecitina di colza', 'rypsilesitiini', 'lecitina (girasol)', 'lécithine (tournesol)', 'lecitina (girasole)']
+  },
+  fish: {
+    terms: [
+      ...s('fisch', 'lachs', 'kabeljau', 'thunfisch', 'sardelle', 'pescado', 'salmón', 'atún', 'bacalao', 'anchoa',
+        'merluza', 'poisson', 'saumon', 'cabillaud', 'anchois', 'morue', 'pesce', 'salmone', 'tonno', 'merluzzo',
+        'acciughe', 'alici', 'baccalà', 'tonnikala', 'turska', 'silli', 'anjovis'),
+      ...st('hering', 'thon', 'kala', 'lohi')
+    ],
+    exclude: ['tintenfisch', 'mustekala', 'kalamata', 'sin pescado', 'sans poisson', 'senza pesce', 'ohne fisch', 'kalaton']
+  },
+  crustaceans: {
+    terms: s('garnele', 'krebstier', 'gamba', 'langostino', 'cangrejo', 'crustáceo', 'langosta', 'crevette', 'crabe',
+      'homard', 'langoustine', 'crustacé', 'gamber', 'granchio', 'aragosta', 'crostace', 'katkarapu', 'rapu', 'hummeri',
+      'äyriäi')
+  },
+  molluscs: {
+    terms: [
+      ...s('muschel', 'tintenfisch', 'auster', 'schnecke', 'weichtier', 'mejillón', 'almeja', 'pulpo', 'ostra', 'molusco',
+        'vieira', 'huître', 'calmar', 'poulpe', 'mollusque', 'saint-jacques', 'cozze', 'vongole', 'calamari', 'polpo',
+        'ostriche', 'mollusch', 'seppia', 'simpukk', 'osteri', 'mustekala', 'nilviäi'),
+      ...st('etana'),
+      ...w('moule', 'moules')
+    ]
+  },
+  sesame: { terms: s('sésamo', 'sésame', 'seesami') },
+  celery: { terms: [...s('céleri', 'sedano'), ...w('apio')] },
+  mustard: { terms: s('senf', 'mostaza', 'moutarde', 'senape', 'sinappi') },
+  sulphites: {
+    terms: s('schwefeldioxid', 'dióxido de azufre', 'anhídrido sulfuroso', 'anhydride sulfureux', 'dioxyde de soufre',
+      'solfit', 'anidride solforosa', 'biossido di zolfo', 'sulfiitti', 'rikkidioksidi')
+  },
+  lupin: { terms: s('lupine', 'altramuz', 'altramuces', 'lupiini') }
+}
+
+for (const def of ALLERGENS) {
+  const x = EXTRA[def.key]
+  if (!x) continue
+  def.terms = [...def.terms, ...x.terms]
+  def.exclude = [...(x.first ?? []), ...def.exclude, ...(x.exclude ?? [])]
+  if (x.ambiguous) def.ambiguous = [...(def.ambiguous ?? []), ...x.ambiguous]
+  if (x.ambiguousExclude) def.ambiguousExclude = [...(def.ambiguousExclude ?? []), ...x.ambiguousExclude]
+}
+
 // Tilstander: sykdommer og intoleranser som regelmotoren oversetter til hva man må passe på.
 export type ConditionKey = 'coeliac' | 'coeliac_strict' | 'lactose' | 'birch'
 
@@ -211,14 +335,18 @@ export const COELIAC_EXCLUDE = [
   'glutenfri hvetestivelse', 'glutenfri hvete stivelse', 'glutenfri hvete-stivelse', 'hvetestivelse (glutenfri)',
   'hvetestivelse(glutenfri)', 'hvetestivelse, glutenfri', 'hvetestivelse - glutenfri', 'glutenfri hvedestivelse',
   'hvedestivelse (glutenfri)', 'glutenfri vetestärkelse', 'vetestärkelse (glutenfri)', 'gluten-free wheat starch',
-  'gluten free wheat starch', 'wheat starch (gluten free)', 'wheat starch (gluten-free)'
+  'gluten free wheat starch', 'wheat starch (gluten free)', 'wheat starch (gluten-free)', 'glutenfreie weizenstärke',
+  'weizenstärke (glutenfrei)', 'almidón de trigo sin gluten', 'amidon de blé sans gluten', 'amido di frumento senza glutine',
+  'gluteeniton vehnätärkkelys'
 ]
 
-export const WHEAT_STARCH = /^(hvetestivelse|hvedestivelse|vetestärkelse|wheat starch|hvete-stivelse)/
+export const WHEAT_STARCH = /^(hvetestivelse|hvedestivelse|vetestärkelse|wheat starch|hvete-stivelse|weizenstärke|vehnätärkkelys)/
 
 /** Varen er merket glutenfri (tekst eller symbolet med overstreket aks). */
 export function claimsGlutenFree(text: string): boolean {
-  return /glutenfri(tt|e)?\b|gluten[\s-]free|glutenfritt|glutenfria?\b/.test(normalize(text).replace(/glutenfri(e)? havre\w*/g, ''))
+  return /glutenfri(tt|e)?\b|gluten[\s-]free|glutenfritt|glutenfria?\b|glutenfrei|sin gluten|sans gluten|senza glutine|gluteeniton/.test(
+    normalize(text).replace(/(glutenfri(e)? havre\w*|glutenfreie[rn]? hafer\w*|avena sin gluten|avoine sans gluten|avena senza glutine|gluteeniton kaura)/g, '')
+  )
 }
 
 /** Bjørkepollen: mat som ofte gir kryssreaksjon (Norges Astma- og Allergiforbund, NHI). Gjelder mest rå mat. */
@@ -267,8 +395,8 @@ export const SEVERITY_LABEL: Record<Severity, string> = {
   severe: 'Alvorlig'
 }
 
-const LETTER = 'a-z0-9æøåäöüéèêàáâíóúçñß'
-const isLetter = (ch: string | undefined) => !!ch && new RegExp(`[${LETTER}]`).test(ch)
+const LETTER_RE = /[\p{L}\p{N}]/u
+const isLetter = (ch: string | undefined) => !!ch && LETTER_RE.test(ch)
 
 /** Normaliser tekst for matching: små bokstaver, samlet E-nummer, enkle mellomrom. */
 export function normalize(text: string): string {

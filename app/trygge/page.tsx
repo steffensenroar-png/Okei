@@ -5,6 +5,7 @@ import Link from 'next/link'
 import AuthGate from '@/components/AuthGate'
 import { supabase } from '@/lib/supabase-browser'
 import { Mascot } from '@/components/Art'
+import { useT } from '@/components/I18n'
 
 interface Safe {
   id: string
@@ -16,6 +17,7 @@ interface Safe {
 }
 
 function SafeList() {
+  const { t, locale } = useT()
   const [rows, setRows] = useState<Safe[] | null>(null)
 
   async function load() {
@@ -35,21 +37,21 @@ function SafeList() {
     <main className="page">
       <div className="hero-row">
         <div className="stack" style={{ gap: 6 }}>
-          <h1>Trygge varer</h1>
-          <p className="muted">Varer som har fått grønt for familien. Skanner du en av dem igjen og ingredienslisten er endret, sier Okei fra.</p>
+          <h1>{t('safe.title')}</h1>
+          <p className="muted">{t('safe.intro')}</p>
         </div>
         <Mascot mood="happy" size={84} />
       </div>
-      <div className="seg" role="group" aria-label="Vis">
-        <Link href="/historikk" role="button">Historikk</Link>
-        <Link href="/trygge" role="button" aria-current="page">Trygge varer</Link>
+      <div className="seg" role="group" aria-label={t('hist.show')}>
+        <Link href="/historikk" role="button">{t('nav.history')}</Link>
+        <Link href="/trygge" role="button" aria-current="page">{t('safe.title')}</Link>
       </div>
       {rows === null ? (
-        <div className="spinner" role="status" aria-label="Laster" />
+        <div className="spinner" role="status" aria-label={t('loading')} />
       ) : !rows.length ? (
         <div className="empty">
-          <p className="muted">Ingen trygge varer ennå. Trykk «Lagre som trygg vare» når en vare får grønt.</p>
-          <Link className="btn btn-primary" href="/skann">Skann noe</Link>
+          <p className="muted">{t('safe.empty')}</p>
+          <Link className="btn btn-primary" href="/skann">{t('scanSomething')}</Link>
         </div>
       ) : (
         <div className="stack" style={{ gap: 8 }}>
@@ -63,9 +65,9 @@ function SafeList() {
               )}
               <span className="stack" style={{ gap: 2, flex: 1, minWidth: 0 }}>
                 <span style={{ fontWeight: 700 }}>{r.name ?? r.ean}</span>
-                <span className="small muted">{[r.brand, `lagret ${new Date(r.created_at).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' })}`].filter(Boolean).join(' · ')}</span>
+                <span className="small muted">{[r.brand, t('safe.savedOn', { date: new Date(r.created_at).toLocaleDateString(locale, { day: 'numeric', month: 'short' }) })].filter(Boolean).join(' · ')}</span>
               </span>
-              <button className="btn btn-small" onClick={() => remove(r.id)} aria-label={`Fjern ${r.name ?? r.ean}`}>Fjern</button>
+              <button className="btn btn-small" onClick={() => remove(r.id)} aria-label={`${t('remove')} ${r.name ?? r.ean}`}>{t('remove')}</button>
             </div>
           ))}
         </div>

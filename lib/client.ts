@@ -1,6 +1,7 @@
 'use client'
 
 import { supabase } from './supabase-browser'
+import { isLang, Lang, tr } from './i18n/core'
 import type { AllergenKey, ConditionKey, Severity } from './allergens'
 
 export interface FamilyProfile {
@@ -43,7 +44,7 @@ export async function apiPost<T = any>(path: string, body: Record<string, unknow
     body: JSON.stringify(body)
   })
   const json = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error(json.error || 'Noe gikk galt. Prøv igjen.')
+  if (!res.ok) throw new Error(errorText(json))
   return json
 }
 
@@ -54,7 +55,7 @@ export async function compressImage(file: File, max = 1600): Promise<{ data: str
     const img = await new Promise<HTMLImageElement>((resolve, reject) => {
       const i = new Image()
       i.onload = () => resolve(i)
-      i.onerror = () => reject(new Error('Kunne ikke lese bildet'))
+      i.onerror = () => reject(new Error(tr(currentLang(), 'err.image')))
       i.src = url
     })
     const scale = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight))
@@ -99,3 +100,24 @@ export function storeSet(key: string, value: string) {
 
 /** Koblingskode som venter på at barnet logger inn. */
 export const PENDING_KEY = 'okei.pendingCode'
+
+/** Språket som er valgt på denne enheten (for kode utenfor React). */
+export function currentLang(): Lang {
+  try {
+    const l = localStorage.getItem('okei.lang')
+    if (isLang(l)) return l
+  } catch {
+    /* privat modus */
+  }
+  return 'no'
+}
+
+/** Feilmeldinger fra serveren har en kode som oversettes. Ukjente koder viser serverens tekst. */
+export function errorText(json: { error?: string; code?: string; params?: Record<string, string | number> }): string {
+  const lang = currentLang()
+  if (json.code) {
+    const v = tr(lang, `err.${json.code}`, json.params)
+    if (v !== `err.${json.code}`) return v
+  }
+  return json.error || tr(lang, 'err.generic')
+}

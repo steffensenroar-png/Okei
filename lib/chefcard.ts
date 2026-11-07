@@ -2,7 +2,7 @@
 
 import type { AllergenKey, ConditionKey, Severity } from './allergens'
 
-export type Lang = 'no' | 'en' | 'de' | 'es' | 'fr' | 'it' | 'sv'
+export type Lang = 'no' | 'en' | 'de' | 'es' | 'fr' | 'it' | 'sv' | 'da' | 'fi'
 
 export const LANGS: { id: Lang; label: string }[] = [
   { id: 'no', label: 'Norsk' },
@@ -11,24 +11,26 @@ export const LANGS: { id: Lang; label: string }[] = [
   { id: 'es', label: 'Español' },
   { id: 'fr', label: 'Français' },
   { id: 'it', label: 'Italiano' },
-  { id: 'sv', label: 'Svenska' }
+  { id: 'sv', label: 'Svenska' },
+  { id: 'da', label: 'Dansk' },
+  { id: 'fi', label: 'Suomi' }
 ]
 
 const A: Record<AllergenKey, Record<Lang, string>> = {
-  milk: { no: 'melk', en: 'milk', de: 'Milch', es: 'leche', fr: 'lait', it: 'latte', sv: 'mjölk' },
-  egg: { no: 'egg', en: 'egg', de: 'Ei', es: 'huevo', fr: 'œuf', it: 'uova', sv: 'ägg' },
-  peanut: { no: 'peanøtter', en: 'peanuts', de: 'Erdnüsse', es: 'cacahuetes', fr: 'arachides', it: 'arachidi', sv: 'jordnötter' },
-  nuts: { no: 'nøtter', en: 'tree nuts', de: 'Schalenfrüchte (Nüsse)', es: 'frutos de cáscara', fr: 'fruits à coque', it: 'frutta a guscio', sv: 'nötter' },
-  gluten: { no: 'gluten (hvete, rug, bygg)', en: 'gluten (wheat, rye, barley)', de: 'Gluten (Weizen, Roggen, Gerste)', es: 'gluten (trigo, centeno, cebada)', fr: 'gluten (blé, seigle, orge)', it: 'glutine (frumento, segale, orzo)', sv: 'gluten (vete, råg, korn)' },
-  soy: { no: 'soya', en: 'soy', de: 'Soja', es: 'soja', fr: 'soja', it: 'soia', sv: 'soja' },
-  fish: { no: 'fisk', en: 'fish', de: 'Fisch', es: 'pescado', fr: 'poisson', it: 'pesce', sv: 'fisk' },
-  crustaceans: { no: 'skalldyr (reker, krabbe, hummer)', en: 'crustaceans (shrimp, crab, lobster)', de: 'Krebstiere (Garnelen, Krabben, Hummer)', es: 'crustáceos (gambas, cangrejo, langosta)', fr: 'crustacés (crevettes, crabe, homard)', it: 'crostacei (gamberi, granchio, astice)', sv: 'kräftdjur (räkor, krabba, hummer)' },
-  molluscs: { no: 'bløtdyr (blåskjell, blekksprut)', en: 'molluscs (mussels, squid)', de: 'Weichtiere (Muscheln, Tintenfisch)', es: 'moluscos (mejillones, calamar)', fr: 'mollusques (moules, calmar)', it: 'molluschi (cozze, calamari)', sv: 'blötdjur (musslor, bläckfisk)' },
-  sesame: { no: 'sesam', en: 'sesame', de: 'Sesam', es: 'sésamo', fr: 'sésame', it: 'sesamo', sv: 'sesam' },
-  celery: { no: 'selleri', en: 'celery', de: 'Sellerie', es: 'apio', fr: 'céleri', it: 'sedano', sv: 'selleri' },
-  mustard: { no: 'sennep', en: 'mustard', de: 'Senf', es: 'mostaza', fr: 'moutarde', it: 'senape', sv: 'senap' },
-  sulphites: { no: 'sulfitt', en: 'sulphites', de: 'Sulfite', es: 'sulfitos', fr: 'sulfites', it: 'solfiti', sv: 'sulfiter' },
-  lupin: { no: 'lupin', en: 'lupin', de: 'Lupinen', es: 'altramuces', fr: 'lupin', it: 'lupini', sv: 'lupin' }
+  milk: { no: 'melk', en: 'milk', de: 'Milch', es: 'leche', fr: 'lait', it: 'latte', sv: 'mjölk', da: 'mælk', fi: 'maito' },
+  egg: { no: 'egg', en: 'egg', de: 'Ei', es: 'huevo', fr: 'œuf', it: 'uova', sv: 'ägg', da: 'æg', fi: 'kananmuna' },
+  peanut: { no: 'peanøtter', en: 'peanuts', de: 'Erdnüsse', es: 'cacahuetes', fr: 'arachides', it: 'arachidi', sv: 'jordnötter', da: 'jordnødder', fi: 'maapähkinä' },
+  nuts: { no: 'nøtter', en: 'tree nuts', de: 'Schalenfrüchte (Nüsse)', es: 'frutos de cáscara', fr: 'fruits à coque', it: 'frutta a guscio', sv: 'nötter', da: 'nødder', fi: 'pähkinät' },
+  gluten: { no: 'gluten (hvete, rug, bygg)', en: 'gluten (wheat, rye, barley)', de: 'Gluten (Weizen, Roggen, Gerste)', es: 'gluten (trigo, centeno, cebada)', fr: 'gluten (blé, seigle, orge)', it: 'glutine (frumento, segale, orzo)', sv: 'gluten (vete, råg, korn)', da: 'gluten (hvede, rug, byg)', fi: 'gluteeni (vehnä, ruis, ohra)' },
+  soy: { no: 'soya', en: 'soy', de: 'Soja', es: 'soja', fr: 'soja', it: 'soia', sv: 'soja', da: 'soja', fi: 'soija' },
+  fish: { no: 'fisk', en: 'fish', de: 'Fisch', es: 'pescado', fr: 'poisson', it: 'pesce', sv: 'fisk', da: 'fisk', fi: 'kala' },
+  crustaceans: { no: 'skalldyr (reker, krabbe, hummer)', en: 'crustaceans (shrimp, crab, lobster)', de: 'Krebstiere (Garnelen, Krabben, Hummer)', es: 'crustáceos (gambas, cangrejo, langosta)', fr: 'crustacés (crevettes, crabe, homard)', it: 'crostacei (gamberi, granchio, astice)', sv: 'kräftdjur (räkor, krabba, hummer)', da: 'krebsdyr (rejer, krabbe, hummer)', fi: 'äyriäiset (katkaravut, rapu, hummeri)' },
+  molluscs: { no: 'bløtdyr (blåskjell, blekksprut)', en: 'molluscs (mussels, squid)', de: 'Weichtiere (Muscheln, Tintenfisch)', es: 'moluscos (mejillones, calamar)', fr: 'mollusques (moules, calmar)', it: 'molluschi (cozze, calamari)', sv: 'blötdjur (musslor, bläckfisk)', da: 'bløddyr (muslinger, blæksprutte)', fi: 'nilviäiset (simpukat, mustekala)' },
+  sesame: { no: 'sesam', en: 'sesame', de: 'Sesam', es: 'sésamo', fr: 'sésame', it: 'sesamo', sv: 'sesam', da: 'sesam', fi: 'seesami' },
+  celery: { no: 'selleri', en: 'celery', de: 'Sellerie', es: 'apio', fr: 'céleri', it: 'sedano', sv: 'selleri', da: 'selleri', fi: 'selleri' },
+  mustard: { no: 'sennep', en: 'mustard', de: 'Senf', es: 'mostaza', fr: 'moutarde', it: 'senape', sv: 'senap', da: 'sennep', fi: 'sinappi' },
+  sulphites: { no: 'sulfitt', en: 'sulphites', de: 'Sulfite', es: 'sulfitos', fr: 'sulfites', it: 'solfiti', sv: 'sulfiter', da: 'sulfitter', fi: 'sulfiitit' },
+  lupin: { no: 'lupin', en: 'lupin', de: 'Lupinen', es: 'altramuces', fr: 'lupin', it: 'lupini', sv: 'lupin', da: 'lupin', fi: 'lupiini' }
 }
 
 const T: Record<Lang, {
@@ -134,6 +136,33 @@ const T: Record<Lang, {
     also: 'Undvik även:',
     cross: 'Använd rena redskap, separat frityrolja och en egen skärbräda.',
     thanks: 'Säg till om du är osäker. Tack så mycket!'
+  }
+  ,
+  da: {
+    title: 'Til den, der laver maden',
+    intro: (n) => `${n} har fødevareallergi og kan ikke spise:`,
+    needs: (n) => `${n} skal være opmærksom på dette i maden:`,
+    severe: 'alvorlig – også spor',
+    coeliac: 'Cøliaki: ingen hvede, rug, byg, spelt eller almindelig havre. Glutenfri havre og glutenfri hvedestivelse er OK.',
+    coeliacStrict: 'Reagerer også på små spor af gluten.',
+    lactose: 'Laktoseintolerance: laktosefri mejeriprodukter er OK.',
+    birch: 'Birkepollenallergi: rå frugt, rå grøntsager og nødder kan give kløe. Kogt eller bagt er som regel OK.',
+    also: 'Undgå også:',
+    cross: 'Brug rent køkkengrej, separat friturefedt og eget skærebræt.',
+    thanks: 'Sig til, hvis du er i tvivl. Mange tak!'
+  },
+  fi: {
+    title: 'Ruokani valmistajalle',
+    intro: (n) => `${n} on ruoka-allerginen eikä voi syödä:`,
+    needs: (n) => `${n} tarvitsee erityisruokavalion:`,
+    severe: 'vakava – myös pienet määrät',
+    coeliac: 'Keliakia: ei vehnää, ruista, ohraa, speltiä eikä tavallista kauraa. Gluteeniton kaura ja gluteeniton vehnätärkkelys sopivat.',
+    coeliacStrict: 'Reagoi myös pieniin gluteenimääriin.',
+    lactose: 'Laktoosi-intoleranssi: laktoosittomat maitotuotteet sopivat.',
+    birch: 'Koivun siitepölyallergia: raa’at hedelmät, raa’at vihannekset ja pähkinät voivat aiheuttaa kutinaa. Kypsennettynä ne sopivat yleensä.',
+    also: 'Vältä myös:',
+    cross: 'Käytä puhtaita välineitä, erillistä paistorasvaa ja omaa leikkuulautaa.',
+    thanks: 'Kerro, jos olet epävarma. Kiitos paljon!'
   }
 }
 

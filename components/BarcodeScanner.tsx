@@ -1,5 +1,6 @@
 'use client'
 
+import { useT } from '@/components/I18n'
 import { useEffect, useRef, useState } from 'react'
 import { validGtin } from '@/lib/client'
 
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export default function BarcodeScanner({ onCode, paused }: Props) {
+  const { t } = useT()
   const videoRef = useRef<HTMLVideoElement>(null)
   const [status, setStatus] = useState<'starting' | 'running' | 'denied' | 'unsupported'>('starting')
   const [manual, setManual] = useState('')
@@ -69,7 +71,7 @@ export default function BarcodeScanner({ onCode, paused }: Props) {
     e.preventDefault()
     const code = manual.replace(/\D/g, '')
     if (!validGtin(code)) {
-      setManualError('Sjekk tallene. Strekkoden har 8 eller 13 siffer.')
+      setManualError(t('bc.badCode'))
       return
     }
     setManualError('')
@@ -81,24 +83,24 @@ export default function BarcodeScanner({ onCode, paused }: Props) {
       <div className="camera">
         <video ref={videoRef} muted playsInline autoPlay />
         <div className="frame" />
-        {status === 'starting' && <div className="msg">Starter kamera…</div>}
+        {status === 'starting' && <div className="msg">{t('bc.starting')}</div>}
         {status === 'denied' && (
-          <div className="msg">Fikk ikke tilgang til kameraet. Gi nettleseren tilgang, eller skriv inn tallene under strekkoden.</div>
+          <div className="msg">{t('bc.denied')}</div>
         )}
-        {status === 'unsupported' && <div className="msg">Kameraet støttes ikke her. Skriv inn tallene under strekkoden.</div>}
+        {status === 'unsupported' && <div className="msg">{t('bc.unsupported')}</div>}
       </div>
-      {status === 'running' && <p className="small muted" style={{ textAlign: 'center' }}>Hold strekkoden i rammen. Vi skanner automatisk.</p>}
+      {status === 'running' && <p className="small muted" style={{ textAlign: 'center' }}>{t('bc.hold')}</p>}
       <form onSubmit={submitManual} className="row">
         <input
           className="input"
           inputMode="numeric"
           autoComplete="off"
-          placeholder="Eller skriv inn strekkoden"
-          aria-label="Strekkode"
+          placeholder={t('bc.manual')}
+          aria-label={t('bc.label')}
           value={manual}
           onChange={(e) => setManual(e.target.value)}
         />
-        <button className="btn btn-small btn-primary" type="submit" style={{ minHeight: 48 }}>Sjekk</button>
+        <button className="btn btn-small btn-primary" type="submit" style={{ minHeight: 48 }}>{t('bc.check')}</button>
       </form>
       {manualError && <div className="alert error" role="alert">{manualError}</div>}
     </div>

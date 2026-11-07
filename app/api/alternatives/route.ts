@@ -2,7 +2,7 @@
 // Bare for skann der vi kjenner produktnavnet (strekkode, eller navn lest fra etiketten).
 
 import { NextResponse } from 'next/server'
-import { HttpError, userClient } from '@/lib/server/auth'
+import { errorResponse, HttpError, userClient } from '@/lib/server/auth'
 import { evaluateFamily, ProductData, ProfileAllergen, StructuredStatus } from '@/lib/rules'
 import { keyFromName, type AllergenKey, type ConditionKey } from '@/lib/allergens'
 import { mapNutrition } from '@/lib/server/products'
@@ -37,14 +37,14 @@ export async function POST(req: Request) {
       .select('ean, product_name, profile_ids, profile_id, result')
       .eq('id', scanId)
       .single()
-    if (!scan?.product_name) throw new HttpError(404, 'Vi kjenner ikke produktnavnet, så vi kan ikke foreslå alternativer.')
+    if (!scan?.product_name) throw new HttpError(404, 'Vi kjenner ikke produktnavnet, så vi kan ikke foreslå alternativer.', 'no_product_name')
 
     const ids: string[] = scan.profile_ids?.length ? scan.profile_ids : [scan.profile_id].filter(Boolean)
     const { data: profiles } = await db
       .from('family_profiles')
       .select('id, name, allergens, custom_terms, conditions, wishes')
       .in('id', ids)
-    if (!profiles?.length) throw new HttpError(404, 'Fant ikke profilene')
+    if (!profiles?.length) throw new HttpError(404, 'Fant ikke profilene', 'no_profiles')
 
     const q = searchQuery(scan.product_name, scan.result?.product?.brand ?? null)
     if (!q) return NextResponse.json({ query: '', items: [] })
@@ -53,7 +53,7 @@ export async function POST(req: Request) {
       headers: { Authorization: `Bearer ${key}`, Accept: 'application/json' },
       cache: 'no-store'
     })
-    if (!res.ok) throw new HttpError(502, 'Produktsøket svarte ikke. Prøv igjen.')
+    if (!res.ok) throw new HttpError(502, 'Produktsøket svarte ikke. Prøv igjen.', 'search_down')
     const json = await res.json()
     const list: any[] = Array.isArray(json?.data) ? json.data : []
 
@@ -126,9 +126,6 @@ export async function POST(req: Request) {
     items.sort((a, b) => b.score - a.score)
     return NextResponse.json({ query: q, items: items.slice(0, 3).map(({ score, ...i }) => i) })
   } catch (e) {
-    const status = e instanceof HttpError ? e.status : 500
-    const message = e instanceof HttpError ? e.message : 'Noe gikk galt. Prøv igjen.'
-    if (!(e instanceof HttpError)) console.error('alternatives error', e)
-    return NextResponse.json({ error: message }, { status })
+    return errorResponse(e, 'alternatives error')
   }
 }

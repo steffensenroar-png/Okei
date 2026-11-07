@@ -102,13 +102,36 @@ const LABEL_TOOL: Anthropic.Tool = {
         description: 'Ordrett tekst om grovhet eller kornandel, f.eks. Brødskalaen «Ekstra grovt 75–100 %» eller «sammalt hvete 30 %». Tom streng hvis ingen.'
       },
       keyhole: { type: 'boolean', description: 'true hvis Nøkkelhull-symbolet er synlig.' },
+      declared_allergens: {
+        type: 'array',
+        items: { type: 'string', enum: ALLERGEN_KEYS },
+        description: 'Allergener som står i selve ingredienslisten (ofte uthevet med fet skrift eller store bokstaver). Uansett språk.'
+      },
+      declared_traces: {
+        type: 'array',
+        items: { type: 'string', enum: ALLERGEN_KEYS },
+        description: 'Allergener som bare står i «kan inneholde spor»-teksten.'
+      },
+      translation: {
+        type: 'string',
+        description: 'Ingredienslisten og «kan inneholde»-teksten oversatt til målspråket. Tom streng hvis etiketten allerede er på målspråket.'
+      },
       notes: { type: 'string', description: 'Kort merknad om hva som eventuelt ikke kunne leses.' }
     },
     required: ['is_ingredient_list', 'legibility', 'ingredients_text', 'may_contain_text']
   }
 }
 
-export async function readLabel(image: string, media: ImageMedia, kind: 'food' | 'product' = 'food'): Promise<ProductData> {
+const LANG_NAME: Record<string, string> = {
+  no: 'norsk bokmål', en: 'engelsk', sv: 'svensk', da: 'dansk', fi: 'finsk', de: 'tysk', es: 'spansk', fr: 'fransk', it: 'italiensk'
+}
+
+export async function readLabel(
+  image: string,
+  media: ImageMedia,
+  kind: 'food' | 'product' = 'food',
+  lang = 'no'
+): Promise<ProductData> {
   const out = await callTool<{
     is_ingredient_list: boolean
     legibility: Legibility
@@ -119,6 +142,10 @@ export async function readLabel(image: string, media: ImageMedia, kind: 'food' |
     nutrition_per_100g?: Nutrition
     grain_info?: string
     keyhole?: boolean
+    declared_allergens?: AllergenKey[]
+    declared_traces?: AllergenKey[]
+    translation?: string
+    language?: string
     notes?: string
   }>(
     image,
@@ -128,7 +155,8 @@ export async function readLabel(image: string, media: ImageMedia, kind: 'food' |
       : 'Du transkriberer ingredienslister på matvarer for en allergiapp. ') +
       'Skriv av teksten nøyaktig slik den står, på originalspråket. ' +
       'Gjett aldri ord du ikke kan lese: marker heller legibility som partial eller poor. ' +
-      'Hvis bildet ikke viser en ingrediensliste, sett is_ingredient_list til false.',
+      'Hvis bildet ikke viser en ingrediensliste, sett is_ingredient_list til false. ' +
+      `Målspråket for translation er ${LANG_NAME[lang] ?? 'norsk bokmål'}.`,
     LABEL_TOOL
   )
   const isList = !!out.is_ingredient_list
@@ -142,6 +170,14 @@ export async function readLabel(image: string, media: ImageMedia, kind: 'food' |
     nutrition: cleanNutrition(out.nutrition_per_100g),
     grainInfo: out.grain_info?.trim() || null,
     keyhole: !!out.keyhole,
+    aiDeclared: isList
+      ? {
+          contains: (out.declared_allergens ?? []).filter((k) => ALLERGEN_KEYS.includes(k)),
+          traces: (out.declared_traces ?? []).filter((k) => ALLERGEN_KEYS.includes(k))
+        }
+      : undefined,
+    translatedText: isList && out.translation?.trim() ? out.translation.trim() : null,
+    language: out.language?.trim().slice(0, 5) || null,
     source: kind === 'product' ? 'Foto av produktets ingrediensliste (tekst lest av AI)' : 'Foto av ingrediensliste (tekst lest av AI)',
     found: isList && !!out.ingredients_text?.trim()
   }

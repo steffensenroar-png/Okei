@@ -237,6 +237,80 @@ describe('sikkerhetsregler fra designgjennomgangen', () => {
     const p: ProfileInput = { name: 'A', allergens: [{ key: 'milk', severity: 'moderate' }] }
     const r = evaluate(label('Sukker, kakao. Kan inneholde spor av hasselnøtter.'), p)
     expect(r.flag).toBe('green')
-    expect(r.others).toEqual([{ label: 'Nøtter', kind: 'traces' }])
+    expect(r.others).toEqual([{ key: 'nuts', label: 'Nøtter', kind: 'traces' }])
+  })
+})
+
+describe('andre språk', () => {
+  const p = (key: any, severity: any = 'moderate'): ProfileInput => ({ name: 'A', allergens: [{ key, severity }] })
+  it('tysk: Weizen og Milch gir rødt, Spuren gir gult, Kokosmilch er ikke melk', () => {
+    expect(evaluate(label('Zutaten: Weizenmehl, Zucker, Salz.'), p('gluten')).flag).toBe('red')
+    expect(evaluate(label('Zutaten: Zucker, Vollmilchpulver.'), p('milk')).flag).toBe('red')
+    expect(evaluate(label('Zutaten: Reis, Kokosmilch, Salz.'), p('milk')).flag).toBe('green')
+    expect(evaluate(label('Zutaten: Zucker, Kakaobutter. Kann Spuren von Haselnüssen enthalten.'), p('nuts')).flag).toBe('yellow')
+    expect(evaluate(label('Zutaten: Erdnüsse, Salz.'), p('nuts')).flag).toBe('green')
+    expect(evaluate(label('Zutaten: Erdnüsse, Salz.'), p('peanut')).flag).toBe('red')
+  })
+  it('spansk: trigo og leche, trazas, leche de coco', () => {
+    expect(evaluate(label('Ingredientes: harina de trigo, azúcar.'), p('gluten')).flag).toBe('red')
+    expect(evaluate(label('Ingredientes: arroz, leche de coco.'), p('milk')).flag).toBe('green')
+    expect(evaluate(label('Ingredientes: azúcar, cacao. Puede contener trazas de leche.'), p('milk')).flag).toBe('yellow')
+    expect(evaluate(label('Ingredientes: trigo sarraceno, sal.'), p('gluten')).flag).toBe('green')
+  })
+  it('fransk: blé, œuf, traces, lait de coco, laitue', () => {
+    expect(evaluate(label('Ingrédients : farine de blé, sucre.'), p('gluten')).flag).toBe('red')
+    expect(evaluate(label('Ingrédients : œufs, sucre.'), p('egg')).flag).toBe('red')
+    expect(evaluate(label('Ingrédients : laitue, tomate, lait de coco.'), p('milk')).flag).toBe('green')
+    expect(evaluate(label('Ingrédients : sucre. Peut contenir des traces de fruits à coque.'), p('nuts')).flag).toBe('yellow')
+  })
+  it('italiensk: frumento, latte, tracce, granoturco', () => {
+    expect(evaluate(label('Ingredienti: farina di frumento, zucchero.'), p('gluten')).flag).toBe('red')
+    expect(evaluate(label('Ingredienti: latte, zucchero.'), p('milk')).flag).toBe('red')
+    expect(evaluate(label('Ingredienti: farina di granoturco, sale.'), p('gluten')).flag).toBe('green')
+    expect(evaluate(label('Ingredienti: zucchero. Può contenere tracce di sesamo.'), p('sesame')).flag).toBe('yellow')
+  })
+  it('finsk: vehnä, maito, voi sisältää, «ei» er ikke egg, maitohappo', () => {
+    expect(evaluate(label('Ainekset: vehnäjauho, sokeri.'), p('gluten')).flag).toBe('red')
+    expect(evaluate(label('Ainekset: sokeri, maitojauhe.'), p('milk')).flag).toBe('red')
+    expect(evaluate(label('Ainekset: sokeri, kaakaovoi. Voi sisältää pieniä määriä maapähkinää.'), p('peanut')).flag).toBe('yellow')
+    expect(evaluate(label('Ainekset: riisi, suola. Ei sisällä gluteenia.'), p('egg')).flag).toBe('green')
+    expect(evaluate(label('Ainekset: kana, suola, maitohappo.'), p('milk')).flag).toBe('green')
+    expect(evaluate(label('Ainekset: kananmuna, sokeri.'), p('egg')).flag).toBe('red')
+  })
+  it('cøliaki på tysk: glutenfreie Weizenstärke er OK', () => {
+    const c: ProfileInput = { name: 'M', allergens: [], conditions: ['coeliac'] }
+    expect(evaluate(label('Zutaten: Wasser, glutenfreie Weizenstärke, Reismehl.'), c).flag).toBe('green')
+  })
+})
+
+describe('AI-sikkerhetsnett', () => {
+  it('gjør svaret strengere når AI ser et allergen ordlisten bommer på, aldri mildere', () => {
+    const p: ProfileInput = { name: 'A', allergens: [{ key: 'milk', severity: 'moderate' }] }
+    const r = evaluate({ ...label('Składniki: cukier, mleko w proszku.'), aiDeclared: { contains: ['milk'], traces: [] } }, p)
+    expect(r.flag).toBe('red')
+    expect(r.insights?.map((i) => i.id)).toContain('ai_net')
+    const t = evaluate({ ...label('Ris, salt.'), aiDeclared: { contains: [], traces: ['milk'] } }, p)
+    expect(t.flag).toBe('yellow')
+    // AI som ikke ser noe, gjør aldri et rødt svar grønt.
+    expect(evaluate({ ...label('Melk, sukker.'), aiDeclared: { contains: [], traces: [] } }, p).flag).toBe('red')
+  })
+  it('respekterer glutenfri hvetestivelse ved cøliaki', () => {
+    const c: ProfileInput = { name: 'M', allergens: [], conditions: ['coeliac'] }
+    const r = evaluate({ ...label('Vann, glutenfri hvetestivelse.'), aiDeclared: { contains: ['gluten'], traces: [] } }, c)
+    expect(r.flag).toBe('green')
+  })
+})
+
+import { DICTS, fmt, LANG_IDS } from './i18n/core'
+
+describe('språk', () => {
+  it('alle språk har alle nøkler og ingen rester av {plassholdere}', () => {
+    const keys = Object.keys(DICTS.no)
+    for (const l of LANG_IDS) {
+      for (const k of keys) expect(DICTS[l][k], `${l}:${k}`).not.toBeUndefined()
+    }
+    const m = { k: 'f.notFor', p: { names: ['Nora', 'Emil'] } }
+    for (const l of LANG_IDS) expect(fmt(l, m)).not.toMatch(/[{}]/)
+    for (const l of LANG_IDS) expect(fmt(l, { k: 'h.noneFound', p: { name: 'Klaus' } })).not.toMatch(/[{}]/)
   })
 })

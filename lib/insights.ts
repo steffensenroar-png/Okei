@@ -89,6 +89,13 @@ export const INSIGHTS: Record<string, Insight> = {
       'Omtrent 70 prosent med bjørkepollenallergi reagerer på noe mat, oftest rå frukt, grønnsaker og nøtter. Reaksjonen er vanligvis kløe i munnen. Mange tåler maten skrellet eller kokt, for eksempel eplekake eller hermetisk frukt.',
     source: NHI_FRUKT
   },
+  ai_net: {
+    id: 'ai_net',
+    title: 'Ekstra kontroll fra AI',
+    text:
+      'Okei sjekker etiketten to ganger: med en fast ordliste og med AI som ser hvilke allergener som er uthevet. Her så AI-en et allergen som ordlisten ikke kjente igjen, ofte fordi etiketten er på et annet språk eller bruker et uvanlig ord. Svaret blir da strengere, aldri mildere. Les etiketten selv.',
+    source: { label: 'EU-forordning 1169/2011: allergener skal utheves i ingredienslisten', url: 'https://eur-lex.europa.eu/legal-content/NO/TXT/?uri=CELEX:32011R1169' }
+  },
   menu_ask: {
     id: 'menu_ask',
     title: 'Spør alltid personalet',

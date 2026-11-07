@@ -4,13 +4,15 @@ import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { supabase } from '@/lib/supabase-browser'
-import { ALLERGEN_BY_KEY, AllergenKey, CONDITIONS, ConditionKey, Severity } from '@/lib/allergens'
-import { compressImage } from '@/lib/client'
+import { AllergenKey, ConditionKey, Severity } from '@/lib/allergens'
+import { compressImage, errorText } from '@/lib/client'
+import { useT } from '@/components/I18n'
+import type { Msg } from '@/lib/i18n/core'
 import AllergenIcon from '@/components/AllergenIcon'
 import { Animal, animalFor, Mascot, ModeArt } from '@/components/Art'
 import { CameraIcon, FlagIcon, Logo } from '@/components/Icons'
 import BarcodeScanner from '@/components/BarcodeScanner'
-import { Insights } from '@/components/ResultParts'
+import { Insights, sourceText } from '@/components/ResultParts'
 import type { Flag, Insight } from '@/lib/rules'
 
 interface CardProfile {
@@ -25,14 +27,12 @@ interface CardProfile {
 interface GuestResult {
   flag: Flag
   headline: string
+  headlineMsg?: Msg
   insights: Insight[]
-  people: { name: string; flag: Flag; headline: string }[]
-  product: { name: string | null; ingredientsText: string | null; source: string }
+  people: { name: string; flag: Flag; headline: string; headlineMsg?: Msg }[]
+  product: { name: string | null; ingredientsText: string | null; translatedText?: string | null; source: string }
 }
 
-const SEV: Record<Severity, string> = { mild: 'mild', moderate: 'moderat', severe: 'alvorlig' }
-const WORD: Record<Flag, string> = { red: 'Nei', yellow: 'Usikkert', green: 'OK' }
-const ACTION: Record<Flag, string> = { red: 'Ikke gi dette.', yellow: 'Sjekk etiketten selv eller spør foreldrene.', green: 'Sjekk etiketten før servering.' }
 
 export default function SharedCard() {
   const { token } = useParams<{ token: string }>()
@@ -42,6 +42,7 @@ export default function SharedCard() {
   const [error, setError] = useState('')
   const [result, setResult] = useState<GuestResult | null>(null)
   const fileRef = useRef<HTMLInputElement>(null)
+  const { t, f, lang } = useT()
 
   useEffect(() => {
     supabase()
@@ -57,14 +58,14 @@ export default function SharedCard() {
       const res = await fetch('/api/guest/scan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...body, token, mode })
+        body: JSON.stringify({ ...body, token, mode, lang })
       })
       const json = await res.json()
-      if (!res.ok) throw new Error(json.error || 'Noe gikk galt.')
+      if (!res.ok) throw new Error(errorText(json))
       setResult(json)
       setTimeout(() => document.getElementById('guest-result')?.scrollIntoView({ behavior: 'smooth' }), 50)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Noe gikk galt.')
+      setError(e instanceof Error ? e.message : t('err.generic'))
     } finally {
       setBusy(false)
     }
@@ -81,7 +82,7 @@ export default function SharedCard() {
   if (profiles === undefined)
     return (
       <main className="page center" style={{ alignItems: 'center' }}>
-        <div className="spinner" role="status" aria-label="Laster" />
+        <div className="spinner" role="status" aria-label={t('loading')} />
       </main>
     )
   if (profiles === null || !profiles.length)
@@ -89,19 +90,18 @@ export default function SharedCard() {
       <main className="page center">
         <Logo />
         <Mascot mood="unsure" size={120} />
-        <h1>Kortet finnes ikke lenger</h1>
-        <p className="muted">Lenken er trukket tilbake eller utløpt. Be foreldrene sende en ny.</p>
+        <h1>{t('card.gone')}</h1>
+        <p className="muted">{t('card.goneText')}</p>
       </main>
     )
 
   const names = profiles.map((p) => p.name)
-  const who = names.length > 1 ? names.slice(0, -1).join(', ') + ' og ' + names[names.length - 1] : names[0]
 
   return (
     <main className="page card-page">
       <div className="row" style={{ justifyContent: 'space-between' }}>
         <Logo />
-        <span className="tag">Allergikort</span>
+        <span className="tag">{t('card.tag')}</span>
       </div>
 
       {profiles.map((p, i) => (
@@ -114,8 +114,8 @@ export default function SharedCard() {
             <div key={c} className="finding" style={{ alignItems: 'center' }}>
               <AllergenIcon k={c} size={28} />
               <span>
-                <b>{CONDITIONS.find((x) => x.key === c)?.label ?? c}</b>
-                {c === 'coeliac' && p.conditions.includes('coeliac_strict') ? ' (svært sensitiv, også spor)' : ''}
+                <b>{t(`cond.${c}`)}</b>
+                {c === 'coeliac' && p.conditions.includes('coeliac_strict') ? ` ${t('card.strict')}` : ''}
               </span>
             </div>
           ))}
@@ -123,43 +123,43 @@ export default function SharedCard() {
             <div key={a.key} className="finding" style={{ alignItems: 'center' }}>
               <AllergenIcon k={a.key} size={28} />
               <span>
-                <b>{ALLERGEN_BY_KEY[a.key]?.label ?? a.key}</b> – {SEV[a.severity]}
-                {a.severity === 'severe' ? ', også «kan inneholde spor»' : ''}
+                <b>{t(`allergen.${a.key}`)}</b> – {t(`sev.${a.severity}`).toLowerCase()}
+                {a.severity === 'severe' ? t('card.alsoTraces') : ''}
               </span>
             </div>
           ))}
-          {!!p.custom_terms?.length && <p className="small"><b>Unngå også:</b> {p.custom_terms.join(', ')}</p>}
+          {!!p.custom_terms?.length && <p className="small"><b>{t('card.avoidAlso')}</b> {p.custom_terms.join(', ')}</p>}
           {p.emergency_note && (
             <div className="emergency">
-              <strong>Ved reaksjon</strong>
+              <strong>{t('card.onReaction')}</strong>
               <p>{p.emergency_note}</p>
             </div>
           )}
         </section>
       ))}
-      <p className="small" style={{ fontWeight: 700 }}>Ved alvorlig reaksjon: ring 113.</p>
+      <p className="small" style={{ fontWeight: 700 }}>{t('card.call')}</p>
 
       <section className="stack" style={{ gap: 12 }}>
-        <h2>Sjekk en vare for {who}</h2>
+        <h2>{t('card.checkFor', { names })}</h2>
         <div className="mode-tiles kid-tiles">
           <button className="mode-tile barcode" aria-pressed={mode === 'barcode'} onClick={() => setMode('barcode')}>
             <ModeArt mode="barcode" size={44} />
-            <span>Strekkode</span>
+            <span>{t('mode.barcode')}</span>
           </button>
           <button className="mode-tile label" aria-pressed={mode === 'label'} onClick={() => setMode('label')}>
             <ModeArt mode="label" size={44} />
-            <span>Etikett</span>
+            <span>{t('mode.label')}</span>
           </button>
         </div>
         {busy ? (
-          <div className="row small muted"><div className="spinner" style={{ width: 20, height: 20 }} /> Sjekker…</div>
+          <div className="row small muted"><div className="spinner" style={{ width: 20, height: 20 }} /> {t('card.checking')}</div>
         ) : mode === 'barcode' ? (
           <BarcodeScanner onCode={(ean) => run({ ean })} paused={busy} />
         ) : (
           <>
             <button className="photo-drop label" onClick={() => fileRef.current?.click()}>
               <span className="photo-cta"><CameraIcon /></span>
-              Ta bilde av ingredienslisten
+              {t('card.photo')}
             </button>
             <input ref={fileRef} type="file" accept="image/*" capture="environment" hidden onChange={onFile} />
           </>
@@ -172,22 +172,28 @@ export default function SharedCard() {
           <div className="row" style={{ gap: 10 }}>
             <span className="flag-icon"><FlagIcon flag={result.flag} size={28} /></span>
             <div className="stack" style={{ gap: 2 }}>
-              <span className="small">{result.product.name ?? 'Varen'}</span>
-              <strong style={{ fontSize: 20 }}>{WORD[result.flag]}: {result.headline}</strong>
+              <span className="small">{result.product.name ?? t('card.theProduct')}</span>
+              <strong style={{ fontSize: 20 }}>{t(`word.${result.flag}`)}: {f(result.headlineMsg, result.headline)}</strong>
             </div>
           </div>
-          <p style={{ fontWeight: 600 }}>{ACTION[result.flag]}</p>
+          <p style={{ fontWeight: 600 }}>{t(`card.action.${result.flag}`)}</p>
           {result.people.length > 1 && result.people.map((p) => (
-            <span key={p.name} className="small row" style={{ gap: 6 }}><FlagIcon flag={p.flag} size={14} /> <b>{p.name}:</b> {p.headline}</span>
+            <span key={p.name} className="small row" style={{ gap: 6 }}><FlagIcon flag={p.flag} size={14} /> <b>{p.name}:</b> {f(p.headlineMsg, p.headline)}</span>
           ))}
           {result.product.ingredientsText && <p className="small muted">{result.product.ingredientsText}</p>}
-          <p className="tiny">Kilde: {result.product.source}. Sjekk alltid etiketten.</p>
+          {result.product.translatedText && (
+            <details className="translated">
+              <summary>{t('res.translated')}</summary>
+              <p className="small">{result.product.translatedText}</p>
+            </details>
+          )}
+          <p className="tiny">{t('card.source', { source: sourceText(t, result.product.source) })}</p>
         </section>
       )}
       {result && <Insights items={result.insights} />}
 
       <p className="tiny" style={{ textAlign: 'center' }}>
-        Kortet er delt fra <Link href="/">Okei</Link>, et oppslagsverk for matallergi. Det erstatter ikke lege. Ingenting du skanner her lagres.
+        {t('card.footer')} <Link href="/">{t('card.more')}</Link>
       </p>
     </main>
   )

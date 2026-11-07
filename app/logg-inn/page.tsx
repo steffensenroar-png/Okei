@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase-browser'
 import { FoodSticker, Mascot } from '@/components/Art'
 import { GoogleIcon, Logo } from '@/components/Icons'
+import { LangPicker, useT } from '@/components/I18n'
 
 export default function Login() {
   const router = useRouter()
@@ -12,6 +13,7 @@ export default function Login() {
   const [sent, setSent] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const { t } = useT()
 
   useEffect(() => {
     supabase()
@@ -27,7 +29,7 @@ export default function Login() {
       provider: 'google',
       options: { redirectTo: `${window.location.origin}/skann` }
     })
-    if (error) setError('Google-innlogging feilet. Prøv igjen.')
+    if (error) setError(t('login.googleFail'))
   }
 
   async function magicLink(e: React.FormEvent) {
@@ -39,13 +41,16 @@ export default function Login() {
       options: { emailRedirectTo: `${window.location.origin}/skann` }
     })
     setBusy(false)
-    if (error) setError('Kunne ikke sende lenken. Sjekk adressen og prøv igjen.')
+    if (error) setError(t('login.mailFail'))
     else setSent(true)
   }
 
   return (
     <main className="page" style={{ paddingBottom: 32, justifyContent: 'space-between', minHeight: '100dvh' }}>
-      <a href="/" style={{ textDecoration: "none" }} aria-label="Til forsiden"><Logo /></a>
+      <div className="row" style={{ justifyContent: 'space-between' }}>
+        <a href="/" style={{ textDecoration: 'none' }} aria-label={t('login.home')}><Logo /></a>
+        <LangPicker />
+      </div>
       <div className="hero-art" aria-hidden="true">
         <span className="sticker s1"><FoodSticker kind="apple" size={50} /></span>
         <span className="sticker s2"><FoodSticker kind="milk" size={46} /></span>
@@ -56,30 +61,30 @@ export default function Login() {
         <Mascot mood="happy" size={170} />
       </div>
       <div className="stack" style={{ gap: 12 }}>
-        <h1 style={{ fontSize: 34, lineHeight: 1.1 }}>Ta bilde av maten.<br />Se om den passer.</h1>
+        <h1 style={{ fontSize: 34, lineHeight: 1.1 }}>{t('login.h1a')}<br />{t('login.h1b')}</h1>
         <p className="muted" style={{ fontSize: 16 }}>
-          Okei sjekker mat mot dine og barnas allergier og svarer med rødt, gult eller grønt. Gratis i betaen.
+          {t('login.lead')}
         </p>
       </div>
 
       <div className="stack" style={{ gap: 12 }}>
         <button className="btn btn-google" onClick={google}>
-          <GoogleIcon /> Fortsett med Google
+          <GoogleIcon /> {t('login.google')}
         </button>
         {sent ? (
-          <div className="alert info">Sjekk e-posten din. Vi har sendt en innloggingslenke til {email}.</div>
+          <div className="alert info">{t('login.sent', { email })}</div>
         ) : (
           <form onSubmit={magicLink} className="stack" style={{ gap: 10 }}>
             <label className="field">
-              Eller få en innloggingslenke på e-post
-              <input className="input" type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="navn@eksempel.no" />
+              {t('login.orMail')}
+              <input className="input" type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t('login.mailPh')} />
             </label>
-            <button className="btn" type="submit" disabled={busy}>{busy ? 'Sender…' : 'Send lenke'}</button>
+            <button className="btn" type="submit" disabled={busy}>{busy ? t('login.sending') : t('login.send')}</button>
           </form>
         )}
         {error && <div className="alert error" role="alert">{error}</div>}
         <p className="tiny" style={{ textAlign: 'center' }}>
-          Okei er et oppslagsverk og erstatter ikke lege. Sjekk alltid etiketten. <a href="/personvern">Personvern</a> · <a href="/">Om Okei</a>
+          {t('disclaimer')} <a href="/personvern">{t('privacy')}</a> · <a href="/">{t('prof.about')}</a>
         </p>
       </div>
     </main>

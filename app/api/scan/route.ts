@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { HttpError, userClient } from '@/lib/server/auth'
+import { errorResponse, HttpError, userClient } from '@/lib/server/auth'
 import { lookupBarcode } from '@/lib/server/products'
 import { guessFood, readLabel, readMenu } from '@/lib/server/vision'
 import { evaluateFamily, evaluateMenu, ProductData, ProfileAllergen } from '@/lib/rules'
@@ -23,8 +23,10 @@ interface Body {
   ean?: string
   image?: string
   mediaType?: (typeof MEDIA)[number]
+  lang?: string
 }
 
+const LANGS = ['no', 'en', 'sv', 'da', 'fi', 'de', 'es', 'fr', 'it']
 const AI_DAILY_LIMIT = Number(process.env.AI_DAILY_LIMIT || 30)
 
 export async function POST(req: Request) {
@@ -34,7 +36,7 @@ export async function POST(req: Request) {
 
     if (!['barcode', 'label', 'food', 'product', 'menu'].includes(body.mode)) throw new HttpError(400, 'Ukjent modus')
     const ids = [...new Set((body.profileIds?.length ? body.profileIds : body.profileId ? [body.profileId] : []).map(String))]
-    if (!ids.length) throw new HttpError(400, 'Velg minst én profil')
+    if (!ids.length) throw new HttpError(400, 'Velg minst én profil', 'pick_profile')
     if (ids.length > MAX_PROFILES) throw new HttpError(400, 'For mange profiler')
 
     // Åpen beta: tak på bildeskann (AI) per bruker per døgn. Telles i en logg som ikke kan slettes.
@@ -47,7 +49,7 @@ export async function POST(req: Request) {
         .eq('kind', 'ai')
         .gte('created_at', since)
       if ((count ?? 0) >= AI_DAILY_LIMIT)
-        throw new HttpError(429, `Du har brukt ${AI_DAILY_LIMIT} bildeskann siste døgn. Strekkode virker fortsatt, og bildeskann åpner igjen i morgen.`)
+        throw new HttpError(429, `Du har brukt ${AI_DAILY_LIMIT} bildeskann siste døgn. Strekkode virker fortsatt, og bildeskann åpner igjen i morgen.`, 'rate_limit', { n: AI_DAILY_LIMIT })
       await db.from('usage_log').insert({ owner_id: user.id, kind: 'ai' })
     }
 
@@ -56,7 +58,7 @@ export async function POST(req: Request) {
       .select('id, name, allergens, custom_terms, conditions, wishes, created_at')
       .in('id', ids)
       .order('created_at')
-    if (pErr || !rows?.length) throw new HttpError(404, 'Fant ikke profilene')
+    if (pErr || !rows?.length) throw new HttpError(404, 'Fant ikke profilene', 'no_profiles')
 
     const profiles = rows.map((r) => ({
       id: r.id,
@@ -78,14 +80,14 @@ export async function POST(req: Request) {
     if (body.mode !== 'barcode') {
       image = String(body.image ?? '').replace(/^data:[^,]+,/, '')
       media = MEDIA.includes(body.mediaType as any) ? body.mediaType! : 'image/jpeg'
-      if (!image) throw new HttpError(400, 'Mangler bilde')
-      if ((image.length * 3) / 4 > MAX_IMAGE_BYTES) throw new HttpError(413, 'Bildet er for stort')
+      if (!image) throw new HttpError(400, 'Mangler bilde', 'missing_image')
+      if ((image.length * 3) / 4 > MAX_IMAGE_BYTES) throw new HttpError(413, 'Bildet er for stort', 'image_too_big')
     }
 
     // Meny: én vurdering per rett.
     if (body.mode === 'menu') {
       const menu = await readMenu(image, media)
-      if (!menu || !menu.dishes.length) throw new HttpError(422, 'Fant ingen meny på bildet. Ta bilde av menyen eller allergenlisten, så tett at teksten er lesbar.')
+      if (!menu || !menu.dishes.length) throw new HttpError(422, 'Fant ingen meny på bildet. Ta bilde av menyen eller allergenlisten, så tett at teksten er lesbar.', 'no_menu')
       const ev = evaluateMenu(menu.dishes, profiles)
       const { data: scan, error } = await db
         .from('scans')
@@ -95,23 +97,23 @@ export async function POST(req: Request) {
           source: 'Foto av meny (lest av AI)',
           flag: ev.flag,
           headline: ev.headline,
-          result: { menu: true, dishes: ev.dishes, insights: ev.insights, people: [], place: menu.place }
+          result: { menu: true, dishes: ev.dishes, insights: ev.insights, people: [], place: menu.place, headlineMsg: ev.headlineMsg }
         })
         .select('id')
         .single()
-      if (error || !scan) throw new HttpError(500, 'Kunne ikke lagre resultatet')
+      if (error || !scan) throw new HttpError(500, 'Kunne ikke lagre resultatet', 'save_failed')
       return NextResponse.json({ id: scan.id, flag: ev.flag })
     }
 
     let product: ProductData
     if (body.mode === 'barcode') {
       const ean = String(body.ean ?? '').replace(/\D/g, '')
-      if (ean.length < 8 || ean.length > 14) throw new HttpError(400, 'Ugyldig strekkode')
+      if (ean.length < 8 || ean.length > 14) throw new HttpError(400, 'Ugyldig strekkode', 'bad_barcode')
       product = await lookupBarcode(ean)
     } else if (body.mode === 'food') {
       product = await guessFood(image, media)
     } else {
-      product = await readLabel(image, media, body.mode === 'product' ? 'product' : 'food')
+      product = await readLabel(image, media, body.mode === 'product' ? 'product' : 'food', LANGS.includes(String(body.lang)) ? String(body.lang) : 'no')
     }
 
     const family = evaluateFamily(product, profiles)
@@ -149,6 +151,7 @@ export async function POST(req: Request) {
           people,
           evaluation: people[0].evaluation,
           insights: family.insights,
+          headlineMsg: family.headlineMsg,
           changed,
           fetchedAt: new Date().toISOString(),
           product: {
@@ -165,19 +168,18 @@ export async function POST(req: Request) {
             grainInfo: product.grainInfo ?? null,
             keyhole: product.keyhole ?? false,
             labels: product.labels ?? [],
-            glutenFreeClaim: product.glutenFreeClaim ?? false
+            glutenFreeClaim: product.glutenFreeClaim ?? false,
+            translatedText: product.translatedText ?? null,
+            language: product.language ?? null
           }
         }
       })
       .select('id')
       .single()
-    if (sErr || !scan) throw new HttpError(500, 'Kunne ikke lagre resultatet')
+    if (sErr || !scan) throw new HttpError(500, 'Kunne ikke lagre resultatet', 'save_failed')
 
     return NextResponse.json({ id: scan.id, flag: family.flag })
   } catch (e) {
-    const status = e instanceof HttpError ? e.status : 500
-    const message = e instanceof HttpError ? e.message : 'Noe gikk galt. Prøv igjen.'
-    if (!(e instanceof HttpError)) console.error('scan error', e)
-    return NextResponse.json({ error: message }, { status })
+    return errorResponse(e, 'scan error')
   }
 }

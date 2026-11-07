@@ -3,11 +3,13 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import AuthGate from '@/components/AuthGate'
+import { useT } from '@/components/I18n'
 import { Mascot } from '@/components/Art'
 import { supabase } from '@/lib/supabase-browser'
 import { PENDING_KEY, storeGet, storeSet } from '@/lib/client'
 
 function Connect() {
+  const { t } = useT()
   const [code, setCode] = useState('')
   const [state, setState] = useState<'idle' | 'busy' | 'done' | 'error'>('idle')
   const [result, setResult] = useState<{ profile: string; parent: string } | null>(null)
@@ -30,10 +32,10 @@ function Connect() {
       setState('error')
       setError(
         error.message.includes('own_code')
-          ? 'Dette er din egen kode. Barnet må logge inn med sin egen konto på sin egen telefon.'
+          ? t('link.ownCode')
           : error.message.includes('invalid_code')
-            ? 'Koden finnes ikke eller er utløpt. Be forelderen lage en ny.'
-            : 'Kunne ikke koble til. Prøv igjen.'
+            ? t('link.invalid')
+            : t('link.failed')
       )
       return
     }
@@ -46,11 +48,11 @@ function Connect() {
       <main className="page center">
         <div className="empty">
           <Mascot mood="happy" size={150} />
-          <h1>Du er koblet til familien</h1>
+          <h1>{t('link.done')}</h1>
           <p className="muted">
-            Du sjekker mat som <b>{result.profile}</b>. {result.parent ? `${result.parent} ser` : 'Forelderen din ser'} det du skanner.
+            {t('link.doneText', { profile: result.profile, parent: result.parent || t('link.yourParent') })}
           </p>
-          <Link className="btn btn-primary" href="/skann">Begynn å skanne</Link>
+          <Link className="btn btn-primary" href="/skann">{t('link.start')}</Link>
         </div>
       </main>
     )
@@ -60,14 +62,14 @@ function Connect() {
     <main className="page">
       <div className="hero-row">
         <div className="stack" style={{ gap: 6 }}>
-          <h1>Koble til familien</h1>
-          <p className="muted">Skriv inn koden du har fått av en forelder. Da sjekker du mat mot din egen profil, og forelderen ser det du skanner.</p>
+          <h1>{t('link.title')}</h1>
+          <p className="muted">{t('link.intro')}</p>
         </div>
         <Mascot mood="wave" size={92} />
       </div>
       <form onSubmit={accept} className="stack">
         <label className="field">
-          Kode
+          {t('link.code')}
           <input
             className="input code-input"
             value={code}
@@ -75,11 +77,11 @@ function Connect() {
             autoCapitalize="characters"
             autoComplete="off"
             onChange={(e) => setCode(e.target.value.toUpperCase())}
-            placeholder="F.eks. 7A3F09C2"
+            placeholder={t('link.placeholder')}
           />
         </label>
         <button className="btn btn-primary" type="submit" disabled={state === 'busy' || code.trim().length < 8}>
-          {state === 'busy' ? 'Kobler til…' : 'Koble til'}
+          {state === 'busy' ? t('link.busy') : t('link.button')}
         </button>
         {error && <div className="alert error" role="alert">{error}</div>}
       </form>

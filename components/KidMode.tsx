@@ -3,6 +3,7 @@
 // Barnemodus: telefonen låses til én profil med et enklere oppsett, opplesning og knapp for å ringe en voksen.
 // Innstillingen ligger bare på denne telefonen. En voksen låser opp med PIN.
 
+import { useT } from '@/components/I18n'
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import BarcodeScanner from '@/components/BarcodeScanner'
@@ -38,15 +39,16 @@ export function setKidMode(k: KidMode | null) {
   storeSet(KEY, k ? JSON.stringify(k) : '')
 }
 
-/** Les opp tekst på norsk med nettleserens innebygde stemme. */
-export function speak(text: string) {
+/** Les opp tekst med nettleserens innebygde stemme. */
+export function speak(text: string, locale = 'nb-NO') {
   try {
     const synth = window.speechSynthesis
     if (!synth) return
     synth.cancel()
     const u = new SpeechSynthesisUtterance(text)
-    u.lang = 'nb-NO'
-    const v = synth.getVoices().find((x) => /^(nb|no|nn)/i.test(x.lang))
+    u.lang = locale
+    const pre = locale.slice(0, 2)
+    const v = synth.getVoices().find((x) => (pre === 'nb' ? /^(nb|no|nn)/i : new RegExp(`^${pre}`, 'i')).test(x.lang))
     if (v) u.voice = v
     u.rate = 0.95
     synth.speak(u)
@@ -56,30 +58,32 @@ export function speak(text: string) {
 }
 
 export function CallButton({ kid }: { kid: KidMode }) {
+  const { t } = useT()
   if (!kid.phone) return null
   return (
     <a className="btn btn-call" href={`tel:${kid.phone.replace(/[^\d+]/g, '')}`}>
-      📞 Ring {kid.callName || 'en voksen'}
+      📞 {t('kid.call', { name: kid.callName || t('kid.anAdult') })}
     </a>
   )
 }
 
 export function PinUnlock({ kid, onUnlock, onCancel }: { kid: KidMode; onUnlock: () => void; onCancel: () => void }) {
+  const { t } = useT()
   const [pin, setPin] = useState('')
   const [err, setErr] = useState('')
   async function check(e: React.FormEvent) {
     e.preventDefault()
     if ((await hashPin(pin)) === kid.pinHash) onUnlock()
     else {
-      setErr('Feil kode')
+      setErr(t('kid.wrongPin'))
       setPin('')
     }
   }
   return (
-    <div className="modal-back" role="dialog" aria-modal="true" aria-label="Lås opp for voksne">
+    <div className="modal-back" role="dialog" aria-modal="true" aria-label={t('kid.unlockLabel')}>
       <form className="modal stack" onSubmit={check}>
-        <h2>For voksne</h2>
-        <p className="small muted">Skriv PIN-koden for å gå ut av barnemodus.</p>
+        <h2>{t('kid.forAdults')}</h2>
+        <p className="small muted">{t('kid.pinText')}</p>
         <input
           className="input code-input"
           inputMode="numeric"
@@ -88,11 +92,11 @@ export function PinUnlock({ kid, onUnlock, onCancel }: { kid: KidMode; onUnlock:
           value={pin}
           onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
           autoFocus
-          aria-label="PIN-kode"
+          aria-label={t('kid.pin')}
         />
         {err && <div className="alert error" role="alert">{err}</div>}
-        <button className="btn btn-primary" type="submit" disabled={pin.length < 4}>Lås opp</button>
-        <button className="btn" type="button" onClick={onCancel}>Avbryt</button>
+        <button className="btn btn-primary" type="submit" disabled={pin.length < 4}>{t('kid.unlock')}</button>
+        <button className="btn" type="button" onClick={onCancel}>{t('cancel')}</button>
       </form>
     </div>
   )
@@ -100,6 +104,7 @@ export function PinUnlock({ kid, onUnlock, onCancel }: { kid: KidMode; onUnlock:
 
 export function KidScan({ kid }: { kid: KidMode }) {
   const router = useRouter()
+  const { t, lang } = useT()
   const [profile, setProfile] = useState<FamilyProfile | null>(null)
   const [mode, setMode] = useState<'barcode' | 'label'>('barcode')
   const [busy, setBusy] = useState(false)
@@ -120,10 +125,10 @@ export function KidScan({ kid }: { kid: KidMode }) {
     setBusy(true)
     setError('')
     try {
-      const res = await postScan({ ...body, mode, profileIds: [kid.profileId] })
+      const res = await postScan({ ...body, mode, profileIds: [kid.profileId], lang })
       router.push(`/resultat/${res.id}`)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Noe gikk galt. Prøv igjen.')
+      setError(e instanceof Error ? e.message : t('err.generic'))
       setBusy(false)
     }
   }
@@ -136,7 +141,7 @@ export function KidScan({ kid }: { kid: KidMode }) {
       const img = await compressImage(file)
       await run({ image: img.data, mediaType: img.mediaType })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Kunne ikke lese bildet.')
+      setError(err instanceof Error ? err.message : t('err.image'))
     }
   }
 
@@ -145,26 +150,26 @@ export function KidScan({ kid }: { kid: KidMode }) {
       <div className="row" style={{ justifyContent: 'space-between' }}>
         <span className="row" style={{ gap: 10 }}>
           {profile && <Animal id={animalFor(profile.avatar, 0)} size={52} />}
-          <h1 style={{ fontSize: 26 }}>Hei{profile ? `, ${profile.name}` : ''}!</h1>
+          <h1 style={{ fontSize: 26 }}>{profile ? t('kid.hiName', { name: profile.name }) : t('kid.hi')}</h1>
         </span>
-        <button className="linkbtn small" onClick={() => setUnlock(true)}>Voksen</button>
+        <button className="linkbtn small" onClick={() => setUnlock(true)}>{t('kid.adult')}</button>
       </div>
 
       <div className="mode-tiles kid-tiles">
         <button className="mode-tile barcode" aria-pressed={mode === 'barcode'} onClick={() => setMode('barcode')}>
           <ModeArt mode="barcode" size={60} />
-          <span>Strekkode</span>
+          <span>{t('mode.barcode')}</span>
         </button>
         <button className="mode-tile label" aria-pressed={mode === 'label'} onClick={() => setMode('label')}>
           <ModeArt mode="label" size={60} />
-          <span>Ta bilde</span>
+          <span>{t('kid.photo')}</span>
         </button>
       </div>
 
       {busy ? (
         <div className="camera" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16, color: '#fff' }}>
           <div className="bob"><Mascot mood="unsure" size={140} /></div>
-          <span style={{ fontWeight: 700, fontSize: 18 }}>Jeg sjekker…</span>
+          <span style={{ fontWeight: 700, fontSize: 18 }}>{t('kid.checking')}</span>
         </div>
       ) : mode === 'barcode' ? (
         <BarcodeScanner onCode={(ean) => run({ ean })} paused={busy} />
@@ -173,7 +178,7 @@ export function KidScan({ kid }: { kid: KidMode }) {
           <button className="photo-drop label" onClick={() => fileRef.current?.click()}>
             <span className="photo-art"><ModeArt mode="label" size={96} /></span>
             <span className="photo-cta"><CameraIcon /></span>
-            Ta bilde av ingredienslisten
+            {t('mode.label.photo')}
           </button>
           <input ref={fileRef} type="file" accept="image/*" capture="environment" hidden onChange={onFile} />
         </>
@@ -181,7 +186,7 @@ export function KidScan({ kid }: { kid: KidMode }) {
 
       {error && <div className="alert error" role="alert">{error}</div>}
       <CallButton kid={kid} />
-      <p className="tiny" style={{ textAlign: 'center' }}>Er du usikker? Spør en voksen før du spiser.</p>
+      <p className="tiny" style={{ textAlign: 'center' }}>{t('kid.askAdult')}</p>
 
       {unlock && (
         <PinUnlock

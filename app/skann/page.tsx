@@ -1,5 +1,6 @@
 'use client'
 
+import { useT } from '@/components/I18n'
 import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -14,23 +15,11 @@ import { KidScan, getKidMode } from '@/components/KidMode'
 
 type Mode = 'barcode' | 'label' | 'food' | 'menu' | 'product'
 
-const MODES: { id: Mode; label: string; hint: string; busy: string }[] = [
-  { id: 'barcode', label: 'Strekkode', hint: '', busy: 'Slår opp produktet…' },
-  { id: 'label', label: 'Etikett', hint: 'Ta bilde av hele ingredienslisten, også «kan inneholde spor».', busy: 'Leser ingredienslisten…' },
-  { id: 'food', label: 'Mat uten pakke', hint: 'Ta bilde av maten. Vi gjetter hva det er, så svaret blir aldri grønt.', busy: 'Ser på bildet…' },
-  { id: 'menu', label: 'Meny', hint: 'Ta bilde av menyen eller allergenlisten på spisestedet. Du får svar per rett.', busy: 'Leser menyen…' },
-  { id: 'product', label: 'Medisin og hud', hint: 'Ta bilde av ingredienslisten eller pakningsvedlegget. Spør alltid apoteket.', busy: 'Leser ingredienslisten…' }
-]
-
-const PHOTO_TEXT: Record<Mode, string> = {
-  barcode: '',
-  label: 'Ta bilde av ingredienslisten',
-  food: 'Ta bilde av maten',
-  menu: 'Ta bilde av menyen',
-  product: 'Ta bilde av ingredienslisten'
-}
+// Tekster: mode.<id>, mode.<id>.hint, mode.<id>.busy, mode.<id>.photo i språkfilene.
+const MODES: { id: Mode }[] = [{ id: 'barcode' }, { id: 'label' }, { id: 'food' }, { id: 'menu' }, { id: 'product' }]
 
 function PenReminder({ profiles }: { profiles: FamilyProfile[] }) {
+  const { t, locale } = useT()
   const soon = profiles.filter((p) => p.epipen_expiry && new Date(p.epipen_expiry).getTime() - Date.now() < 30 * 864e5)
   if (!soon.length) return null
   return (
@@ -39,7 +28,7 @@ function PenReminder({ profiles }: { profiles: FamilyProfile[] }) {
         const past = new Date(p.epipen_expiry!).getTime() < Date.now()
         return (
           <Link key={p.id} href={`/profiler?id=${p.id}`} className="pen-note">
-            💉 {p.name}s adrenalinpenn {past ? 'har gått ut' : 'går ut'} {new Date(p.epipen_expiry!).toLocaleDateString('nb-NO', { day: 'numeric', month: 'long' })}. {past ? 'Skaff ny.' : 'Husk å fornye.'}
+            💉 {t(past ? 'pen.expired' : 'pen.soon', { name: p.name, date: new Date(p.epipen_expiry!).toLocaleDateString(locale, { day: 'numeric', month: 'long' }) })}
           </Link>
         )
       })}
@@ -61,6 +50,7 @@ function Scan() {
 
 function FullScan() {
   const router = useRouter()
+  const { t, lang } = useT()
   const session = useSession()
   const [sharedWith, setSharedWith] = useState<string[]>([])
   const [profiles, setProfiles] = useState<FamilyProfile[] | null>(null)
@@ -75,7 +65,7 @@ function FullScan() {
       .from('family_links')
       .select('parent_email')
       .eq('child_id', session.user.id)
-      .then(({ data }) => setSharedWith([...new Set((data ?? []).map((l: { parent_email: string | null }) => l.parent_email ?? 'en forelder'))]))
+      .then(({ data }) => setSharedWith([...new Set((data ?? []).map((l: { parent_email: string | null }) => l.parent_email ?? t('aParent')))]))
   }, [session.user.id])
 
   useEffect(() => {
@@ -129,10 +119,10 @@ function FullScan() {
     setBusy(true)
     setError('')
     try {
-      const res = await postScan({ ...body, mode, profileIds: selected })
+      const res = await postScan({ ...body, mode, profileIds: selected, lang })
       router.push(`/resultat/${res.id}`)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Noe gikk galt. Prøv igjen.')
+      setError(e instanceof Error ? e.message : t('err.generic'))
       setBusy(false)
     }
   }
@@ -145,14 +135,14 @@ function FullScan() {
       const img = await compressImage(file)
       await run({ image: img.data, mediaType: img.mediaType })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Kunne ikke lese bildet.')
+      setError(err instanceof Error ? err.message : t('err.image'))
     }
   }
 
   if (profiles === null) {
     return (
       <main className="page center" style={{ alignItems: 'center' }}>
-        <div className="spinner" role="status" aria-label="Laster" />
+        <div className="spinner" role="status" aria-label={t('loading')} />
       </main>
     )
   }
@@ -162,14 +152,13 @@ function FullScan() {
       <main className="page center">
         <Logo />
         <div style={{ alignSelf: 'center' }}><Mascot mood="wave" size={150} /></div>
-        <h1>Hvem skal vi passe på?</h1>
-        <p className="muted">Lag en profil med allergiene først. Du kan legge til barn etterpå.</p>
-        <Link className="btn btn-primary" href="/profiler?ny=1">Lag første profil</Link>
+        <h1>{t('scan.whoFirst')}</h1>
+        <p className="muted">{t('scan.noProfiles')}</p>
+        <Link className="btn btn-primary" href="/profiler?ny=1">{t('scan.firstProfile')}</Link>
       </main>
     )
   }
 
-  const current = MODES.find((m) => m.id === mode)!
 
   return (
     <main className="page">
@@ -178,7 +167,7 @@ function FullScan() {
       </div>
 
       <div className="stack" style={{ gap: 10 }}>
-        <h2 style={{ fontSize: 19 }}>Hvem handler du for?</h2>
+        <h2 style={{ fontSize: 19 }}>{t('scan.who')}</h2>
         <div className="row" style={{ flexWrap: 'wrap', gap: 8 }}>
           {profiles.length > 1 && (
             <button className="profile-pill" aria-pressed={selected.length === profiles.length} onClick={toggleAll}>
@@ -187,7 +176,7 @@ function FullScan() {
                   <Animal key={p.id} id={animalFor(p.avatar, i)} size={28} />
                 ))}
               </span>
-              Hele familien
+              {t('scan.wholeFamily')}
             </button>
           )}
           {profiles.map((p, i) => (
@@ -202,19 +191,19 @@ function FullScan() {
 
       {sharedWith.length > 0 && (
         <p className="share-note">
-          <span aria-hidden="true">👀</span> Det du skanner, ser {sharedWith.join(' og ')}.
+          <span aria-hidden="true">👀</span> {t('scan.sharedWith', { names: sharedWith })}
         </p>
       )}
 
       <RecallBanner />
       <PenReminder profiles={profiles} />
 
-      <div className="stack" style={{ gap: 8 }} role="group" aria-label="Hva vil du sjekke?">
+      <div className="stack" style={{ gap: 8 }} role="group" aria-label={t('scan.what')}>
         <div className="mode-tiles">
           {MODES.slice(0, 3).map((m) => (
             <button key={m.id} className={`mode-tile ${m.id}`} aria-pressed={m.id === mode} onClick={() => pickMode(m.id)}>
               <ModeArt mode={m.id} size={48} />
-              <span>{m.label}</span>
+              <span>{t(`mode.${m.id}`)}</span>
             </button>
           ))}
         </div>
@@ -222,7 +211,7 @@ function FullScan() {
           {MODES.slice(3).map((m) => (
             <button key={m.id} className={`mode-tile ${m.id}`} aria-pressed={m.id === mode} onClick={() => pickMode(m.id)}>
               <ModeArt mode={m.id} size={34} />
-              <span>{m.label}</span>
+              <span>{t(`mode.${m.id}`)}</span>
             </button>
           ))}
         </div>
@@ -231,7 +220,7 @@ function FullScan() {
       {busy ? (
         <div className="camera" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16, color: '#fff' }}>
           <div className="bob"><Mascot mood="unsure" size={120} /></div>
-          <span style={{ fontWeight: 600 }}>{current.busy}</span>
+          <span style={{ fontWeight: 600 }}>{t(`mode.${mode}.busy`)}</span>
         </div>
       ) : mode === 'barcode' ? (
         <BarcodeScanner onCode={(ean) => run({ ean })} paused={busy} />
@@ -240,15 +229,15 @@ function FullScan() {
           <button className={`photo-drop ${mode}`} onClick={() => fileRef.current?.click()}>
             <span className="photo-art"><ModeArt mode={mode} size={96} /></span>
             <span className="photo-cta"><CameraIcon /></span>
-            {PHOTO_TEXT[mode]}
+            {t(`mode.${mode}.photo`)}
           </button>
-          <p className="small muted" style={{ textAlign: 'center' }}>{current.hint}</p>
+          <p className="small muted" style={{ textAlign: 'center' }}>{t(`mode.${mode}.hint`)}</p>
           <input ref={fileRef} type="file" accept="image/*" capture="environment" hidden onChange={onFile} />
         </>
       )}
 
       {error && <div className="alert error" role="alert">{error}</div>}
-      <p className="tiny" style={{ textAlign: 'center' }}>Okei er et oppslagsverk og erstatter ikke lege. Sjekk alltid etiketten.</p>
+      <p className="tiny" style={{ textAlign: 'center' }}>{t('disclaimer')}</p>
     </main>
   )
 }

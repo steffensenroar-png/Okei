@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { anonClient, HttpError } from '@/lib/server/auth'
+import { anonClient, errorResponse, HttpError } from '@/lib/server/auth'
 import { lookupBarcode } from '@/lib/server/products'
 import { readLabel } from '@/lib/server/vision'
 import { evaluateFamily, ProductData, ProfileAllergen } from '@/lib/rules'
@@ -20,26 +20,27 @@ export async function POST(req: Request) {
       ean?: string
       image?: string
       mediaType?: (typeof MEDIA)[number]
+      lang?: string
     }
     const token = String(body.token ?? '')
-    if (!/^[0-9a-f]{32,64}$/.test(token)) throw new HttpError(400, 'Ugyldig lenke')
+    if (!/^[0-9a-f]{32,64}$/.test(token)) throw new HttpError(400, 'Ugyldig lenke', 'link_expired')
     const db = anonClient()
     const { data: card } = await db.rpc('get_shared_card', { p_token: token })
-    if (!card) throw new HttpError(404, 'Lenken er utløpt eller trukket tilbake')
+    if (!card) throw new HttpError(404, 'Lenken er utløpt eller trukket tilbake', 'link_expired')
 
     let product: ProductData
     if (body.mode === 'barcode') {
       const ean = String(body.ean ?? '').replace(/\D/g, '')
-      if (ean.length < 8 || ean.length > 14) throw new HttpError(400, 'Ugyldig strekkode')
+      if (ean.length < 8 || ean.length > 14) throw new HttpError(400, 'Ugyldig strekkode', 'bad_barcode')
       product = await lookupBarcode(ean)
     } else if (body.mode === 'label') {
       const { data: ok } = await db.rpc('use_share_scan', { p_token: token })
-      if (!ok) throw new HttpError(429, 'Lenken har brukt opp bildeskannene for i dag. Strekkode virker fortsatt.')
+      if (!ok) throw new HttpError(429, 'Lenken har brukt opp bildeskannene for i dag. Strekkode virker fortsatt.', 'guest_limit')
       const image = String(body.image ?? '').replace(/^data:[^,]+,/, '')
       const media = MEDIA.includes(body.mediaType as any) ? body.mediaType! : 'image/jpeg'
-      if (!image) throw new HttpError(400, 'Mangler bilde')
-      if ((image.length * 3) / 4 > MAX_IMAGE_BYTES) throw new HttpError(413, 'Bildet er for stort')
-      product = await readLabel(image, media)
+      if (!image) throw new HttpError(400, 'Mangler bilde', 'missing_image')
+      if ((image.length * 3) / 4 > MAX_IMAGE_BYTES) throw new HttpError(413, 'Bildet er for stort', 'image_too_big')
+      product = await readLabel(image, media, 'food', ['no', 'en', 'sv', 'da', 'fi', 'de', 'es', 'fr', 'it'].includes(String(body.lang)) ? String(body.lang) : 'no')
     } else throw new HttpError(400, 'Ukjent modus')
 
     const profiles = (card.profiles as any[]).map((p) => ({
@@ -54,14 +55,12 @@ export async function POST(req: Request) {
     return NextResponse.json({
       flag: family.flag,
       headline: family.headline,
+      headlineMsg: family.headlineMsg,
       insights: family.insights,
-      people: family.people.map((p) => ({ name: p.name, flag: p.evaluation.flag, headline: p.evaluation.headline })),
-      product: { name: product.name ?? null, ingredientsText: product.ingredientsText ?? null, source: product.source }
+      people: family.people.map((p) => ({ name: p.name, flag: p.evaluation.flag, headline: p.evaluation.headline, headlineMsg: p.evaluation.headlineMsg })),
+      product: { name: product.name ?? null, ingredientsText: product.ingredientsText ?? null, translatedText: product.translatedText ?? null, source: product.source }
     })
   } catch (e) {
-    const status = e instanceof HttpError ? e.status : 500
-    const message = e instanceof HttpError ? e.message : 'Noe gikk galt. Prøv igjen.'
-    if (!(e instanceof HttpError)) console.error('guest scan error', e)
-    return NextResponse.json({ error: message }, { status })
+    return errorResponse(e, 'guest scan error')
   }
 }

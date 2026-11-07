@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import '@fontsource-variable/plus-jakarta-sans'
 import './globals.css'
 import ThemeSync from '@/components/ThemeSync'
+import { I18nProvider } from '@/components/I18n'
 
 const THEME_BOOT = `(function(){try{var t=localStorage.getItem('okei.theme')||'auto',a=localStorage.getItem('okei.accent')||'green';var d=t==='dark'||(t==='auto'&&window.matchMedia('(prefers-color-scheme: dark)').matches);var h=document.documentElement;h.dataset.theme=d?'dark':'light';h.dataset.accent=a;}catch(e){}})();`
 
@@ -27,7 +28,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <ThemeSync />
-        <div className="shell">{children}</div>
+        <I18nProvider>
+          <div className="shell">{children}</div>
+        </I18nProvider>
       </body>
     </html>
   )

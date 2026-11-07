@@ -421,3 +421,12 @@ sup.who { font-size: 10px; font-weight: 800; color: var(--quiet); margin-left: 1
   .chef-card { border: 0; font-size: 18px; }
 }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* Oversatt ingrediensliste og språkvelger */
+.translated { border: 1px dashed var(--line); border-radius: 12px; padding: 10px 12px; background: var(--surface); }
+.translated summary { cursor: pointer; font-weight: 700; font-size: 14px; }
+.translated p { margin: 8px 0 0; }
+.lang-pick {
+  font: inherit; font-size: 14px; min-height: 40px; padding: 0 10px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer;
+}

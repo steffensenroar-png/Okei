@@ -7,34 +7,36 @@ import type { FamilyProfile } from '@/lib/client'
 import type { Wishes } from '@/lib/wishes'
 import { getKidMode, hashPin, PinUnlock, setKidMode } from '@/components/KidMode'
 import { Animal, animalFor } from '@/components/Art'
+import { useT } from '@/components/I18n'
 
 /** Ønsker: påvirker aldri flagget, bare informasjon og alternativer. */
 export function WishesEditor({ value, onChange }: { value: Wishes; onChange: (w: Wishes) => void }) {
   const toggle = (k: keyof Wishes) => onChange({ ...value, [k]: !value[k] })
   const num = (k: 'lowcarb' | 'lowsugar', def: number) =>
     onChange({ ...value, [k]: value[k] == null ? def : null })
+  const { t } = useT()
   return (
     <div className="stack" style={{ gap: 10 }}>
-      <h2>Ønsker</h2>
-      <p className="small muted">Valgfritt. Påvirker ikke rødt, gult og grønt, men vises i resultatet og brukes når Okei foreslår alternativer.</p>
+      <h2>{t('wish.heading')}</h2>
+      <p className="small muted">{t('wishEd.intro')}</p>
       <div className="wish-grid">
-        <button type="button" className="chip" aria-pressed={value.lowcarb != null} onClick={() => num('lowcarb', 10)}>Lavkarbo</button>
-        <button type="button" className="chip" aria-pressed={value.lowsugar != null} onClick={() => num('lowsugar', 5)}>Lite sukker</button>
-        <button type="button" className="chip" aria-pressed={!!value.fiber} onClick={() => toggle('fiber')}>Mye fiber</button>
-        <button type="button" className="chip" aria-pressed={!!value.wholegrain} onClick={() => toggle('wholegrain')}>Grovt og fullkorn</button>
-        <button type="button" className="chip" aria-pressed={!!value.keyhole} onClick={() => toggle('keyhole')}>Nøkkelhullet</button>
-        <button type="button" className="chip" aria-pressed={!!value.vegetarian} onClick={() => toggle('vegetarian')}>Vegetar</button>
-        <button type="button" className="chip" aria-pressed={!!value.vegan} onClick={() => toggle('vegan')}>Vegansk</button>
+        <button type="button" className="chip" aria-pressed={value.lowcarb != null} onClick={() => num('lowcarb', 10)}>{t('w.lowcarb')}</button>
+        <button type="button" className="chip" aria-pressed={value.lowsugar != null} onClick={() => num('lowsugar', 5)}>{t('w.lowsugar')}</button>
+        <button type="button" className="chip" aria-pressed={!!value.fiber} onClick={() => toggle('fiber')}>{t('w.fiber')}</button>
+        <button type="button" className="chip" aria-pressed={!!value.wholegrain} onClick={() => toggle('wholegrain')}>{t('w.wholegrain')}</button>
+        <button type="button" className="chip" aria-pressed={!!value.keyhole} onClick={() => toggle('keyhole')}>{t('w.keyhole')}</button>
+        <button type="button" className="chip" aria-pressed={!!value.vegetarian} onClick={() => toggle('vegetarian')}>{t('w.vegetarian')}</button>
+        <button type="button" className="chip" aria-pressed={!!value.vegan} onClick={() => toggle('vegan')}>{t('w.vegan')}</button>
       </div>
       {value.lowcarb != null && (
         <label className="field">
-          Lavkarbo: maks gram karbohydrater per 100 g
+          {t('wishEd.maxCarb')}
           <input className="input" inputMode="numeric" value={value.lowcarb} onChange={(e) => onChange({ ...value, lowcarb: Math.max(0, Math.min(100, Number(e.target.value.replace(/\D/g, '')) || 0)) })} />
         </label>
       )}
       {value.lowsugar != null && (
         <label className="field">
-          Lite sukker: maks gram sukker per 100 g
+          {t('wishEd.maxSugar')}
           <input className="input" inputMode="numeric" value={value.lowsugar} onChange={(e) => onChange({ ...value, lowsugar: Math.max(0, Math.min(100, Number(e.target.value.replace(/\D/g, '')) || 0)) })} />
         </label>
       )}
@@ -53,6 +55,7 @@ interface Share {
 export function ShareCard({ profileId, name }: { profileId: string; name: string }) {
   const [shares, setShares] = useState<Share[]>([])
   const [copied, setCopied] = useState('')
+  const { t, locale } = useT()
 
   async function load() {
     const { data } = await supabase()
@@ -76,9 +79,9 @@ export function ShareCard({ profileId, name }: { profileId: string; name: string
   }
   async function send(token: string) {
     const url = `${window.location.origin}/kort/${token}`
-    const text = `Her er ${name}s allergikort i Okei. Du kan se hva ${name} ikke tåler, og skanne varer for å sjekke.`
+    const text = t('share.text', { name })
     try {
-      if (navigator.share) return await navigator.share({ title: `${name}s allergikort`, text, url })
+      if (navigator.share) return await navigator.share({ title: t('share.title', { name }), text, url })
       await navigator.clipboard.writeText(url)
       setCopied(token)
       setTimeout(() => setCopied(''), 2500)
@@ -87,30 +90,30 @@ export function ShareCard({ profileId, name }: { profileId: string; name: string
     }
   }
   async function revoke(id: string) {
-    if (!window.confirm('Trekke tilbake lenken? Den slutter å virke med en gang.')) return
+    if (!window.confirm(t('share.confirmRevoke'))) return
     await supabase().from('share_links').update({ revoked: true }).eq('id', id)
     load()
   }
 
   return (
     <div className="card stack" style={{ gap: 12 }}>
-      <h2>Del {name}s allergikort</h2>
+      <h2>{t('share.heading', { name })}</h2>
       <p className="small muted">
-        Til barnehage, skole, besteforeldre eller foreldre som arrangerer bursdag. De ser allergiene og nødinfo, og kan skanne varer mot {name}s profil uten å logge inn. Lenken kan trekkes tilbake når som helst.
+        {t('share.intro', { name })}
       </p>
       {shares.map((s) => (
         <div key={s.id} className="row" style={{ justifyContent: 'space-between', gap: 8 }}>
           <span className="small">
-            Lenke laget {new Date(s.created_at).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' })}
+            {t('share.created', { date: new Date(s.created_at).toLocaleDateString(locale, { day: 'numeric', month: 'short' }) })}
           </span>
           <span className="row" style={{ gap: 6 }}>
-            <button type="button" className="btn btn-small" onClick={() => send(s.token)}>{copied === s.token ? 'Kopiert' : 'Send'}</button>
-            <button type="button" className="btn btn-small btn-danger" onClick={() => revoke(s.id)}>Trekk tilbake</button>
+            <button type="button" className="btn btn-small" onClick={() => send(s.token)}>{copied === s.token ? t('copied') : t('send')}</button>
+            <button type="button" className="btn btn-small btn-danger" onClick={() => revoke(s.id)}>{t('share.revoke')}</button>
           </span>
         </div>
       ))}
-      <button type="button" className="btn" onClick={create}>Lag ny lenke til allergikortet</button>
-      <Link className="linkbtn" href={`/kokkekort?id=${profileId}`}>Lag kokkekort til restaurant og reise</Link>
+      <button type="button" className="btn" onClick={create}>{t('share.new')}</button>
+      <Link className="linkbtn" href={`/kokkekort?id=${profileId}`}>{t('share.chef')}</Link>
     </div>
   )
 }
@@ -121,13 +124,14 @@ export function KidModeSetup({ profiles }: { profiles: FamilyProfile[] }) {
   const [profileId, setProfileId] = useState(profiles[0]?.id ?? '')
   const [pin, setPin] = useState('')
   const [phone, setPhone] = useState('')
-  const [callName, setCallName] = useState('mamma')
+  const { t } = useT()
+  const [callName, setCallName] = useState(() => t('kidSetup.defaultCall'))
   const [error, setError] = useState('')
 
   async function start(e: React.FormEvent) {
     e.preventDefault()
-    if (!profileId) return setError('Velg hvem telefonen er til.')
-    if (!/^\d{4,8}$/.test(pin)) return setError('PIN må være 4 til 8 sifre.')
+    if (!profileId) return setError(t('kidSetup.pickWho'))
+    if (!/^\d{4,8}$/.test(pin)) return setError(t('kidSetup.pinRule'))
     setKidMode({ profileId, pinHash: await hashPin(pin), phone: phone.trim() || undefined, callName: callName.trim() || undefined })
     window.location.href = '/skann'
   }
@@ -136,10 +140,10 @@ export function KidModeSetup({ profiles }: { profiles: FamilyProfile[] }) {
   return (
     <div className="card stack" style={{ gap: 12 }}>
       <div className="row" style={{ justifyContent: 'space-between' }}>
-        <h2>Barnemodus</h2>
-        {!open && <button type="button" className="btn btn-small" onClick={() => setOpen(true)}>Slå på</button>}
+        <h2>{t('kidSetup.title')}</h2>
+        {!open && <button type="button" className="btn btn-small" onClick={() => setOpen(true)}>{t('turnOn')}</button>}
       </div>
-      <p className="small muted">Gjør denne telefonen enklere for et barn: én profil, store knapper, opplesning av svaret og knapp for å ringe en voksen. En voksen går ut med PIN.</p>
+      <p className="small muted">{t('kidSetup.intro')}</p>
       {open && (
         <form className="stack" onSubmit={start}>
           <div className="row" style={{ flexWrap: 'wrap', gap: 8 }}>
@@ -150,21 +154,21 @@ export function KidModeSetup({ profiles }: { profiles: FamilyProfile[] }) {
             ))}
           </div>
           <label className="field">
-            PIN for voksne (4–8 sifre)
+            {t('kidSetup.pin')}
             <input className="input" inputMode="numeric" autoComplete="off" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))} maxLength={8} />
           </label>
           <div className="grid2">
             <label className="field">
-              Hvem skal barnet ringe?
-              <input className="input" value={callName} onChange={(e) => setCallName(e.target.value)} placeholder="mamma" maxLength={20} />
+              {t('kidSetup.callWho')}
+              <input className="input" value={callName} onChange={(e) => setCallName(e.target.value)} placeholder={t('kidSetup.defaultCall')} maxLength={20} />
             </label>
             <label className="field">
-              Telefonnummer
-              <input className="input" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Valgfritt" maxLength={20} />
+              {t('kidSetup.phone')}
+              <input className="input" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={t('optional')} maxLength={20} />
             </label>
           </div>
           {error && <div className="alert error" role="alert">{error}</div>}
-          <button className="btn btn-primary" type="submit">Start barnemodus</button>
+          <button className="btn btn-primary" type="submit">{t('kidSetup.start')}</button>
         </form>
       )}
     </div>

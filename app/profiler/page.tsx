@@ -4,13 +4,15 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import AuthGate, { useSession } from '@/components/AuthGate'
 import { supabase } from '@/lib/supabase-browser'
-import { ALLERGENS, ALLERGEN_BY_KEY, AllergenKey, CONDITIONS, ConditionKey, Severity, SEVERITY_LABEL } from '@/lib/allergens'
+import { ALLERGENS, AllergenKey, CONDITIONS, ConditionKey, Severity } from '@/lib/allergens'
 import { FamilyProfile } from '@/lib/client'
 import AllergenIcon from '@/components/AllergenIcon'
 import { Animal, ANIMALS, animalFor, Mascot } from '@/components/Art'
 import { Accent, ACCENTS, getAccent, getTheme, saveTheme, Theme, THEMES } from '@/lib/theme'
 import { KidGate, KidModeSetup, ShareCard, WishesEditor } from '@/components/ProfileExtras'
 import type { Wishes } from '@/lib/wishes'
+import { useT } from '@/components/I18n'
+import { LANGUAGES } from '@/lib/i18n/core'
 
 type Draft = {
   id?: string
@@ -42,13 +44,13 @@ function toDraft(p: FamilyProfile): Draft {
   }
 }
 
-function summary(p: FamilyProfile) {
+function summary(p: FamilyProfile, t: (k: string, p?: Record<string, string>) => string) {
   const parts = p.allergens.map((a) => {
-    const label = ALLERGEN_BY_KEY[a.key]?.label ?? a.key
-    return a.severity === 'severe' ? `${label} (alvorlig)` : label
+    const label = t(`allergen.${a.key}`)
+    return a.severity === 'severe' ? t('prof.severeTag', { label }) : label
   })
-  const conds = (p.conditions ?? []).map((c) => CONDITIONS.find((x) => x.key === c)?.label ?? c)
-  return [...conds, ...parts, ...(p.custom_terms ?? [])].join(' · ') || 'Ingen allergier registrert'
+  const conds = (p.conditions ?? []).filter((c) => c !== 'coeliac_strict').map((c) => t(`cond.${c}`))
+  return [...conds, ...parts, ...(p.custom_terms ?? [])].join(' · ') || t('prof.noAllergies')
 }
 
 interface Link_ { id: string; child_email: string | null; created_at: string }
@@ -59,6 +61,7 @@ function ChildPhone({ profileId, name }: { profileId: string; name: string }) {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
+  const { t } = useT()
 
   async function load() {
     const { data } = await supabase()
@@ -78,14 +81,14 @@ function ChildPhone({ profileId, name }: { profileId: string; name: string }) {
     setError('')
     const { data, error } = await supabase().from('family_invites').insert({ profile_id: profileId }).select('code').single()
     setBusy(false)
-    if (error || !data) return setError('Kunne ikke lage kode. Prøv igjen.')
+    if (error || !data) return setError(t('child.codeFail'))
     setCode(data.code)
   }
 
   async function share() {
     if (!code) return
     const url = `${window.location.origin}/koble?kode=${code}`
-    const text = `Åpne lenken på telefonen din og logg inn for å koble deg til familien i Okei. Koden er ${code}.`
+    const text = t('child.shareText', { code })
     try {
       if (navigator.share) return await navigator.share({ title: 'Okei', text, url })
       await navigator.clipboard.writeText(`${text} ${url}`)
@@ -97,31 +100,31 @@ function ChildPhone({ profileId, name }: { profileId: string; name: string }) {
   }
 
   async function unlink(id: string) {
-    if (!window.confirm('Fjerne koblingen? Du ser ikke lenger skannene fra den telefonen.')) return
+    if (!window.confirm(t('child.confirmUnlink'))) return
     await supabase().from('family_links').delete().eq('id', id)
     load()
   }
 
   return (
     <div className="card stack" style={{ gap: 12 }}>
-      <h2>{name} sin egen telefon</h2>
+      <h2>{t('child.title', { name })}</h2>
       <p className="small muted">
-        Lag en kode og send den til {name}. Når {name} logger inn med egen konto og bruker koden, sjekker telefonen mat mot denne profilen, og du ser alt som skannes i historikken din.
+        {t('child.intro', { name })}
       </p>
       {links.map((l) => (
         <div key={l.id} className="row" style={{ justifyContent: 'space-between', gap: 8 }}>
-          <span className="small" style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis' }}>Koblet: {l.child_email ?? 'ukjent konto'}</span>
-          <button type="button" className="btn btn-small btn-danger" onClick={() => unlink(l.id)}>Fjern</button>
+          <span className="small" style={{ fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('child.linked', { email: l.child_email ?? t('child.unknown') })}</span>
+          <button type="button" className="btn btn-small btn-danger" onClick={() => unlink(l.id)}>{t('remove')}</button>
         </div>
       ))}
       {code ? (
         <div className="stack" style={{ gap: 8 }}>
-          <div className="code-box" aria-label={`Kode ${code.split('').join(' ')}`}>{code}</div>
-          <p className="tiny">Gjelder i 7 dager og kan brukes én gang.</p>
-          <button type="button" className="btn btn-primary" onClick={share}>{copied ? 'Lenken er kopiert' : 'Send koden'}</button>
+          <div className="code-box" aria-label={t('child.codeAria', { code: code.split('').join(' ') })}>{code}</div>
+          <p className="tiny">{t('child.validity')}</p>
+          <button type="button" className="btn btn-primary" onClick={share}>{copied ? t('linkCopied') : t('child.send')}</button>
         </div>
       ) : (
-        <button type="button" className="btn" onClick={makeCode} disabled={busy}>{busy ? 'Lager kode…' : 'Lag koblingskode'}</button>
+        <button type="button" className="btn" onClick={makeCode} disabled={busy}>{busy ? t('child.making') : t('child.make')}</button>
       )}
       {error && <div className="alert error" role="alert">{error}</div>}
     </div>
@@ -131,41 +134,50 @@ function ChildPhone({ profileId, name }: { profileId: string; name: string }) {
 function Appearance() {
   const [theme, setTheme] = useState<Theme>('auto')
   const [accent, setAccent] = useState<Accent>('green')
+  const { t, lang, setLang } = useT()
 
   useEffect(() => {
     setTheme(getTheme())
     setAccent(getAccent())
   }, [])
 
-  function pick(t: Theme, a: Accent) {
-    setTheme(t)
+  function pick(th: Theme, a: Accent) {
+    setTheme(th)
     setAccent(a)
-    saveTheme(t, a)
+    saveTheme(th, a)
   }
 
   return (
     <div className="card stack" style={{ gap: 14 }}>
       <div className="row" style={{ justifyContent: 'space-between' }}>
         <div className="stack" style={{ gap: 2 }}>
-          <h2>Utseende</h2>
-          <p className="tiny">Gjelder bare denne telefonen.</p>
+          <h2>{t('look.title')}</h2>
+          <p className="tiny">{t('look.device')}</p>
         </div>
         <Mascot mood="happy" size={64} />
       </div>
-      <div className="seg" role="group" aria-label="Tema">
-        {THEMES.map((t) => (
-          <button key={t.id} type="button" aria-pressed={theme === t.id} onClick={() => pick(t.id, accent)}>{t.label}</button>
+      <label className="field">
+        {t('language')}
+        <select className="input" value={lang} onChange={(e) => setLang(e.target.value as typeof lang)}>
+          {LANGUAGES.map((l) => (
+            <option key={l.id} value={l.id}>{l.flag} {l.label}</option>
+          ))}
+        </select>
+      </label>
+      <div className="seg" role="group" aria-label={t('look.theme')}>
+        {THEMES.map((th) => (
+          <button key={th.id} type="button" aria-pressed={theme === th.id} onClick={() => pick(th.id, accent)}>{t(`theme.${th.id}`)}</button>
         ))}
       </div>
-      <div className="swatches" role="radiogroup" aria-label="Farge">
+      <div className="swatches" role="radiogroup" aria-label={t('look.color')}>
         {ACCENTS.map((a) => (
           <button
             key={a.id}
             type="button"
             role="radio"
             aria-checked={accent === a.id}
-            aria-label={a.label}
-            title={a.label}
+            aria-label={t(`accent.${a.id}`)}
+            title={t(`accent.${a.id}`)}
             className="swatch"
             style={{ background: a.color }}
             onClick={() => pick(theme, a.id)}
@@ -180,9 +192,10 @@ function Appearance() {
 
 function ShareButton() {
   const [copied, setCopied] = useState(false)
+  const { t } = useT()
   async function share() {
     const url = window.location.origin
-    const data = { title: 'Okei', text: 'Sjekk mat mot allergiene i familien med Okei (beta).', url }
+    const data = { title: 'Okei', text: t('prof.shareText'), url }
     try {
       if (navigator.share) return await navigator.share(data)
       await navigator.clipboard.writeText(url)
@@ -194,7 +207,7 @@ function ShareButton() {
   }
   return (
     <button className="btn" onClick={share}>
-      {copied ? 'Lenken er kopiert' : 'Del Okei med andre'}
+      {copied ? t('linkCopied') : t('prof.shareApp')}
     </button>
   )
 }
@@ -206,6 +219,7 @@ function Profiles() {
   const [draft, setDraft] = useState<Draft | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const { t } = useT()
 
   async function load() {
     const { data } = await supabase()
@@ -232,7 +246,7 @@ function Profiles() {
   }, [])
 
   async function unlinkSelf(profileId: string, name: string) {
-    if (!window.confirm(`Koble fra ${name}? Du kan ikke lenger sjekke mat mot denne profilen.`)) return
+    if (!window.confirm(t('prof.confirmUnlinkSelf', { name }))) return
     await supabase().from('family_links').delete().eq('child_id', session.user.id).eq('profile_id', profileId)
     load()
   }
@@ -262,9 +276,9 @@ function Profiles() {
     e.preventDefault()
     if (!draft) return
     const name = draft.name.trim()
-    if (!name) return setError('Skriv inn et navn.')
+    if (!name) return setError(t('prof.needName'))
     const year = draft.birth_year ? Number(draft.birth_year) : null
-    if (year !== null && (isNaN(year) || year < 1900 || year > new Date().getFullYear())) return setError('Sjekk fødselsåret.')
+    if (year !== null && (isNaN(year) || year < 1900 || year > new Date().getFullYear())) return setError(t('prof.checkYear'))
     setSaving(true)
     setError('')
     const row = {
@@ -284,14 +298,14 @@ function Profiles() {
       : supabase().from('family_profiles').insert(row)
     const { error } = await q
     setSaving(false)
-    if (error) return setError('Kunne ikke lagre. Prøv igjen.')
+    if (error) return setError(t('err.save_failed'))
     setDraft(null)
     load()
   }
 
   async function remove() {
     if (!draft?.id) return
-    if (!window.confirm(`Slette profilen «${draft.name}»? Historikken beholdes uten profilkobling.`)) return
+    if (!window.confirm(t('prof.confirmDelete', { name: draft.name }))) return
     await supabase().from('family_profiles').delete().eq('id', draft.id)
     setDraft(null)
     load()
@@ -303,25 +317,25 @@ function Profiles() {
       <main className="page">
         <div className="row" style={{ gap: 14 }}>
           {draft.avatar && <Animal id={animalFor(draft.avatar, 0)} size={60} />}
-          <h1>{draft.id ? `Endre ${draft.name}` : 'Ny profil'}</h1>
+          <h1>{draft.id ? t('prof.edit', { name: draft.name }) : t('prof.new')}</h1>
         </div>
         <form onSubmit={save} className="stack" style={{ gap: 18 }}>
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12 }}>
             <label className="field">
-              Navn
+              {t('prof.name')}
               <input className="input" value={draft.name} maxLength={60} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
             </label>
             <label className="field">
-              Fødselsår
-              <input className="input" inputMode="numeric" placeholder="valgfritt" value={draft.birth_year} onChange={(e) => setDraft({ ...draft, birth_year: e.target.value })} />
+              {t('prof.birthYear')}
+              <input className="input" inputMode="numeric" placeholder={t('optional')} value={draft.birth_year} onChange={(e) => setDraft({ ...draft, birth_year: e.target.value })} />
             </label>
           </div>
 
           <div className="stack" style={{ gap: 8 }}>
-            <h2>Velg et dyr</h2>
-            <div className="animal-grid" role="radiogroup" aria-label="Velg et dyr">
+            <h2>{t('prof.pickAnimal')}</h2>
+            <div className="animal-grid" role="radiogroup" aria-label={t('prof.pickAnimal')}>
               {ANIMALS.map((a) => (
-                <button type="button" key={a.id} role="radio" aria-checked={draft.avatar === a.id} aria-label={a.label} className="animal-pick" onClick={() => setDraft({ ...draft, avatar: a.id })}>
+                <button type="button" key={a.id} role="radio" aria-checked={draft.avatar === a.id} aria-label={t(`animal.${a.id}`)} className="animal-pick" onClick={() => setDraft({ ...draft, avatar: a.id })}>
                   <Animal id={a.id} size={52} />
                 </button>
               ))}
@@ -329,7 +343,7 @@ function Profiles() {
           </div>
 
           <div className="stack">
-            <h2>Sykdommer og intoleranser</h2>
+            <h2>{t('prof.conditions')}</h2>
             {CONDITIONS.map((c) => (
               <button
                 type="button"
@@ -341,8 +355,8 @@ function Profiles() {
               >
                 <AllergenIcon k={c.key} size={36} />
                 <span className="stack" style={{ gap: 2 }}>
-                  <span style={{ fontWeight: 700 }}>{c.label}</span>
-                  <span className="small muted">{c.hint}</span>
+                  <span style={{ fontWeight: 700 }}>{t(`cond.${c.key}`)}</span>
+                  <span className="small muted">{t(`cond.${c.key}.hint`)}</span>
                 </span>
               </button>
             ))}
@@ -354,21 +368,21 @@ function Profiles() {
                   onChange={() => toggleCondition('coeliac_strict')}
                   style={{ width: 22, height: 22 }}
                 />
-                <span><b>Svært sensitiv for gluten.</b> «Kan inneholde spor» gir rødt i stedet for gult.</span>
+                <span><b>{t('prof.strictTitle')}</b> {t('prof.strictText')}</span>
               </label>
             )}
           </div>
 
           <div className="stack">
             <div className="row" style={{ justifyContent: 'space-between' }}>
-              <h2>Allergier</h2>
-              <span className="tiny">{selected.length} valgt</span>
+              <h2>{t('prof.allergies')}</h2>
+              <span className="tiny">{t('prof.selected', { n: selected.length })}</span>
             </div>
             <div className="chips">
               {ALLERGENS.map((a) => (
                 <button type="button" key={a.key} className="chip" aria-pressed={!!draft.allergens[a.key]} onClick={() => toggle(a.key)}>
                   <AllergenIcon k={a.key} size={30} />
-                  {a.label}
+                  {t(`allergen.${a.key}`)}
                 </button>
               ))}
             </div>
@@ -376,57 +390,57 @@ function Profiles() {
 
           {selected.length > 0 && (
             <div className="stack" style={{ gap: 12 }}>
-              <h2>Hvor alvorlig?</h2>
+              <h2>{t('prof.howSevere')}</h2>
               {selected.map((a) => (
                 <div key={a.key} className="stack" style={{ gap: 6 }}>
-                  <span className="small row" style={{ fontWeight: 700, gap: 8 }}><AllergenIcon k={a.key} size={22} />{a.label}</span>
-                  <div className="seg" role="group" aria-label={`Alvorlighetsgrad for ${a.label}`}>
+                  <span className="small row" style={{ fontWeight: 700, gap: 8 }}><AllergenIcon k={a.key} size={22} />{t(`allergen.${a.key}`)}</span>
+                  <div className="seg" role="group" aria-label={t('prof.severityFor', { label: t(`allergen.${a.key}`) })}>
                     {(['mild', 'moderate', 'severe'] as Severity[]).map((s) => (
                       <button type="button" key={s} aria-pressed={draft.allergens[a.key] === s} onClick={() => setSeverity(a.key, s)}>
-                        {SEVERITY_LABEL[s]}
+                        {t(`sev.${s}`)}
                       </button>
                     ))}
                   </div>
                 </div>
               ))}
-              <p className="tiny">Står som <b>Alvorlig</b> til du endrer det. Velg Alvorlig hvis personen har adrenalinpenn eller har hatt en alvorlig reaksjon. Da gir også «kan inneholde spor» rødt flagg.</p>
+              <p className="tiny">{t('prof.severeHelp')}</p>
             </div>
           )}
 
           <label className="field">
-            Andre ingredienser å unngå
-            <input className="input" placeholder="F.eks. kiwi, erter (skill med komma)" value={draft.custom} onChange={(e) => setDraft({ ...draft, custom: e.target.value })} />
+            {t('prof.custom')}
+            <input className="input" placeholder={t('prof.customPh')} value={draft.custom} onChange={(e) => setDraft({ ...draft, custom: e.target.value })} />
           </label>
 
           <WishesEditor value={draft.wishes} onChange={(w) => setDraft({ ...draft, wishes: w })} />
 
           <div className="stack" style={{ gap: 10 }}>
-            <h2>Nødinfo</h2>
+            <h2>{t('prof.emergency')}</h2>
             <label className="field">
-              Hva skal andre gjøre ved en reaksjon?
+              {t('prof.emergencyQ')}
               <textarea
                 className="input"
                 maxLength={1000}
                 value={draft.emergency_note}
                 onChange={(e) => setDraft({ ...draft, emergency_note: e.target.value })}
-                placeholder="F.eks. «Adrenalinpenn i sekken. Sett den i låret og ring 113. Ring mamma 99 99 99 99.»"
+                placeholder={t('prof.emergencyPh')}
               />
             </label>
             <label className="field">
-              Adrenalinpennen går ut (valgfritt)
+              {t('prof.penExpiry')}
               <input className="input" type="date" value={draft.epipen_expiry} onChange={(e) => setDraft({ ...draft, epipen_expiry: e.target.value })} />
             </label>
-            <p className="tiny">Vises på allergikortet du deler. Okei minner deg på pennen 30 dager før den går ut.</p>
+            <p className="tiny">{t('prof.penHelp')}</p>
           </div>
 
-          {draft.id && <ShareCard profileId={draft.id} name={draft.name || 'barnet'} />}
-          {draft.id && <ChildPhone profileId={draft.id} name={draft.name || 'barnet'} />}
+          {draft.id && <ShareCard profileId={draft.id} name={draft.name || t('prof.theChild')} />}
+          {draft.id && <ChildPhone profileId={draft.id} name={draft.name || t('prof.theChild')} />}
 
           {error && <div className="alert error" role="alert">{error}</div>}
-          <button className="btn btn-primary" type="submit" disabled={saving}>{saving ? 'Lagrer…' : 'Lagre profil'}</button>
+          <button className="btn btn-primary" type="submit" disabled={saving}>{saving ? t('saving') : t('prof.save')}</button>
           <div className="row">
-            {profiles.length > 0 && <button type="button" className="btn" onClick={() => setDraft(null)}>Avbryt</button>}
-            {draft.id && <button type="button" className="btn btn-danger" onClick={remove}>Slett</button>}
+            {profiles.length > 0 && <button type="button" className="btn" onClick={() => setDraft(null)}>{t('cancel')}</button>}
+            {draft.id && <button type="button" className="btn btn-danger" onClick={remove}>{t('delete')}</button>}
           </div>
         </form>
       </main>
@@ -437,8 +451,8 @@ function Profiles() {
     <main className="page">
       <div className="hero-row">
         <div className="stack" style={{ gap: 6 }}>
-          <h1>Familien</h1>
-          <p className="muted">Én profil per person du sjekker mat for. Barna kan velge sitt eget dyr.</p>
+          <h1>{t('nav.family')}</h1>
+          <p className="muted">{t('prof.intro')}</p>
         </div>
         <Mascot mood="wave" size={92} />
       </div>
@@ -449,38 +463,38 @@ function Profiles() {
             <span className="stack" style={{ gap: 4, flex: 1 }}>
               <span style={{ fontSize: 16, fontWeight: 700 }}>
                 {p.name}
-                {p.birth_year ? `, ${new Date().getFullYear() - p.birth_year} år` : ''}
+                {p.birth_year ? `, ${t('prof.age', { n: new Date().getFullYear() - p.birth_year })}` : ''}
               </span>
-              <span className="small muted">{summary(p)}</span>
+              <span className="small muted">{summary(p, t)}</span>
             </span>
           </button>
         ))}
-        <button className="btn" onClick={() => setDraft(empty(profiles.length))}>+ Legg til profil</button>
+        <button className="btn" onClick={() => setDraft(empty(profiles.length))}>{t('prof.add')}</button>
       </div>
       {linked.length > 0 && (
         <div className="stack">
-          <h2>Koblet til familien</h2>
+          <h2>{t('prof.linkedTitle')}</h2>
           {linked.map((p, i) => (
             <div key={p.id} className="card row" style={{ gap: 14 }}>
               <Animal id={animalFor(p.avatar, i)} size={52} />
               <span className="stack" style={{ gap: 4, flex: 1, minWidth: 0 }}>
                 <span style={{ fontSize: 16, fontWeight: 700 }}>{p.name}</span>
-                <span className="small muted">{summary(p)}</span>
-                <span className="tiny">Styres av {p.parent ?? 'en forelder'}, som ser det du skanner.</span>
+                <span className="small muted">{summary(p, t)}</span>
+                <span className="tiny">{t('prof.managedBy', { who: p.parent ?? t('aParent') })}</span>
               </span>
-              <button className="btn btn-small" onClick={() => unlinkSelf(p.id, p.name)}>Koble fra</button>
+              <button className="btn btn-small" onClick={() => unlinkSelf(p.id, p.name)}>{t('prof.unlink')}</button>
             </div>
           ))}
         </div>
       )}
-      <Link className="linkbtn" href="/koble">Har du fått en kode? Koble til en familie</Link>
+      <Link className="linkbtn" href="/koble">{t('prof.haveCode')}</Link>
       <KidModeSetup profiles={profiles} />
       <Appearance />
       <div className="spacer" />
       <ShareButton />
-      <Link className="linkbtn" href="/?om=1">Om Okei</Link>
-      <Link className="linkbtn" href="/personvern">Personvern</Link>
-      <button className="linkbtn" onClick={() => supabase().auth.signOut()}>Logg ut ({session.user.email})</button>
+      <Link className="linkbtn" href="/?om=1">{t('prof.about')}</Link>
+      <Link className="linkbtn" href="/personvern">{t('privacy')}</Link>
+      <button className="linkbtn" onClick={() => supabase().auth.signOut()}>{t('logout')} ({session.user.email})</button>
     </main>
   )
 }

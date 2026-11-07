@@ -1,10 +1,12 @@
 'use client'
 
+import { useT } from '@/components/I18n'
 import { createContext, useContext, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase-browser'
 import { PENDING_KEY, storeGet } from '@/lib/client'
+import { isLang } from '@/lib/i18n/core'
 import { Logo } from './Icons'
 import Nav from './Nav'
 
@@ -15,6 +17,7 @@ type State = 'loading' | 'notbeta' | 'terms' | 'ok' | 'error'
 
 export default function AuthGate({ children }: { children: React.ReactNode }) {
   const router = useRouter()
+  const { t, lang, setLang } = useT()
   const [session, setSession] = useState<Session | null>(null)
   const [state, setState] = useState<State>('loading')
   const [agree, setAgree] = useState(false)
@@ -35,8 +38,10 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
       if (!alive) return
       if (error) return setState('error')
       if (!beta) return setState('notbeta')
-      const { data: settings } = await sb.from('user_settings').select('accepted_terms_at').maybeSingle()
+      const { data: settings } = await sb.from('user_settings').select('accepted_terms_at, language').maybeSingle()
       if (!alive) return
+      // Språket følger kontoen mellom enheter, med mindre denne enheten har valgt selv.
+      if (settings?.language && isLang(settings.language) && !storeGet('okei.lang')) setLang(settings.language)
       setState(settings?.accepted_terms_at ? 'ok' : 'terms')
       const pending = storeGet(PENDING_KEY)
       if (pending && window.location.pathname !== '/koble') router.replace(`/koble?kode=${encodeURIComponent(pending)}`)
@@ -53,11 +58,25 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
     }
   }, [router])
 
+  // Lagre språkvalg på kontoen.
+  useEffect(() => {
+    function onLang(e: Event) {
+      const l = (e as CustomEvent).detail
+      supabase()
+        .auth.getSession()
+        .then(({ data }) => {
+          if (data.session) supabase().from('user_settings').upsert({ user_id: data.session.user.id, language: l })
+        })
+    }
+    window.addEventListener('okei:lang', onLang)
+    return () => window.removeEventListener('okei:lang', onLang)
+  }, [])
+
   async function accept() {
     setSaving(true)
     const { error } = await supabase()
       .from('user_settings')
-      .upsert({ user_id: session!.user.id, accepted_terms_at: new Date().toISOString() })
+      .upsert({ user_id: session!.user.id, accepted_terms_at: new Date().toISOString(), language: lang })
     setSaving(false)
     if (!error) setState('ok')
   }
@@ -70,7 +89,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
   if (state === 'loading') {
     return (
       <main className="page center" style={{ alignItems: 'center' }}>
-        <div className="spinner" role="status" aria-label="Laster" />
+        <div className="spinner" role="status" aria-label={t('loading')} />
       </main>
     )
   }
@@ -79,13 +98,13 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
     return (
       <main className="page center">
         <Logo />
-        <h1>{state === 'notbeta' ? 'Du har ikke tilgang' : 'Noe gikk galt'}</h1>
+        <h1>{state === 'notbeta' ? t('auth.noAccess') : t('auth.error')}</h1>
         <p className="muted">
           {state === 'notbeta'
-            ? 'Prøv å logge ut og inn igjen.'
-            : 'Vi fikk ikke kontakt med databasen. Prøv igjen om litt.'}
+            ? t('auth.noAccess.text')
+            : t('auth.error.text')}
         </p>
-        <button className="btn" onClick={signOut}>Logg ut</button>
+        <button className="btn" onClick={signOut}>{t('logout')}</button>
       </main>
     )
   }
@@ -97,20 +116,20 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
       {state === 'terms' && (
         <div className="modal-back" role="dialog" aria-modal="true" aria-labelledby="terms-title">
           <div className="modal">
-            <h1 id="terms-title">Før du starter</h1>
-            <p>Okei er i beta og er et oppslagsverk. Svarene bygger på produktdata og tekst lest av AI, og kan være feil.</p>
+            <h1 id="terms-title">{t('terms.title')}</h1>
+            <p>{t('terms.intro')}</p>
             <ul style={{ margin: 0, paddingLeft: 20, lineHeight: 1.6 }}>
-              <li>Okei erstatter ikke lege. Sjekk alltid etiketten.</li>
-              <li>Ved alvorlig allergisk reaksjon: ring 113.</li>
-              <li>Vi lagrer profilene dine (navn, allergier) og resultatene av skann. Bilder lagres ikke.</li>
-              <li>Du kan slette profiler og historikk når som helst. Les <a href="/personvern" target="_blank" rel="noopener">personvernerklæringen</a>.</li>
+              <li>{t('terms.doctor')}</li>
+              <li>{t('terms.113')}</li>
+              <li>{t('terms.store')}</li>
+              <li>{t('terms.delete')} <a href="/personvern" target="_blank" rel="noopener">{t('terms.privacyLink')}</a>.</li>
             </ul>
             <label className="row" style={{ alignItems: 'flex-start', fontSize: 15 }}>
               <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} style={{ width: 22, height: 22, marginTop: 1 }} />
-              <span>Jeg forstår, og samtykker til at Okei lagrer allergiopplysningene jeg legger inn.</span>
+              <span>{t('terms.consent')}</span>
             </label>
             <button className="btn btn-primary" disabled={!agree || saving} onClick={accept}>
-              {saving ? 'Lagrer…' : 'Start'}
+              {saving ? t('saving') : t('terms.start')}
             </button>
           </div>
         </div>

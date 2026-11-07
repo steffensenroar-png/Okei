@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase-browser'
 import { normalize } from '@/lib/allergens'
 import { storeGet, storeSet } from '@/lib/client'
+import { useT } from '@/components/I18n'
 
 interface Recall {
   title: string
@@ -44,6 +45,7 @@ function match(recalls: Recall[], scans: { ean: string | null; product_name: str
 }
 
 export default function RecallBanner() {
+  const { t, locale } = useT()
   const [matches, setMatches] = useState<Match[]>([])
 
   useEffect(() => {
@@ -77,13 +79,13 @@ export default function RecallBanner() {
         <div key={m.recall.url} className="recall" role="alert">
           <span className="recall-icon" aria-hidden="true">!</span>
           <div className="stack" style={{ gap: 4, flex: 1, minWidth: 0 }}>
-            <strong>Tilbakekalt: {m.recall.title}</strong>
+            <strong>{t('recall.title', { title: m.recall.title })}</strong>
             <span className="small">
-              Du skannet «{m.product}» {new Date(m.when).toLocaleDateString('nb-NO', { day: 'numeric', month: 'short' })}. Sjekk om det er samme vare og parti.
+              {t('recall.text', { product: m.product, date: new Date(m.when).toLocaleDateString(locale, { day: 'numeric', month: 'short' }) })}
             </span>
             <span className="row" style={{ gap: 12 }}>
-              <a className="small" href={m.recall.url} target="_blank" rel="noreferrer">Les hos Mattilsynet</a>
-              <button className="linkbtn small" onClick={() => dismiss(m.recall.url)}>Skjul</button>
+              <a className="small" href={m.recall.url} target="_blank" rel="noreferrer">{t('recall.read')}</a>
+              <button className="linkbtn small" onClick={() => dismiss(m.recall.url)}>{t('recall.hide')}</button>
             </span>
           </div>
         </div>
