@@ -19,12 +19,17 @@ function client() {
 
 type ImageMedia = 'image/jpeg' | 'image/png' | 'image/webp'
 
+// Noen modeller støtter ikke tvunget verktøyvalg (tool_choice: tool), så vi ber
+// om verktøykallet i instruksen og faller tilbake på JSON i tekstsvaret.
 async function callTool<T>(image: string, media: ImageMedia, prompt: string, tool: Anthropic.Tool): Promise<T> {
   const res = await client().messages.create({
     model: MODEL,
-    max_tokens: 2000,
+    max_tokens: 4000,
+    system:
+      `Du svarer alltid ved å kalle verktøyet ${tool.name} nøyaktig én gang, med alle påkrevde felter. ` +
+      'Skriv ingen annen tekst.',
     tools: [tool],
-    tool_choice: { type: 'tool', name: tool.name },
+    tool_choice: { type: 'auto' },
     messages: [
       {
         role: 'user',
@@ -36,8 +41,21 @@ async function callTool<T>(image: string, media: ImageMedia, prompt: string, too
     ]
   })
   const block = res.content.find((b) => b.type === 'tool_use')
-  if (!block || block.type !== 'tool_use') throw new Error('AI ga ikke strukturert svar')
-  return block.input as T
+  if (block && block.type === 'tool_use') return block.input as T
+
+  const text = res.content
+    .filter((b): b is Anthropic.TextBlock => b.type === 'text')
+    .map((b) => b.text)
+    .join('\n')
+  const match = text.match(/\{[\s\S]*\}/)
+  if (match) {
+    try {
+      return JSON.parse(match[0]) as T
+    } catch {
+      /* faller gjennom til feilen under */
+    }
+  }
+  throw new Error('AI ga ikke strukturert svar')
 }
 
 const LABEL_TOOL: Anthropic.Tool = {
