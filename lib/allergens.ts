@@ -83,7 +83,8 @@ export const ALLERGENS: AllergenDef[] = [
       ...s('mandel', 'mandl', 'almond', 'marsipan', 'marzipan', 'hasselnøtt', 'hasselnöt', 'hasselnød', 'hazelnut',
         'valnøtt', 'valnöt', 'valnød', 'walnut', 'cashew', 'pekan', 'pecan', 'paranøtt', 'paranöt', 'paranød',
         'brazil nut', 'pistasj', 'pistach', 'pistacie', 'macadamia', 'queensland', 'nøtt', 'nötter', 'nødder',
-        'tree nut', 'pralin', 'gianduja'),
+        'tree nut', 'pralin', 'gianduja', 'prunus amygdalus', 'corylus avellana', 'juglans regia', 'anacardium',
+        'bertholletia', 'macadamia ternifolia'),
       ...st('nuts', 'nut')
     ],
     exclude: ['peanøtt', 'jordnøtt', 'jordnöt', 'jordnød', 'peanut', 'kokosnøtt', 'kokosnöt', 'kokosnød', 'coconut',
@@ -99,7 +100,8 @@ export const ALLERGENS: AllergenDef[] = [
     terms: [
       ...s('hvete', 'hvede', 'vete', 'wheat', 'spelt', 'dinkel', 'havre', 'oats', 'durum', 'semule', 'semolina',
         'kamut', 'khorasan', 'couscous', 'bulgur', 'seitan', 'gluten', 'emmer', 'enkorn', 'einkorn', 'triticale',
-        'rugmel', 'rågmjöl', 'rugbrød', 'byggmel', 'byggryn', 'bygmel', 'kornmel'),
+        'rugmel', 'rågmjöl', 'rugbrød', 'byggmel', 'byggryn', 'bygmel', 'kornmel', 'triticum', 'hordeum', 'secale cereale',
+        'avena sativa'),
       ...st('rug', 'råg', 'rye', 'bygg', 'barley', 'malt', 'maltekstrakt', 'maltextrakt', 'graham', 'farro')
     ],
     // Merket glutenfri havre tåles av de fleste med cøliaki (Norsk cøliakiforening). Må stå før «glutenfri».
@@ -110,7 +112,7 @@ export const ALLERGENS: AllergenDef[] = [
   {
     key: 'soy',
     label: 'Soya',
-    terms: [...s('soya', 'soja', 'edamame', 'tempeh'), ...st('soy', 'tofu', 'miso', 'shoyu', 'tamari')],
+    terms: [...s('soya', 'soja', 'edamame', 'tempeh', 'glycine max'), ...st('soy', 'tofu', 'miso', 'shoyu', 'tamari')],
     exclude: ['soyafri', 'sojafri', 'soy free', 'soy-free', 'uten soya'],
     ambiguous: [...s('lecitin', 'lecithin', 'lecitiner'), ...w('e322')],
     ambiguousExclude: ['solsikkelecitin', 'solsikke-lecitin', 'rapslecitin', 'raps-lecitin', 'sunflower lecithin',
@@ -187,12 +189,49 @@ export const ALLERGENS: AllergenDef[] = [
 ]
 
 // Tilstander: sykdommer og intoleranser som regelmotoren oversetter til hva man må passe på.
-export type ConditionKey = 'coeliac' | 'lactose'
+export type ConditionKey = 'coeliac' | 'coeliac_strict' | 'lactose' | 'birch'
 
+/** Tilstander som vises som egne kort. «coeliac_strict» er et valg under cøliaki, ikke eget kort. */
 export const CONDITIONS: { key: ConditionKey; label: string; hint: string }[] = [
-  { key: 'coeliac', label: 'Cøliaki', hint: 'Gluten regnes som alvorlig. Også «kan inneholde spor» gir rødt.' },
-  { key: 'lactose', label: 'Laktoseintoleranse', hint: 'Ser etter laktose. Laktosefrie varer er OK.' }
+  {
+    key: 'coeliac',
+    label: 'Cøliaki',
+    hint: 'Gluten gir rødt. «Kan inneholde spor» gir gult, fordi de fleste med cøliaki tåler spor i små mengder. Glutenfri hvetestivelse er OK.'
+  },
+  { key: 'lactose', label: 'Laktoseintoleranse', hint: 'Ser etter laktose. Laktosefrie varer er OK.' },
+  {
+    key: 'birch',
+    label: 'Bjørkepollenallergi',
+    hint: 'Varsler om rå frukt, grønnsaker og nøtter som ofte gir kløe i munnen. Mange tåler dem kokt eller skrellet.'
+  }
 ]
+
+/** Glutenfri hvetestivelse tåles av de fleste med cøliaki, men ikke ved hveteallergi. Må stå før «glutenfri». */
+export const COELIAC_EXCLUDE = [
+  'glutenfri hvetestivelse', 'glutenfri hvete stivelse', 'glutenfri hvete-stivelse', 'hvetestivelse (glutenfri)',
+  'hvetestivelse(glutenfri)', 'hvetestivelse, glutenfri', 'hvetestivelse - glutenfri', 'glutenfri hvedestivelse',
+  'hvedestivelse (glutenfri)', 'glutenfri vetestärkelse', 'vetestärkelse (glutenfri)', 'gluten-free wheat starch',
+  'gluten free wheat starch', 'wheat starch (gluten free)', 'wheat starch (gluten-free)'
+]
+
+export const WHEAT_STARCH = /^(hvetestivelse|hvedestivelse|vetestärkelse|wheat starch|hvete-stivelse)/
+
+/** Varen er merket glutenfri (tekst eller symbolet med overstreket aks). */
+export function claimsGlutenFree(text: string): boolean {
+  return /glutenfri(tt|e)?\b|gluten[\s-]free|glutenfritt|glutenfria?\b/.test(normalize(text).replace(/glutenfri(e)? havre\w*/g, ''))
+}
+
+/** Bjørkepollen: mat som ofte gir kryssreaksjon (Norges Astma- og Allergiforbund, NHI). Gjelder mest rå mat. */
+export const BIRCH_DEF: AllergenDef = {
+  key: 'nuts',
+  label: 'Kryssreaksjon (bjørk)',
+  terms: [
+    ...s('eple', 'epler', 'pære', 'pærer', 'kiwi', 'fersken', 'nektarin', 'kirsebær', 'morell', 'plomme', 'aprikos',
+      'hasselnøtt', 'hasselnøtter', 'mandel', 'mandler', 'selleri', 'gulrot', 'gulrøtter', 'apple', 'pear', 'peach',
+      'cherry', 'plum', 'apricot', 'hazelnut', 'almond', 'celery', 'carrot', 'jordbær')
+  ],
+  exclude: ['eplecidereddik', 'epleeddik', 'eplejuicekonsentrat', 'pærekonsentrat', 'cider vinegar']
+}
 
 // Laktose: melkeprodukter med laktose. Kasein og myseprotein er protein, ikke laktose, men myse inneholder laktose.
 export const LACTOSE_DEF: AllergenDef = {

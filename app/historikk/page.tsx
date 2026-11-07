@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Mascot } from '@/components/Art'
+import RecallBanner from '@/components/RecallBanner'
 import AuthGate, { useSession } from '@/components/AuthGate'
 import { supabase } from '@/lib/supabase-browser'
 import { StatusIcon } from '@/components/AllergenIcon'
@@ -50,6 +51,11 @@ function History() {
   return (
     <main className="page">
       <h1>Historikk</h1>
+      <div className="seg" role="group" aria-label="Vis">
+        <Link href="/historikk" role="button" aria-current="page">Historikk</Link>
+        <Link href="/trygge" role="button">Trygge varer</Link>
+      </div>
+      <RecallBanner />
       {hasKids && (
         <div className="seg" role="group" aria-label="Vis skann fra">
           {([['all', 'Alle'], ['mine', 'Mine'], ['kids', 'Barnas']] as const).map(([k, l]) => (

@@ -136,11 +136,55 @@ describe('egne ingredienser og navn', () => {
 })
 
 describe('tilstander', () => {
-  it('cøliaki gjør spor av gluten rødt', () => {
+  it('cøliaki: spor av gluten gir gult med forklaring, svært sensitiv gir rødt', () => {
     const p: ProfileInput = { name: 'Marte', allergens: [], conditions: ['coeliac'] }
     const r = evaluate(label('Rismel, sukker. Kan inneholde spor av hvete.'), p)
-    expect(r.flag).toBe('red')
+    expect(r.flag).toBe('yellow')
     expect(r.findings[0].label).toBe('Gluten (cøliaki)')
+    expect(r.insights?.map((i) => i.id)).toContain('coeliac_traces')
+    const strict = evaluate(label('Rismel, sukker. Kan inneholde spor av hvete.'), { ...p, conditions: ['coeliac', 'coeliac_strict'] })
+    expect(strict.flag).toBe('red')
+    expect(strict.insights?.map((i) => i.id) ?? []).not.toContain('coeliac_traces')
+  })
+  it('cøliaki: glutenfri hvetestivelse er OK, men ikke ved hveteallergi', () => {
+    const p: ProfileInput = { name: 'Marte', allergens: [], conditions: ['coeliac'] }
+    const bread = label('Vann, glutenfri hvetestivelse, rismel, gjær, salt.')
+    const r = evaluate(bread, p)
+    expect(r.flag).toBe('green')
+    expect(r.insights?.map((i) => i.id)).toContain('coeliac_wheat_starch')
+    expect(evaluate(label('Vann, hvetestivelse (glutenfri), rismel.'), p).flag).toBe('green')
+    const wheat: ProfileInput = { name: 'Ola', allergens: [{ key: 'gluten', severity: 'severe' }] }
+    expect(evaluate(bread, wheat).flag).toBe('red')
+  })
+  it('cøliaki: «hvetestivelse*» godtas når varen er merket glutenfri', () => {
+    const p: ProfileInput = { name: 'Marte', allergens: [], conditions: ['coeliac'] }
+    const r = evaluate({ ...label('Vann, hvetestivelse*, maisstivelse.'), glutenFreeClaim: true }, p)
+    expect(r.flag).toBe('green')
+    expect(r.insights?.map((i) => i.id)).toEqual(expect.arrayContaining(['coeliac_wheat_starch', 'gluten_free_label']))
+    expect(evaluate(label('Vann, hvetestivelse, maisstivelse.'), p).flag).toBe('red')
+  })
+  it('cøliaki: vanlig havre gir rødt med forklaring, glutenfri havre er OK', () => {
+    const p: ProfileInput = { name: 'Marte', allergens: [], conditions: ['coeliac'] }
+    const r = evaluate(label('Havregryn, rosiner.'), p)
+    expect(r.flag).toBe('red')
+    expect(r.insights?.map((i) => i.id)).toContain('coeliac_oats')
+    expect(evaluate(label('Glutenfri havre, rosiner.'), p).flag).toBe('green')
+  })
+  it('bjørkepollen: rått eple gir gult med forklaring om kryssreaksjon', () => {
+    const p: ProfileInput = { name: 'Roar', allergens: [], conditions: ['birch'] }
+    const r = evaluate(label('Eple, gulrot, sitronsaft.'), p)
+    expect(r.flag).toBe('yellow')
+    expect(r.headline).toMatch(/kryssreaksjon/)
+    expect(r.insights?.map((i) => i.id)).toContain('birch_cross')
+    expect(evaluate(label('Ris, vann, salt.'), p).flag).toBe('green')
+  })
+  it('forklaringer: melkesyre og peanøtt ved nøtteallergi', () => {
+    const milk: ProfileInput = { name: 'A', allergens: [{ key: 'milk', severity: 'moderate' }] }
+    expect(evaluate(label('Kjøtt, salt, melkesyre.'), milk).insights?.map((i) => i.id)).toContain('lactic_acid')
+    const nuts: ProfileInput = { name: 'A', allergens: [{ key: 'nuts', severity: 'moderate' }] }
+    const r = evaluate(label('Sjokolade, peanøtter.'), nuts)
+    expect(r.flag).toBe('green')
+    expect(r.insights?.map((i) => i.id)).toContain('peanut_not_nut')
   })
   it('laktoseintoleranse: melk gir rødt, laktosefri melk er OK, kasein er ikke laktose', () => {
     const p: ProfileInput = { name: 'A', allergens: [], conditions: ['lactose'] }

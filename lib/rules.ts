@@ -12,8 +12,12 @@ import {
   ALLERGEN_BY_KEY,
   AllergenDef,
   AllergenKey,
+  BIRCH_DEF,
+  COELIAC_EXCLUDE,
   ConditionKey,
   LACTOSE_DEF,
+  WHEAT_STARCH,
+  claimsGlutenFree,
   Severity,
   blankOut,
   findTerms,
@@ -21,8 +25,10 @@ import {
   matchAllergen,
   normalize
 } from './allergens'
+import { INSIGHTS, Insight } from './insights'
+export type { Insight } from './insights'
 
-export type Mode = 'barcode' | 'label' | 'food'
+export type Mode = 'barcode' | 'label' | 'food' | 'product'
 export type Flag = 'red' | 'yellow' | 'green'
 export type StructuredStatus = 'contains' | 'traces' | 'free' | 'unknown'
 export type Status = 'contains' | 'traces' | 'ambiguous' | 'likely' | 'none' | 'unknown'
@@ -51,8 +57,25 @@ export interface ProductData {
   legibility?: Legibility
   likely?: AllergenKey[]
   confidence?: 'low' | 'medium' | 'high'
+  /** Pakken er merket glutenfri eller har symbolet med overstreket aks. */
+  glutenFreeClaim?: boolean
+  nutrition?: Nutrition | null
+  grainInfo?: string | null
+  keyhole?: boolean
+  labels?: string[]
+  image?: string | null
   source: string
   found: boolean
+}
+
+export interface Nutrition {
+  energy_kcal?: number
+  carbohydrates_g?: number
+  sugars_g?: number
+  fiber_g?: number
+  protein_g?: number
+  fat_g?: number
+  salt_g?: number
 }
 
 export interface Finding {
@@ -76,6 +99,8 @@ export interface Evaluation {
   findings: Finding[]
   /** Allergener i produktet som ikke står på profilen (til informasjon). */
   others?: OtherAllergen[]
+  /** «Godt å vite»: forklaringer som bygger kunnskap, med kilde. */
+  insights?: Insight[]
 }
 
 const TRACE_PATTERNS = [
@@ -122,6 +147,8 @@ interface Check {
   def: AllergenDef
   dataKey: AllergenKey
   lactose?: boolean
+  coeliac?: boolean
+  birch?: boolean
 }
 
 function otherAllergens(product: ProductData, main: string, traces: string, findings: Finding[]): OtherAllergen[] {
@@ -149,7 +176,19 @@ export function buildChecks(profile: ProfileInput): Check[] {
     checks.push({ key: pa.key, label: def.label, severity: pa.severity, def, dataKey: pa.key })
   }
   if (coeliac) {
-    checks.push({ key: 'gluten', label: 'Gluten (cøliaki)', severity: 'severe', def: ALLERGEN_BY_KEY.gluten, dataKey: 'gluten' })
+    // Spor gir gult som standard (Norsk cøliakiforening). «Svært sensitiv» gir rødt.
+    const g = ALLERGEN_BY_KEY.gluten
+    checks.push({
+      key: 'gluten',
+      label: 'Gluten (cøliaki)',
+      severity: conditions.includes('coeliac_strict') ? 'severe' : 'moderate',
+      def: { ...g, exclude: [...COELIAC_EXCLUDE, ...g.exclude] },
+      dataKey: 'gluten',
+      coeliac: true
+    })
+  }
+  if (conditions.includes('birch')) {
+    checks.push({ key: 'birch', label: 'Kryssreaksjon (bjørk)', severity: 'mild', def: BIRCH_DEF, dataKey: 'nuts', birch: true })
   }
   if (conditions.includes('lactose') && !profile.allergens.some((a) => a.key === 'milk')) {
     checks.push({ key: 'lactose', label: 'Laktose', severity: 'moderate', def: LACTOSE_DEF, dataKey: 'milk', lactose: true })
@@ -157,7 +196,7 @@ export function buildChecks(profile: ProfileInput): Check[] {
   return checks
 }
 
-export function evaluate(product: ProductData, profile: ProfileInput): Evaluation {
+function evaluateCore(product: ProductData, profile: ProfileInput, flags: CoreFlags): Evaluation {
   const reasons: string[] = []
   const findings: Finding[] = []
 
@@ -167,12 +206,24 @@ export function evaluate(product: ProductData, profile: ProfileInput): Evaluatio
   const tracesAll = [traces, extraTraces ? normalize(extraTraces) : ''].filter(Boolean).join(' ')
   const hasText = text.length > 0
   const legible = product.legibility ? product.legibility === 'good' : true
+  const normText = normalize(text)
+  const glutenFree = !!product.glutenFreeClaim || claimsGlutenFree(`${product.name ?? ''} ${text}`)
+  let usedWheatStarch = false
+  let sawOats = false
+  let sawBirch = false
+  const sync = () => Object.assign(flags, { usedWheatStarch, sawOats, sawBirch, glutenFree })
 
   for (const c of buildChecks(profile)) {
     const def = c.def
     const f: Finding = { key: c.key, label: c.label, severity: c.severity, status: 'none', evidence: [] }
 
     if (product.mode === 'food') {
+      if (c.birch) {
+        // Uemballert mat: maskoten kan ikke se om eplet er rått. Vis bare forklaringen.
+        sawBirch = true
+        findings.push(f)
+        continue
+      }
       f.status = product.likely?.includes(c.dataKey) ? 'likely' : 'unknown'
       findings.push(f)
       continue
@@ -185,7 +236,31 @@ export function evaluate(product: ProductData, profile: ProfileInput): Evaluatio
 
     const inMain = hasText ? matchAllergen(main, def) : { hits: [], ambiguous: [] }
     const inTraces = tracesAll ? matchAllergen(tracesAll, def) : { hits: [], ambiguous: [] }
-    const st = product.structured?.[c.dataKey]
+    let st = c.birch ? undefined : product.structured?.[c.dataKey]
+
+    if (c.coeliac) {
+      // «Hvetestivelse*» med fotnote om glutenfri: OK når varen er merket glutenfri.
+      if (glutenFree && inMain.hits.length) {
+        const kept = inMain.hits.filter((h) => !WHEAT_STARCH.test(h))
+        if (kept.length < inMain.hits.length) usedWheatStarch = true
+        inMain.hits = kept
+      }
+      if (hasText && COELIAC_EXCLUDE.some((p) => normText.includes(p))) usedWheatStarch = true
+      // Butikkdata sier ofte «inneholder gluten» om glutenfri hvetestivelse. Stol på ingredienslisten da.
+      if (st === 'contains' && usedWheatStarch && !inMain.hits.length) st = undefined
+      if (inMain.hits.some((h) => /havre|oats/.test(h))) sawOats = true
+    }
+
+    if (c.birch) {
+      if (inMain.hits.length) {
+        f.status = 'ambiguous'
+        f.evidence = inMain.hits
+        f.note = 'Inneholder mat som ofte gir kryssreaksjon ved bjørkepollenallergi. Mange tåler den kokt eller skrellet.'
+        sawBirch = true
+      }
+      findings.push(f)
+      continue
+    }
 
     if (inMain.hits.length || st === 'contains') {
       f.status = 'contains'
@@ -227,6 +302,7 @@ export function evaluate(product: ProductData, profile: ProfileInput): Evaluatio
     findings.push(f)
   }
 
+  sync()
   const others = otherAllergens(product, main, tracesAll, findings)
   const contains = findings.filter((f) => f.status === 'contains')
   const severeTraces = findings.filter((f) => f.status === 'traces' && f.severity === 'severe')
@@ -275,7 +351,9 @@ export function evaluate(product: ProductData, profile: ProfileInput): Evaluatio
     const headline = otherTraces.length
       ? `Kan inneholde spor av ${listLabels(otherTraces)}`
       : ambiguous.length
-        ? `Usikker ingrediens: ${ambiguous[0].evidence[0]}`
+        ? ambiguous[0].key === 'birch'
+          ? `Kan gi kryssreaksjon: ${ambiguous[0].evidence.join(', ')}`
+          : `Usikker ingrediens: ${ambiguous[0].evidence[0]}`
         : 'Usikkert'
     return { flag: 'yellow', headline: cap(headline), reasons, findings, others }
   }
@@ -291,6 +369,42 @@ export function evaluate(product: ProductData, profile: ProfileInput): Evaluatio
   return { flag: 'green', headline: `Ingen av ${who} allergener funnet`, reasons, findings, others }
 }
 
+interface CoreFlags {
+  usedWheatStarch?: boolean
+  sawOats?: boolean
+  sawBirch?: boolean
+  glutenFree?: boolean
+}
+
+/** Bygg «Godt å vite» ut fra hva som faktisk skjedde i vurderingen. */
+function buildInsights(product: ProductData, profile: ProfileInput, ev: Evaluation, flags: CoreFlags): Insight[] {
+  const out: Insight[] = []
+  const conditions = profile.conditions ?? []
+  const coeliac = conditions.includes('coeliac')
+  const gluten = ev.findings.find((f) => f.key === 'gluten')
+  const text = normalize(`${product.ingredientsText ?? ''} ${product.tracesText ?? ''}`)
+
+  if (product.mode === 'product') out.push(INSIGHTS.product_pharmacy)
+  if (coeliac && gluten?.status === 'traces' && !conditions.includes('coeliac_strict')) out.push(INSIGHTS.coeliac_traces)
+  if (coeliac && flags.usedWheatStarch) out.push(INSIGHTS.coeliac_wheat_starch)
+  if (coeliac && flags.sawOats) out.push(INSIGHTS.coeliac_oats)
+  if (coeliac && flags.glutenFree && gluten && gluten.status !== 'contains') out.push(INSIGHTS.gluten_free_label)
+  if (ev.findings.some((f) => f.status === 'traces' && f.key !== 'gluten' && f.severity !== 'severe')) out.push(INSIGHTS.traces_general)
+  const milkish = profile.allergens.some((a) => a.key === 'milk') || conditions.includes('lactose')
+  if (milkish && /melkesyre|mælkesyre|mjölksyra|lactic acid/.test(text)) out.push(INSIGHTS.lactic_acid)
+  const nutsOnly = profile.allergens.some((a) => a.key === 'nuts') && !profile.allergens.some((a) => a.key === 'peanut')
+  if (nutsOnly && /peanøtt|jordnøtt|peanut/.test(text)) out.push(INSIGHTS.peanut_not_nut)
+  if (flags.sawBirch) out.push(INSIGHTS.birch_cross)
+  return out
+}
+
+export function evaluate(product: ProductData, profile: ProfileInput): Evaluation {
+  const flags: CoreFlags = {}
+  const ev = evaluateCore(product, profile, flags)
+  const insights = buildInsights(product, profile, ev, flags)
+  return insights.length ? { ...ev, insights } : ev
+}
+
 // ---------- Familievurdering: én skann mot flere profiler ----------
 
 export interface PersonResult {
@@ -300,6 +414,7 @@ export interface PersonResult {
 }
 
 export interface FamilyEvaluation {
+  insights: Insight[]
   flag: Flag
   headline: string
   people: PersonResult[]
@@ -317,8 +432,11 @@ export function evaluateFamily(
   profiles: (ProfileInput & { id: string })[]
 ): FamilyEvaluation {
   const people = profiles.map((p) => ({ profileId: p.id, name: p.name, evaluation: evaluate(product, p) }))
+  const seen = new Set<string>()
+  const insights: Insight[] = []
+  for (const p of people) for (const i of p.evaluation.insights ?? []) if (!seen.has(i.id)) seen.add(i.id) && insights.push(i)
   if (people.length === 1) {
-    return { flag: people[0].evaluation.flag, headline: people[0].evaluation.headline, people }
+    return { flag: people[0].evaluation.flag, headline: people[0].evaluation.headline, people, insights }
   }
   const flag = people.reduce<Flag>((w, p) => (RANK[p.evaluation.flag] > RANK[w] ? p.evaluation.flag : w), 'green')
   const red = people.filter((p) => p.evaluation.flag === 'red').map((p) => p.name)
@@ -329,5 +447,65 @@ export function evaluateFamily(
   else if (red.length) headline = `Ikke for ${joinNames(red)}`
   else if (yellow.length === people.length) headline = 'Usikkert for alle'
   else headline = `Usikkert for ${joinNames(yellow)}`
-  return { flag, headline, people }
+  return { flag, headline, people, insights }
+}
+
+// ---------- Meny: vurdering per rett for hele familien ----------
+
+export interface MenuDishInput {
+  name: string
+  description: string
+  allergens: AllergenKey[]
+  allergenInfo: boolean
+}
+
+export interface MenuDishResult {
+  name: string
+  description: string
+  flag: Flag
+  headline: string
+  people: { name: string; flag: Flag; headline: string }[]
+}
+
+export interface MenuEvaluation {
+  flag: Flag
+  headline: string
+  dishes: MenuDishResult[]
+  insights: Insight[]
+}
+
+export function evaluateMenu(dishes: MenuDishInput[], profiles: (ProfileInput & { id: string })[]): MenuEvaluation {
+  const results: MenuDishResult[] = dishes.map((d) => {
+    const structured: Partial<Record<AllergenKey, StructuredStatus>> = {}
+    if (d.allergenInfo) for (const k of Object.keys(ALLERGEN_BY_KEY) as AllergenKey[]) structured[k] = 'free'
+    for (const k of d.allergens) structured[k] = 'contains'
+    const product: ProductData = {
+      mode: 'label',
+      name: d.name,
+      ingredientsText: d.description || d.name,
+      structured,
+      legibility: d.allergenInfo ? 'good' : 'partial',
+      source: 'Foto av meny (lest av AI)',
+      found: true
+    }
+    const fam = evaluateFamily(product, profiles)
+    return {
+      name: d.name,
+      description: d.description,
+      flag: fam.flag,
+      headline: fam.headline,
+      people: fam.people.map((p) => ({ name: p.name, flag: p.evaluation.flag, headline: p.evaluation.headline }))
+    }
+  })
+  const ok = results.filter((r) => r.flag === 'green').length
+  const flag: Flag = ok ? 'green' : results.some((r) => r.flag === 'yellow') ? 'yellow' : 'red'
+  const who = profiles.length > 1 ? 'alle' : profiles[0]?.name ?? 'deg'
+  const headline = !results.length
+    ? 'Fant ingen retter'
+    : ok
+      ? `${ok} av ${results.length} retter passer ${who}`
+      : `Ingen retter passer ${who} sikkert`
+  const order: Record<Flag, number> = { green: 0, yellow: 1, red: 2 }
+  results.sort((a, b) => order[a.flag] - order[b.flag])
+  return { flag: results.length ? flag : 'yellow', headline, dishes: results, insights: [INSIGHTS.menu_ask] }
 }

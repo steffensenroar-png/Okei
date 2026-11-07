@@ -12,6 +12,9 @@ export interface FamilyProfile {
   custom_terms: string[]
   conditions: ConditionKey[]
   avatar?: string | null
+  emergency_note?: string | null
+  epipen_expiry?: string | null
+  wishes?: Record<string, unknown> | null
 }
 
 export const AVATAR_COLORS = [

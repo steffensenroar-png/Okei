@@ -32,6 +32,16 @@ export default function Personvern() {
       </section>
 
       <section className="stack">
+        <h2>Delte allergikort</h2>
+        <p>Du kan lage en lenke til et allergikort. Den som har lenken, ser navn, dyr, allergier, tilstander, egne ord og nødinfo for profilene du har valgt, og kan skanne varer mot dem uten å logge inn. Det som skannes via lenken, lagres ikke. Du kan trekke lenken tilbake når som helst, og den slutter å virke etter 180 dager.</p>
+      </section>
+
+      <section className="stack">
+        <h2>Tilbakekallinger, trygge varer og bruk</h2>
+        <p>Okei henter Mattilsynets offentlige liste over tilbakekallinger. Sammenligningen med varene du har skannet skjer på din telefon, og ingenting om deg sendes til Mattilsynet. Varer du lagrer som trygge, lagres med ingrediensliste så vi kan si fra om den endres. Vi logger når du bruker bildeskann, for å holde taket på antall skann per døgn.</p>
+      </section>
+
+      <section className="stack">
         <h2>Hvorfor og på hvilket grunnlag</h2>
         <p>Vi bruker opplysningene bare for å vise deg om maten passer profilen, og for å forbedre treffsikkerheten i betaen. Helseopplysningene behandles på grunnlag av ditt uttrykkelige samtykke, som du gir før første bruk. Du kan trekke samtykket ved å slette profilene og historikken.</p>
       </section>

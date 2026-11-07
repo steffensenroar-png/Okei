@@ -11,7 +11,8 @@ const EMOJI: Partial<Record<Key, string>> = {
   peanut: '🥜',
   fish: '🐟',
   crustaceans: '🦐',
-  molluscs: '🦪'
+  molluscs: '🦪',
+  birch: '🌳'
 }
 
 function Svg({ size, children }: { size: number; children: React.ReactNode }) {

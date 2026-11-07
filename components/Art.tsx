@@ -272,7 +272,25 @@ export function Animal({ id, size = 40 }: { id: AnimalId; size?: number }) {
 
 /* ---------- Skannemodus-fliser ---------- */
 
-export function ModeArt({ mode, size = 56 }: { mode: 'barcode' | 'label' | 'food'; size?: number }) {
+export function ModeArt({ mode, size = 56 }: { mode: 'barcode' | 'label' | 'food' | 'menu' | 'product'; size?: number }) {
+  if (mode === 'menu')
+    return (
+      <svg width={size} height={size} viewBox="0 0 56 56" aria-hidden="true">
+        <rect x="12" y="8" width="26" height="40" rx="3" fill="#fff" stroke={OUT} strokeWidth="2.4" />
+        <path d="M17 17 h16 M17 24 h12 M17 31 h16 M17 38 h10" stroke="#9AA7A0" strokeWidth="2.4" strokeLinecap="round" />
+        <path d="M44 10 v14 a3 3 0 0 1 -6 0 v-14 M41 10 v36" fill="none" stroke={OUT} strokeWidth="2.4" strokeLinecap="round" />
+      </svg>
+    )
+  if (mode === 'product')
+    return (
+      <svg width={size} height={size} viewBox="0 0 56 56" aria-hidden="true">
+        <rect x="10" y="20" width="18" height="28" rx="4" fill="#fff" stroke={OUT} strokeWidth="2.4" />
+        <rect x="13" y="13" width="12" height="8" rx="2" fill="#9ED3B4" stroke={OUT} strokeWidth="2.4" />
+        <path d="M14 30 h10 M14 36 h7" stroke="#9AA7A0" strokeWidth="2.2" strokeLinecap="round" />
+        <path d="M34 22 h12 l-2 26 h-8 z" fill="#FFD7E4" stroke={OUT} strokeWidth="2.4" strokeLinejoin="round" />
+        <rect x="36" y="14" width="8" height="8" rx="2" fill="#fff" stroke={OUT} strokeWidth="2.4" />
+      </svg>
+    )
   if (mode === 'barcode')
     return (
       <svg width={size} height={size} viewBox="0 0 56 56" aria-hidden="true">

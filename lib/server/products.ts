@@ -1,7 +1,7 @@
 // Produktoppslag på strekkode: Kassalapp (norske varer) først, så Open Food Facts.
 
 import { AllergenKey, keyFromName } from '../allergens'
-import { ProductData, StructuredStatus } from '../rules'
+import { Nutrition, ProductData, StructuredStatus } from '../rules'
 
 const TIMEOUT_MS = 8000
 
@@ -62,6 +62,12 @@ export async function kassalapp(ean: string): Promise<ProductData | null> {
     }
   }
 
+  const nutritionList: any[] = [data.nutrition, ...products.map((p) => p?.nutrition)].find(
+    (x) => Array.isArray(x) && x.length
+  ) ?? []
+  const labelList: any[] = [data.labels, ...products.map((p) => p?.labels)].filter(Array.isArray).flat()
+  const labels = [...new Set(labelList.map((l) => String(l?.display_name ?? l?.name ?? '')).filter(Boolean))]
+
   return {
     mode: 'barcode',
     name: first?.name ?? null,
@@ -69,9 +75,33 @@ export async function kassalapp(ean: string): Promise<ProductData | null> {
     ean,
     ingredientsText: ingredients,
     structured,
+    nutrition: mapNutrition(nutritionList),
+    labels,
+    keyhole: labels.some((l) => /nøkkelhull|keyhole/i.test(l)),
+    glutenFreeClaim: labels.some((l) => /glutenfri|gluten free|crossed grain/i.test(l)),
+    image: products.map((p) => p?.image).find((x) => typeof x === 'string' && x) ?? null,
     source: 'Kassalapp (norske dagligvarekjeder)',
     found: true
   }
+}
+
+/** Kassalapp oppgir næringsinnhold som liste med kode/visningsnavn. */
+export function mapNutrition(list: any[]): Nutrition | null {
+  const out: Nutrition = {}
+  for (const n of list) {
+    const name = `${n?.code ?? ''} ${n?.display_name ?? ''}`.toLowerCase()
+    const v = Number(n?.amount)
+    if (!Number.isFinite(v)) continue
+    if (/kcal|kalori/.test(name)) out.energy_kcal = v
+    else if (/sukker|sugar/.test(name)) out.sugars_g = v
+    else if (/karbo|carb/.test(name)) out.carbohydrates_g = v
+    else if (/fiber/.test(name)) out.fiber_g = v
+    else if (/protein/.test(name)) out.protein_g = v
+    else if (/mettet|saturated/.test(name)) continue
+    else if (/fett|fat/.test(name)) out.fat_g = v
+    else if (/salt/.test(name)) out.salt_g = v
+  }
+  return Object.keys(out).length ? out : null
 }
 
 const OFF_TAGS: Record<string, AllergenKey> = {

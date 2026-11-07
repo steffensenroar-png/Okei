@@ -9,15 +9,57 @@ import { CameraIcon, Logo } from '@/components/Icons'
 import { supabase } from '@/lib/supabase-browser'
 import { compressImage, FamilyProfile, postScan, storeGet, storeSet } from '@/lib/client'
 import { Animal, animalFor, Mascot, ModeArt } from '@/components/Art'
-import type { Mode } from '@/lib/rules'
+import RecallBanner from '@/components/RecallBanner'
+import { KidScan, getKidMode } from '@/components/KidMode'
+
+type Mode = 'barcode' | 'label' | 'food' | 'menu' | 'product'
 
 const MODES: { id: Mode; label: string; hint: string; busy: string }[] = [
   { id: 'barcode', label: 'Strekkode', hint: '', busy: 'Slår opp produktet…' },
   { id: 'label', label: 'Etikett', hint: 'Ta bilde av hele ingredienslisten, også «kan inneholde spor».', busy: 'Leser ingredienslisten…' },
-  { id: 'food', label: 'Mat uten pakke', hint: 'Ta bilde av maten. Vi gjetter hva det er, så svaret blir aldri grønt.', busy: 'Ser på bildet…' }
+  { id: 'food', label: 'Mat uten pakke', hint: 'Ta bilde av maten. Vi gjetter hva det er, så svaret blir aldri grønt.', busy: 'Ser på bildet…' },
+  { id: 'menu', label: 'Meny', hint: 'Ta bilde av menyen eller allergenlisten på spisestedet. Du får svar per rett.', busy: 'Leser menyen…' },
+  { id: 'product', label: 'Medisin og hud', hint: 'Ta bilde av ingredienslisten eller pakningsvedlegget. Spør alltid apoteket.', busy: 'Leser ingredienslisten…' }
 ]
 
+const PHOTO_TEXT: Record<Mode, string> = {
+  barcode: '',
+  label: 'Ta bilde av ingredienslisten',
+  food: 'Ta bilde av maten',
+  menu: 'Ta bilde av menyen',
+  product: 'Ta bilde av ingredienslisten'
+}
+
+function PenReminder({ profiles }: { profiles: FamilyProfile[] }) {
+  const soon = profiles.filter((p) => p.epipen_expiry && new Date(p.epipen_expiry).getTime() - Date.now() < 30 * 864e5)
+  if (!soon.length) return null
+  return (
+    <div className="stack" style={{ gap: 8 }}>
+      {soon.map((p) => {
+        const past = new Date(p.epipen_expiry!).getTime() < Date.now()
+        return (
+          <Link key={p.id} href={`/profiler?id=${p.id}`} className="pen-note">
+            💉 {p.name}s adrenalinpenn {past ? 'har gått ut' : 'går ut'} {new Date(p.epipen_expiry!).toLocaleDateString('nb-NO', { day: 'numeric', month: 'long' })}. {past ? 'Skaff ny.' : 'Husk å fornye.'}
+          </Link>
+        )
+      })}
+    </div>
+  )
+}
+
 function Scan() {
+  const [kid, setKid] = useState<ReturnType<typeof getKidMode>>(null)
+  const [checked, setChecked] = useState(false)
+  useEffect(() => {
+    setKid(getKidMode())
+    setChecked(true)
+  }, [])
+  if (!checked) return null
+  if (kid) return <KidScan kid={kid} />
+  return <FullScan />
+}
+
+function FullScan() {
   const router = useRouter()
   const session = useSession()
   const [sharedWith, setSharedWith] = useState<string[]>([])
@@ -39,7 +81,7 @@ function Scan() {
   useEffect(() => {
     supabase()
       .from('family_profiles')
-      .select('id, name, birth_year, allergens, custom_terms, conditions, avatar')
+      .select('id, name, birth_year, allergens, custom_terms, conditions, avatar, epipen_expiry')
       .order('created_at')
       .then(({ data }) => {
         const list = (data ?? []) as FamilyProfile[]
@@ -164,13 +206,26 @@ function Scan() {
         </p>
       )}
 
-      <div className="mode-tiles" role="group" aria-label="Hva vil du sjekke?">
-        {MODES.map((m) => (
-          <button key={m.id} className={`mode-tile ${m.id}`} aria-pressed={m.id === mode} onClick={() => pickMode(m.id)}>
-            <ModeArt mode={m.id} size={48} />
-            <span>{m.label}</span>
-          </button>
-        ))}
+      <RecallBanner />
+      <PenReminder profiles={profiles} />
+
+      <div className="stack" style={{ gap: 8 }} role="group" aria-label="Hva vil du sjekke?">
+        <div className="mode-tiles">
+          {MODES.slice(0, 3).map((m) => (
+            <button key={m.id} className={`mode-tile ${m.id}`} aria-pressed={m.id === mode} onClick={() => pickMode(m.id)}>
+              <ModeArt mode={m.id} size={48} />
+              <span>{m.label}</span>
+            </button>
+          ))}
+        </div>
+        <div className="mode-tiles more">
+          {MODES.slice(3).map((m) => (
+            <button key={m.id} className={`mode-tile ${m.id}`} aria-pressed={m.id === mode} onClick={() => pickMode(m.id)}>
+              <ModeArt mode={m.id} size={34} />
+              <span>{m.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {busy ? (
@@ -185,7 +240,7 @@ function Scan() {
           <button className={`photo-drop ${mode}`} onClick={() => fileRef.current?.click()}>
             <span className="photo-art"><ModeArt mode={mode} size={96} /></span>
             <span className="photo-cta"><CameraIcon /></span>
-            {mode === 'label' ? 'Ta bilde av ingredienslisten' : 'Ta bilde av maten'}
+            {PHOTO_TEXT[mode]}
           </button>
           <p className="small muted" style={{ textAlign: 'center' }}>{current.hint}</p>
           <input ref={fileRef} type="file" accept="image/*" capture="environment" hidden onChange={onFile} />

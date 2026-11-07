@@ -9,11 +9,15 @@ import { FlagIcon } from '@/components/Icons'
 import AllergenIcon, { StatusIcon } from '@/components/AllergenIcon'
 import { supabase } from '@/lib/supabase-browser'
 import { apiPost } from '@/lib/client'
-import type { Evaluation, Finding, Flag, PersonResult } from '@/lib/rules'
+import type { Evaluation, Finding, Flag, Insight, MenuDishResult, Nutrition, PersonResult } from '@/lib/rules'
+import type { WishNote } from '@/lib/wishes'
+import { ChangedWarning, Insights, MenuDishes, NutritionBox, SaveSafe, WishNotes } from '@/components/ResultParts'
+import { CallButton, getKidMode, KidMode, speak } from '@/components/KidMode'
 
 interface Scan {
   id: string
-  mode: 'barcode' | 'label' | 'food'
+  mode: 'barcode' | 'label' | 'food' | 'menu' | 'product'
+  profile_ids?: string[] | null
   profile_name: string | null
   product_name: string | null
   ean: string | null
@@ -25,9 +29,25 @@ interface Scan {
   created_at: string
   result: {
     family?: boolean
-    people?: PersonResult[]
+    people?: (PersonResult & { wishes?: WishNote[] })[]
     evaluation: Evaluation
-    product: { brand?: string | null; ingredientsText?: string | null; tracesText?: string | null; confidence?: string | null }
+    insights?: Insight[]
+    changed?: { savedAt: string; oldText: string | null } | null
+    fetchedAt?: string
+    menu?: boolean
+    dishes?: MenuDishResult[]
+    place?: string | null
+    product: {
+      brand?: string | null
+      ean?: string | null
+      image?: string | null
+      ingredientsText?: string | null
+      tracesText?: string | null
+      confidence?: string | null
+      nutrition?: Nutrition | null
+      grainInfo?: string | null
+      keyhole?: boolean
+    }
   }
 }
 
@@ -37,6 +57,7 @@ interface Alternative {
   ean: string | null
   image: string | null
   price: number | null
+  notes?: string[]
 }
 
 const EYEBROW: Record<Flag, string> = { red: 'NEI · RØDT FLAGG', yellow: 'USIKKERT · GULT FLAGG', green: 'OK · GRØNT FLAGG' }
@@ -46,13 +67,13 @@ const ACTION: Record<Flag, string> = {
   green: 'Sjekk etiketten før du spiser.'
 }
 const PERSON_WORD: Record<Flag, string> = { red: 'Ikke spis', yellow: 'Usikkert', green: 'OK' }
-const MODE_LABEL = { barcode: 'Strekkode', label: 'Foto av ingrediensliste', food: 'Gjetning fra bilde' }
+const MODE_LABEL = { barcode: 'Strekkode', label: 'Foto av ingrediensliste', food: 'Gjetning fra bilde', menu: 'Foto av meny', product: 'Foto av produkt' }
 const CONFIDENCE: Record<string, string> = { low: 'lav', medium: 'middels', high: 'høy' }
 const RANK: Record<Flag, number> = { red: 0, yellow: 1, green: 2 }
 
 const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
-function Highlighted({ text, red, amber }: { text: string; red: string[]; amber: string[] }) {
+function Highlighted({ text, red, amber, who }: { text: string; red: string[]; amber: string[]; who?: Record<string, string> }) {
   const parts = useMemo(() => {
     const words = [...red, ...amber].filter((w) => w && w.length > 1)
     if (!words.length) return [text]
@@ -65,8 +86,9 @@ function Highlighted({ text, red, amber }: { text: string; red: string[]; amber:
     <>
       {parts.map((p, i) => {
         const l = p.toLowerCase()
-        if (lowerRed.includes(l)) return <mark key={i} className="hit">{p}</mark>
-        if (lowerAmber.includes(l)) return <mark key={i} className="hit-amber">{p}</mark>
+        const sup = who?.[l] ? <sup className="who" aria-label={`gjelder ${who[l]}`}>{who[l]}</sup> : null
+        if (lowerRed.includes(l)) return <span key={i}><mark className="hit">{p}</mark>{sup}</span>
+        if (lowerAmber.includes(l)) return <span key={i}><mark className="hit-amber">{p}</mark>{sup}</span>
         return <span key={i}>{p}</span>
       })}
     </>
@@ -124,6 +146,7 @@ function PersonCard({ person, avatar }: { person: PersonResult; avatar: { id: st
         </div>
         <span className="small" style={{ fontWeight: 600 }}>{person.evaluation.headline}</span>
         <Findings findings={person.evaluation.findings} onlyProblems />
+        <WishNotes notes={(person as PersonResult & { wishes?: WishNote[] }).wishes} />
       </div>
     </div>
   )
@@ -172,6 +195,7 @@ function Alternatives({ scanId, many }: { scanId: string; many: boolean }) {
           <span className="stack" style={{ gap: 2, flex: 1, minWidth: 0 }}>
             <span style={{ fontWeight: 700 }}>{a.name}</span>
             <span className="small muted">{[a.brand, a.price ? `ca. ${Math.round(a.price)} kr` : null].filter(Boolean).join(' · ')}</span>
+            {!!a.notes?.length && <span className="small" style={{ color: 'var(--green)', fontWeight: 600 }}>✓ {a.notes.join(', ')}</span>}
           </span>
         </div>
       ))}
@@ -188,6 +212,8 @@ function Result() {
   const [feedback, setFeedback] = useState('')
   const [sent, setSent] = useState(false)
   const [open, setOpen] = useState(false)
+  const [kid, setKid] = useState<KidMode | null>(null)
+  useEffect(() => setKid(getKidMode()), [])
 
   useEffect(() => {
     supabase()
@@ -239,6 +265,37 @@ function Result() {
     )
   }
 
+  if (scan.result.menu) {
+    return (
+      <main style={{ display: 'flex', flexDirection: 'column', paddingBottom: 104 }}>
+        <div className={`flag-head ${scan.flag}`}>
+          <div className="row" style={{ justifyContent: 'space-between' }}>
+            <Link href="/skann" aria-label="Tilbake til skanning" style={{ color: 'inherit', display: 'flex', width: 44, height: 44, alignItems: 'center' }}>
+              <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true">
+                <path d="M14 4l-7 7 7 7" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </Link>
+            <span className="tag">For {scan.profile_name}</span>
+          </div>
+          <div className="row" style={{ gap: 10, alignItems: 'flex-end' }}>
+            <div className="stack" style={{ gap: 8, flex: 1, minWidth: 0 }}>
+              <span className="flag-word">{scan.result.place ? `MENY · ${scan.result.place.toUpperCase()}` : 'MENY'}</span>
+              <h1 style={{ fontSize: 26 }}>{scan.headline}</h1>
+            </div>
+            <span className="flag-mascot"><Mascot mood={scan.flag === 'green' ? 'happy' : scan.flag === 'red' ? 'stop' : 'unsure'} size={96} /></span>
+          </div>
+          <p className="flag-action">Si fra om allergien når du bestiller.</p>
+        </div>
+        <div className="page" style={{ paddingBottom: 24 }}>
+          <MenuDishes dishes={scan.result.dishes ?? []} />
+          <Insights items={scan.result.insights} />
+          <p className="tiny">Kilde: {scan.source}. Rettene er lest av AI og kan inneholde feil. Ved alvorlig reaksjon: ring <b>113</b>.</p>
+          <Link className="btn btn-dark" href="/skann">Skann en til</Link>
+        </div>
+      </main>
+    )
+  }
+
   const people: PersonResult[] = scan.result.people?.length
     ? scan.result.people
     : [{ profileId: '', name: scan.profile_name ?? '', evaluation: scan.result.evaluation }]
@@ -253,7 +310,27 @@ function Result() {
   const others = (othersAll[0] ?? []).filter((o) => othersAll.every((list) => list.some((x) => x.label === o.label)))
   const product = scan.result.product ?? {}
   const ingredients = [product.ingredientsText, product.tracesText].filter(Boolean).join(' ')
-  const canSuggest = scan.flag !== 'green' && !!scan.product_name && scan.mode !== 'food'
+  const wishMiss = people.some((p) => ((p as PersonResult & { wishes?: WishNote[] }).wishes ?? []).some((w) => w.ok === false))
+  const canSuggest = (scan.flag !== 'green' || wishMiss) && !!scan.product_name && scan.mode !== 'food' && scan.mode !== 'product' && !kid
+  // Initialer ved hvert treff når flere personer er med.
+  const who: Record<string, string> = {}
+  if (many) {
+    const short = (n: string) => n.trim().charAt(0).toUpperCase()
+    for (const p of people)
+      for (const f of p.evaluation.findings)
+        if (f.status === 'contains' || f.status === 'traces' || f.status === 'ambiguous')
+          for (const w of f.evidence) {
+            const k = w.toLowerCase()
+            const cur = who[k] ? who[k].split('·') : []
+            if (!cur.includes(short(p.name))) who[k] = [...cur, short(p.name)].join('·')
+          }
+  }
+  const fetched = scan.result.fetchedAt ?? scan.created_at
+  const fetchedText = new Date(fetched).toLocaleString('nb-NO', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+  const sayIt = () =>
+    speak(
+      `${scan.flag === 'red' ? 'Nei.' : scan.flag === 'yellow' ? 'Usikkert.' : 'OK.'} ${many ? scan.headline : people[0].evaluation.headline}. ${ACTION[scan.flag]}`
+    )
 
   return (
     <main style={{ display: 'flex', flexDirection: 'column', paddingBottom: 104 }}>
@@ -281,6 +358,13 @@ function Result() {
       </div>
 
       <div className="page" style={{ paddingBottom: 24 }}>
+        {kid && (
+          <div className="stack" style={{ gap: 10 }}>
+            <button className="btn btn-primary" onClick={sayIt}>🔊 Les opp svaret</button>
+            <CallButton kid={kid} />
+          </div>
+        )}
+        <ChangedWarning changed={scan.result.changed} />
         <div className="row" style={{ justifyContent: 'space-between', alignItems: 'baseline', gap: 12 }}>
           <h2>{scan.product_name || (scan.mode === 'barcode' ? `Strekkode ${scan.ean}` : 'Ukjent produkt')}</h2>
           <span className="tiny" style={{ textAlign: 'right' }}>{MODE_LABEL[scan.mode]}</span>
@@ -294,7 +378,7 @@ function Result() {
 
         {scan.mode !== 'food' && ingredients && (
           <div className="card ingredients">
-            <Highlighted text={ingredients} red={red} amber={amber} />
+            <Highlighted text={ingredients} red={red} amber={amber} who={many ? who : undefined} />
           </div>
         )}
         {scan.mode === 'food' && product.confidence && (
@@ -302,6 +386,8 @@ function Result() {
         )}
 
         {!many && <Findings findings={people[0].evaluation.findings} />}
+        {!many && <WishNotes notes={(people[0] as PersonResult & { wishes?: WishNote[] }).wishes} />}
+        <NutritionBox n={product.nutrition} grain={product.grainInfo} keyhole={product.keyhole} />
 
         {others.length > 0 && (
           <div className="stack" style={{ gap: 6 }}>
@@ -321,10 +407,22 @@ function Result() {
           </div>
         )}
 
+        <Insights items={scan.result.insights ?? [...new Map(people.flatMap((p) => p.evaluation.insights ?? []).map((i) => [i.id, i])).values()]} />
+
         {canSuggest && <Alternatives scanId={scan.id} many={many} />}
+        {scan.flag === 'green' && scan.ean && scan.owner_id === session.user.id && !kid && (
+          <SaveSafe
+            ean={scan.ean}
+            name={scan.product_name}
+            brand={product.brand}
+            image={product.image}
+            ingredients={product.ingredientsText}
+            profileIds={scan.profile_ids ?? people.map((p) => p.profileId).filter(Boolean)}
+          />
+        )}
 
         <p className="tiny">
-          Kilde: {scan.source}. Okei erstatter ikke lege, sjekk alltid etiketten. Ved alvorlig reaksjon: ring <b>113</b>.
+          Kilde: {scan.source}, hentet {fetchedText}. Okei erstatter ikke lege, sjekk alltid etiketten. Ved alvorlig reaksjon: ring <b>113</b>.
         </p>
 
         <Link className="btn btn-dark" href="/skann">Skann en til</Link>

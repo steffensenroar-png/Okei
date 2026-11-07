@@ -30,3 +30,10 @@ export async function userClient(req: Request): Promise<{ db: SupabaseClient; us
 
   return { db, user: data.user }
 }
+
+/** Klient uten innlogging (for delte allergikort). Bare security definer-funksjoner gir tilgang. */
+export function anonClient(): SupabaseClient {
+  return createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, {
+    auth: { persistSession: false, autoRefreshToken: false }
+  })
+}

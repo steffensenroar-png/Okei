@@ -9,6 +9,8 @@ import { FamilyProfile } from '@/lib/client'
 import AllergenIcon from '@/components/AllergenIcon'
 import { Animal, ANIMALS, animalFor, Mascot } from '@/components/Art'
 import { Accent, ACCENTS, getAccent, getTheme, saveTheme, Theme, THEMES } from '@/lib/theme'
+import { KidGate, KidModeSetup, ShareCard, WishesEditor } from '@/components/ProfileExtras'
+import type { Wishes } from '@/lib/wishes'
 
 type Draft = {
   id?: string
@@ -18,9 +20,12 @@ type Draft = {
   conditions: ConditionKey[]
   custom: string
   avatar: string | null
+  emergency_note: string
+  epipen_expiry: string
+  wishes: Wishes
 }
 
-const empty = (n = 0): Draft => ({ name: '', birth_year: '', allergens: {}, conditions: [], custom: '', avatar: ANIMALS[n % ANIMALS.length].id })
+const empty = (n = 0): Draft => ({ name: '', birth_year: '', allergens: {}, conditions: [], custom: '', avatar: ANIMALS[n % ANIMALS.length].id, emergency_note: '', epipen_expiry: '', wishes: {} })
 
 function toDraft(p: FamilyProfile): Draft {
   return {
@@ -30,7 +35,10 @@ function toDraft(p: FamilyProfile): Draft {
     allergens: Object.fromEntries(p.allergens.map((a) => [a.key, a.severity])),
     conditions: p.conditions ?? [],
     custom: (p.custom_terms ?? []).join(', '),
-    avatar: p.avatar ?? null
+    avatar: p.avatar ?? null,
+    emergency_note: p.emergency_note ?? '',
+    epipen_expiry: p.epipen_expiry ?? '',
+    wishes: (p.wishes ?? {}) as Wishes
   }
 }
 
@@ -202,7 +210,7 @@ function Profiles() {
   async function load() {
     const { data } = await supabase()
       .from('family_profiles')
-      .select('id, owner_id, name, birth_year, allergens, custom_terms, conditions, avatar')
+      .select('id, owner_id, name, birth_year, allergens, custom_terms, conditions, avatar, emergency_note, epipen_expiry, wishes')
       .order('created_at')
     const all = (data ?? []) as FamilyProfile[]
     const own = all.filter((p) => p.owner_id === session.user.id)
@@ -241,7 +249,8 @@ function Profiles() {
   function toggleCondition(key: ConditionKey) {
     if (!draft) return
     const has = draft.conditions.includes(key)
-    setDraft({ ...draft, conditions: has ? draft.conditions.filter((c) => c !== key) : [...draft.conditions, key] })
+    const next = has ? draft.conditions.filter((c) => c !== key && !(key === 'coeliac' && c === 'coeliac_strict')) : [...draft.conditions, key]
+    setDraft({ ...draft, conditions: next })
   }
 
   function setSeverity(key: AllergenKey, sev: Severity) {
@@ -265,6 +274,9 @@ function Profiles() {
       allergens: Object.entries(draft.allergens).map(([key, severity]) => ({ key, severity })),
       conditions: draft.conditions,
       avatar: draft.avatar,
+      emergency_note: draft.emergency_note.trim() || null,
+      epipen_expiry: draft.epipen_expiry || null,
+      wishes: draft.wishes,
       custom_terms: draft.custom.split(',').map((s) => s.trim()).filter(Boolean).slice(0, 20)
     }
     const q = draft.id
@@ -327,13 +339,24 @@ function Profiles() {
                 onClick={() => toggleCondition(c.key)}
                 style={{ textAlign: 'left', cursor: 'pointer', gap: 12, borderWidth: draft.conditions.includes(c.key) ? 2 : 1, borderColor: draft.conditions.includes(c.key) ? 'var(--brand)' : 'var(--line)' }}
               >
-                <AllergenIcon k={c.key === 'lactose' ? 'lactose' : 'coeliac'} size={36} />
+                <AllergenIcon k={c.key} size={36} />
                 <span className="stack" style={{ gap: 2 }}>
                   <span style={{ fontWeight: 700 }}>{c.label}</span>
                   <span className="small muted">{c.hint}</span>
                 </span>
               </button>
             ))}
+            {draft.conditions.includes('coeliac') && (
+              <label className="row small" style={{ gap: 10, padding: '4px 4px 0' }}>
+                <input
+                  type="checkbox"
+                  checked={draft.conditions.includes('coeliac_strict')}
+                  onChange={() => toggleCondition('coeliac_strict')}
+                  style={{ width: 22, height: 22 }}
+                />
+                <span><b>Svært sensitiv for gluten.</b> «Kan inneholde spor» gir rødt i stedet for gult.</span>
+              </label>
+            )}
           </div>
 
           <div className="stack">
@@ -375,6 +398,28 @@ function Profiles() {
             <input className="input" placeholder="F.eks. kiwi, erter (skill med komma)" value={draft.custom} onChange={(e) => setDraft({ ...draft, custom: e.target.value })} />
           </label>
 
+          <WishesEditor value={draft.wishes} onChange={(w) => setDraft({ ...draft, wishes: w })} />
+
+          <div className="stack" style={{ gap: 10 }}>
+            <h2>Nødinfo</h2>
+            <label className="field">
+              Hva skal andre gjøre ved en reaksjon?
+              <textarea
+                className="input"
+                maxLength={1000}
+                value={draft.emergency_note}
+                onChange={(e) => setDraft({ ...draft, emergency_note: e.target.value })}
+                placeholder="F.eks. «Adrenalinpenn i sekken. Sett den i låret og ring 113. Ring mamma 99 99 99 99.»"
+              />
+            </label>
+            <label className="field">
+              Adrenalinpennen går ut (valgfritt)
+              <input className="input" type="date" value={draft.epipen_expiry} onChange={(e) => setDraft({ ...draft, epipen_expiry: e.target.value })} />
+            </label>
+            <p className="tiny">Vises på allergikortet du deler. Okei minner deg på pennen 30 dager før den går ut.</p>
+          </div>
+
+          {draft.id && <ShareCard profileId={draft.id} name={draft.name || 'barnet'} />}
           {draft.id && <ChildPhone profileId={draft.id} name={draft.name || 'barnet'} />}
 
           {error && <div className="alert error" role="alert">{error}</div>}
@@ -429,6 +474,7 @@ function Profiles() {
         </div>
       )}
       <Link className="linkbtn" href="/koble">Har du fått en kode? Koble til en familie</Link>
+      <KidModeSetup profiles={profiles} />
       <Appearance />
       <div className="spacer" />
       <ShareButton />
@@ -442,7 +488,9 @@ function Profiles() {
 export default function Page() {
   return (
     <AuthGate>
-      <Profiles />
+      <KidGate>
+        <Profiles />
+      </KidGate>
     </AuthGate>
   )
 }
