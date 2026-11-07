@@ -3,8 +3,8 @@
 
 import { NextResponse } from 'next/server'
 import { HttpError, userClient } from '@/lib/server/auth'
-import { evaluateFamily, ProductData, ProfileAllergen } from '@/lib/rules'
-import type { ConditionKey } from '@/lib/allergens'
+import { evaluateFamily, ProductData, ProfileAllergen, StructuredStatus } from '@/lib/rules'
+import { keyFromName, type AllergenKey, type ConditionKey } from '@/lib/allergens'
 
 export const runtime = 'nodejs'
 export const maxDuration = 30
@@ -62,9 +62,19 @@ export async function POST(req: Request) {
       const ingredients = typeof p?.ingredients === 'string' ? p.ingredients.trim() : ''
       if (!ingredients || !p?.name) continue
       if (p.ean && p.ean === scan.ean) continue
-      const dedupe = String(p.name).toLowerCase()
+      const dedupe = p.ean ? String(p.ean) : String(p.name).toLowerCase()
       if (seen.has(dedupe)) continue
-      const product: ProductData = { mode: 'barcode', name: p.name, ingredientsText: ingredients, source: 'Kassalapp', found: true }
+      const structured: Partial<Record<AllergenKey, StructuredStatus>> = {}
+      for (const a of Array.isArray(p.allergens) ? p.allergens : []) {
+        const k = keyFromName(String(a?.display_name ?? a?.name ?? a?.code ?? ''))
+        if (!k) continue
+        const v = String(a?.contains ?? '').toUpperCase()
+        const st: StructuredStatus = v === 'YES' ? 'contains' : v.includes('TRACE') ? 'traces' : v === 'NO' ? 'free' : 'unknown'
+        const cur = structured[k]
+        const rank = { contains: 3, traces: 2, free: 1, unknown: 0 }
+        if (!cur || rank[st] > rank[cur]) structured[k] = st
+      }
+      const product: ProductData = { mode: 'barcode', name: p.name, ingredientsText: ingredients, source: 'Kassalapp', found: true, structured }
       const fam = evaluateFamily(
         product,
         profiles.map((r) => ({
