@@ -100,7 +100,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
               <li>Okei erstatter ikke lege. Sjekk alltid etiketten.</li>
               <li>Ved alvorlig allergisk reaksjon: ring 113.</li>
               <li>Vi lagrer profilene dine (navn, allergier) og resultatene av skann. Bilder lagres ikke.</li>
-              <li>Du kan slette profiler og historikk når som helst.</li>
+              <li>Du kan slette profiler og historikk når som helst. Les <a href="/personvern" target="_blank" rel="noopener">personvernerklæringen</a>.</li>
             </ul>
             <label className="row" style={{ alignItems: 'flex-start', fontSize: 15 }}>
               <input type="checkbox" checked={agree} onChange={(e) => setAgree(e.target.checked)} style={{ width: 22, height: 22, marginTop: 1 }} />

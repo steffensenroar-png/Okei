@@ -72,7 +72,7 @@ export default function Login() {
         )}
         {error && <div className="alert error" role="alert">{error}</div>}
         <p className="tiny" style={{ textAlign: 'center' }}>
-          Okei er et oppslagsverk og erstatter ikke lege. Sjekk alltid etiketten.
+          Okei er et oppslagsverk og erstatter ikke lege. Sjekk alltid etiketten. <a href="/personvern">Personvern</a>
         </p>
       </div>
     </main>

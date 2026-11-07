@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import AuthGate, { useSession } from '@/components/AuthGate'
 import { supabase } from '@/lib/supabase-browser'
 import { ALLERGENS, ALLERGEN_BY_KEY, AllergenKey, Severity, SEVERITY_LABEL } from '@/lib/allergens'
@@ -40,6 +41,7 @@ function Profiles() {
   const [draft, setDraft] = useState<Draft | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [isAdmin, setIsAdmin] = useState(false)
 
   async function load() {
     const { data } = await supabase()
@@ -51,6 +53,7 @@ function Profiles() {
   }
 
   useEffect(() => {
+    supabase().rpc('is_admin').then(({ data }) => setIsAdmin(!!data))
     load().then((list) => {
       if (!list.length || new URLSearchParams(window.location.search).has('ny')) setDraft(empty())
     })
@@ -189,6 +192,8 @@ function Profiles() {
         <button className="btn" onClick={() => setDraft(empty())}>+ Legg til profil</button>
       </div>
       <div className="spacer" />
+      {isAdmin && <Link className="btn" href="/admin">Inviter testere</Link>}
+      <Link className="linkbtn" href="/personvern">Personvern</Link>
       <button className="linkbtn" onClick={() => supabase().auth.signOut()}>Logg ut ({session.user.email})</button>
     </main>
   )
