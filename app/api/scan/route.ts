@@ -21,6 +21,8 @@ interface Body {
   mediaType?: (typeof MEDIA)[number]
 }
 
+const AI_DAILY_LIMIT = Number(process.env.AI_DAILY_LIMIT || 30)
+
 export async function POST(req: Request) {
   try {
     const { db, user } = await userClient(req)
@@ -30,6 +32,19 @@ export async function POST(req: Request) {
     const ids = [...new Set((body.profileIds?.length ? body.profileIds : body.profileId ? [body.profileId] : []).map(String))]
     if (!ids.length) throw new HttpError(400, 'Velg minst én profil')
     if (ids.length > MAX_PROFILES) throw new HttpError(400, 'For mange profiler')
+
+    // Åpen beta: tak på bildeskann (AI) per bruker per døgn.
+    if (body.mode !== 'barcode') {
+      const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString()
+      const { count } = await db
+        .from('scans')
+        .select('id', { count: 'exact', head: true })
+        .eq('owner_id', user.id)
+        .neq('mode', 'barcode')
+        .gte('created_at', since)
+      if ((count ?? 0) >= AI_DAILY_LIMIT)
+        throw new HttpError(429, `Du har brukt ${AI_DAILY_LIMIT} bildeskann siste døgn. Strekkode virker fortsatt, og bildeskann åpner igjen i morgen.`)
+    }
 
     const { data: rows, error: pErr } = await db
       .from('family_profiles')

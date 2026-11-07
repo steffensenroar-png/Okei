@@ -76,10 +76,10 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
     return (
       <main className="page center">
         <Logo />
-        <h1>{state === 'notbeta' ? 'Du er ikke invitert ennå' : 'Noe gikk galt'}</h1>
+        <h1>{state === 'notbeta' ? 'Du har ikke tilgang' : 'Noe gikk galt'}</h1>
         <p className="muted">
           {state === 'notbeta'
-            ? `Okei er i lukket beta. Be Roar legge til ${session?.user.email ?? 'e-postadressen din'} på listen.`
+            ? 'Prøv å logge ut og inn igjen.'
             : 'Vi fikk ikke kontakt med databasen. Prøv igjen om litt.'}
         </p>
         <button className="btn" onClick={signOut}>Logg ut</button>
@@ -95,7 +95,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
         <div className="modal-back" role="dialog" aria-modal="true" aria-labelledby="terms-title">
           <div className="modal">
             <h1 id="terms-title">Før du starter</h1>
-            <p>Okei er en lukket beta og et oppslagsverk. Svarene bygger på produktdata og tekst lest av AI, og kan være feil.</p>
+            <p>Okei er i beta og er et oppslagsverk. Svarene bygger på produktdata og tekst lest av AI, og kan være feil.</p>
             <ul style={{ margin: 0, paddingLeft: 20, lineHeight: 1.6 }}>
               <li>Okei erstatter ikke lege. Sjekk alltid etiketten.</li>
               <li>Ved alvorlig allergisk reaksjon: ring 113.</li>

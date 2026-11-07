@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import AuthGate from '@/components/AuthGate'
+import { Animal, animalFor, Mascot } from '@/components/Art'
 import { FlagIcon } from '@/components/Icons'
 import AllergenIcon, { StatusIcon } from '@/components/AllergenIcon'
 import { supabase } from '@/lib/supabase-browser'
@@ -107,11 +108,14 @@ function Findings({ findings, onlyProblems }: { findings: Finding[]; onlyProblem
   )
 }
 
-function PersonCard({ person }: { person: PersonResult }) {
+function PersonCard({ person, avatar }: { person: PersonResult; avatar: { id: string | null; i: number } | undefined }) {
   const flag = person.evaluation.flag
   return (
     <div className={`person-card ${flag}`}>
-      <span className={`person-badge ${flag}`} aria-hidden="true"><FlagIcon flag={flag} /></span>
+      <span className="person-avatar" aria-hidden="true">
+        <Animal id={animalFor(avatar?.id, avatar?.i ?? 0)} size={48} />
+        <span className={`person-badge ${flag}`}><FlagIcon flag={flag} size={16} /></span>
+      </span>
       <div className="stack" style={{ gap: 4, flex: 1, minWidth: 0 }}>
         <div className="row" style={{ justifyContent: 'space-between', gap: 8 }}>
           <span style={{ fontWeight: 800, fontSize: 17 }}>{person.name}</span>
@@ -178,9 +182,22 @@ function Alternatives({ scanId, many }: { scanId: string; many: boolean }) {
 function Result() {
   const params = useParams<{ id: string }>()
   const [scan, setScan] = useState<Scan | null | undefined>(undefined)
+  const [avatars, setAvatars] = useState<Record<string, { id: string | null; i: number }>>({})
   const [feedback, setFeedback] = useState('')
   const [sent, setSent] = useState(false)
   const [open, setOpen] = useState(false)
+
+  useEffect(() => {
+    supabase()
+      .from('family_profiles')
+      .select('id, avatar')
+      .order('created_at')
+      .then(({ data }) => {
+        const map: Record<string, { id: string | null; i: number }> = {}
+        ;(data ?? []).forEach((r: { id: string; avatar: string | null }, i: number) => (map[r.id] = { id: r.avatar, i }))
+        setAvatars(map)
+      })
+  }, [])
 
   useEffect(() => {
     supabase()
@@ -247,12 +264,15 @@ function Result() {
           </Link>
           <span className="tag">{many ? `For ${people.length} personer` : `For ${people[0].name}`}</span>
         </div>
-        <div className="row" style={{ gap: 14 }}>
-          <span className="flag-icon big"><FlagIcon flag={scan.flag} size={40} /></span>
-          <div className="stack" style={{ gap: 2 }}>
-            <span className="flag-word">{EYEBROW[scan.flag]}</span>
+        <div className="row" style={{ gap: 10, alignItems: 'flex-end' }}>
+          <div className="stack" style={{ gap: 8, flex: 1, minWidth: 0 }}>
+            <span className="row" style={{ gap: 8 }}>
+              <span className="flag-icon"><FlagIcon flag={scan.flag} size={30} /></span>
+              <span className="flag-word">{EYEBROW[scan.flag]}</span>
+            </span>
             <h1 style={{ fontSize: 26 }}>{many ? scan.headline : `${people[0].name}: ${scan.headline.charAt(0).toLowerCase()}${scan.headline.slice(1)}`}</h1>
           </div>
+          <span className="flag-mascot"><Mascot mood={scan.flag === 'green' ? 'happy' : scan.flag === 'red' ? 'stop' : 'unsure'} size={104} /></span>
         </div>
         <p className="flag-action">{ACTION[scan.flag]}</p>
         {!many && reasons[0] && <p style={{ fontSize: 15 }}>{reasons[0]}</p>}
@@ -266,7 +286,7 @@ function Result() {
 
         {many && (
           <div className="stack" style={{ gap: 10 }}>
-            {sorted.map((p) => <PersonCard key={p.profileId || p.name} person={p} />)}
+            {sorted.map((p) => <PersonCard key={p.profileId || p.name} person={p} avatar={p.profileId ? avatars[p.profileId] : undefined} />)}
           </div>
         )}
 

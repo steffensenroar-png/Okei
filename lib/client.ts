@@ -10,6 +10,7 @@ export interface FamilyProfile {
   allergens: { key: AllergenKey; severity: Severity }[]
   custom_terms: string[]
   conditions: ConditionKey[]
+  avatar?: string | null
 }
 
 export const AVATAR_COLORS = [

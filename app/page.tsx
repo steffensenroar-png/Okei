@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase-browser'
+import { FoodSticker, Mascot } from '@/components/Art'
 import { GoogleIcon, Logo } from '@/components/Icons'
 
 export default function Login() {
@@ -45,13 +46,19 @@ export default function Login() {
   return (
     <main className="page" style={{ paddingBottom: 32, justifyContent: 'space-between', minHeight: '100dvh' }}>
       <Logo />
-      <div className="stack" style={{ gap: 14 }}>
-        <span className="tag" style={{ alignSelf: 'flex-start', background: 'var(--brand-tint)', color: 'var(--brand)', fontWeight: 700 }}>
-          Lukket beta
-        </span>
-        <h1 style={{ fontSize: 36, lineHeight: 1.1 }}>Ta bilde.<br />Få svar på sekunder.</h1>
+      <div className="hero-art" aria-hidden="true">
+        <span className="sticker s1"><FoodSticker kind="apple" size={50} /></span>
+        <span className="sticker s2"><FoodSticker kind="milk" size={46} /></span>
+        <span className="sticker s3"><FoodSticker kind="bread" size={48} /></span>
+        <span className="sticker s4"><FoodSticker kind="egg" size={40} /></span>
+        <span className="sticker s5"><FoodSticker kind="fish" size={50} /></span>
+        <span className="sticker s6"><FoodSticker kind="carrot" size={46} /></span>
+        <Mascot mood="happy" size={170} />
+      </div>
+      <div className="stack" style={{ gap: 12 }}>
+        <h1 style={{ fontSize: 34, lineHeight: 1.1 }}>Ta bilde av maten.<br />Se om den passer.</h1>
         <p className="muted" style={{ fontSize: 16 }}>
-          Okei sjekker mat mot dine og barnas allergier og viser rødt, gult eller grønt flagg.
+          Okei sjekker mat mot dine og barnas allergier og svarer med rødt, gult eller grønt. Gratis i betaen.
         </p>
       </div>
 

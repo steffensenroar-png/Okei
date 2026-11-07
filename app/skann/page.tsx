@@ -7,7 +7,8 @@ import AuthGate from '@/components/AuthGate'
 import BarcodeScanner from '@/components/BarcodeScanner'
 import { CameraIcon, Logo } from '@/components/Icons'
 import { supabase } from '@/lib/supabase-browser'
-import { avatarStyle, compressImage, FamilyProfile, postScan, storeGet, storeSet } from '@/lib/client'
+import { compressImage, FamilyProfile, postScan, storeGet, storeSet } from '@/lib/client'
+import { Animal, animalFor, Mascot, ModeArt } from '@/components/Art'
 import type { Mode } from '@/lib/rules'
 
 const MODES: { id: Mode; label: string; hint: string; busy: string }[] = [
@@ -28,7 +29,7 @@ function Scan() {
   useEffect(() => {
     supabase()
       .from('family_profiles')
-      .select('id, name, birth_year, allergens, custom_terms, conditions')
+      .select('id, name, birth_year, allergens, custom_terms, conditions, avatar')
       .order('created_at')
       .then(({ data }) => {
         const list = (data ?? []) as FamilyProfile[]
@@ -108,6 +109,7 @@ function Scan() {
     return (
       <main className="page center">
         <Logo />
+        <div style={{ alignSelf: 'center' }}><Mascot mood="wave" size={150} /></div>
         <h1>Hvem skal vi passe på?</h1>
         <p className="muted">Lag en profil med allergiene først. Du kan legge til barn etterpå.</p>
         <Link className="btn btn-primary" href="/profiler?ny=1">Lag første profil</Link>
@@ -123,22 +125,22 @@ function Scan() {
         <Logo />
       </div>
 
-      <div className="stack" style={{ gap: 8 }}>
-        <span style={{ fontWeight: 800, fontSize: 17 }}>
-          Sjekker for: {profiles.filter((p) => selected.includes(p.id)).map((p) => p.name).join(', ')}
-        </span>
+      <div className="stack" style={{ gap: 10 }}>
+        <h2 style={{ fontSize: 19 }}>Hvem handler du for?</h2>
         <div className="row" style={{ flexWrap: 'wrap', gap: 8 }}>
           {profiles.length > 1 && (
             <button className="profile-pill" aria-pressed={selected.length === profiles.length} onClick={toggleAll}>
-              <span className="avatar" style={{ background: 'var(--brand-tint)', color: 'var(--brand)' }} aria-hidden="true">
-                <svg width="18" height="18" viewBox="0 0 22 22"><circle cx="8" cy="8" r="3.2" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M2.5 18c.6-3 2.8-4.6 5.5-4.6s4.9 1.6 5.5 4.6" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /><circle cx="15.5" cy="7.5" r="2.5" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M15 12.6c2.3 0 4 1.3 4.5 3.9" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
+              <span className="family-stack" aria-hidden="true">
+                {profiles.slice(0, 3).map((p, i) => (
+                  <Animal key={p.id} id={animalFor(p.avatar, i)} size={28} />
+                ))}
               </span>
               Hele familien
             </button>
           )}
           {profiles.map((p, i) => (
             <button key={p.id} className="profile-pill" aria-pressed={selected.includes(p.id)} onClick={() => toggleProfile(p.id)}>
-              <span className="avatar" style={avatarStyle(i)}>{p.name.charAt(0).toUpperCase()}</span>
+              <Animal id={animalFor(p.avatar, i)} size={36} />
               {p.name}
               <span className="check" aria-hidden="true">✓</span>
             </button>
@@ -146,32 +148,27 @@ function Scan() {
         </div>
       </div>
 
-      <div className="seg" role="group" aria-label="Hva vil du sjekke?">
+      <div className="mode-tiles" role="group" aria-label="Hva vil du sjekke?">
         {MODES.map((m) => (
-          <button key={m.id} aria-pressed={m.id === mode} onClick={() => pickMode(m.id)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, padding: '6px 2px', lineHeight: 1.15 }}>
-            {m.id === 'barcode' ? (
-              <svg width="22" height="20" viewBox="0 0 22 20" aria-hidden="true">
-                <g fill="currentColor"><rect x="1" y="2" width="2" height="16" /><rect x="5" y="2" width="1" height="16" /><rect x="8" y="2" width="3" height="16" /><rect x="13" y="2" width="1" height="16" /><rect x="16" y="2" width="2" height="16" /><rect x="20" y="2" width="1" height="16" /></g>
-              </svg>
-            ) : (
-              <span aria-hidden="true" style={{ fontSize: 20, lineHeight: 1 }}>{m.id === 'label' ? '📄' : '🥐'}</span>
-            )}
-            <span style={{ fontSize: 13 }}>{m.label}</span>
+          <button key={m.id} className={`mode-tile ${m.id}`} aria-pressed={m.id === mode} onClick={() => pickMode(m.id)}>
+            <ModeArt mode={m.id} size={48} />
+            <span>{m.label}</span>
           </button>
         ))}
       </div>
 
       {busy ? (
         <div className="camera" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16, color: '#fff' }}>
-          <div className="spinner" style={{ borderColor: 'rgba(255,255,255,0.25)', borderTopColor: '#fff' }} />
+          <div className="bob"><Mascot mood="unsure" size={120} /></div>
           <span style={{ fontWeight: 600 }}>{current.busy}</span>
         </div>
       ) : mode === 'barcode' ? (
         <BarcodeScanner onCode={(ean) => run({ ean })} paused={busy} />
       ) : (
         <>
-          <button className="photo-drop" onClick={() => fileRef.current?.click()}>
-            <CameraIcon />
+          <button className={`photo-drop ${mode}`} onClick={() => fileRef.current?.click()}>
+            <span className="photo-art"><ModeArt mode={mode} size={96} /></span>
+            <span className="photo-cta"><CameraIcon /></span>
             {mode === 'label' ? 'Ta bilde av ingredienslisten' : 'Ta bilde av maten'}
           </button>
           <p className="small muted" style={{ textAlign: 'center' }}>{current.hint}</p>

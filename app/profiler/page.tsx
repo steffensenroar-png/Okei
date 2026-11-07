@@ -5,8 +5,9 @@ import Link from 'next/link'
 import AuthGate, { useSession } from '@/components/AuthGate'
 import { supabase } from '@/lib/supabase-browser'
 import { ALLERGENS, ALLERGEN_BY_KEY, AllergenKey, CONDITIONS, ConditionKey, Severity, SEVERITY_LABEL } from '@/lib/allergens'
-import { avatarStyle, FamilyProfile } from '@/lib/client'
+import { FamilyProfile } from '@/lib/client'
 import AllergenIcon from '@/components/AllergenIcon'
+import { Animal, ANIMALS, animalFor, Mascot } from '@/components/Art'
 
 type Draft = {
   id?: string
@@ -15,9 +16,10 @@ type Draft = {
   allergens: Partial<Record<AllergenKey, Severity>>
   conditions: ConditionKey[]
   custom: string
+  avatar: string | null
 }
 
-const empty = (): Draft => ({ name: '', birth_year: '', allergens: {}, conditions: [], custom: '' })
+const empty = (n = 0): Draft => ({ name: '', birth_year: '', allergens: {}, conditions: [], custom: '', avatar: ANIMALS[n % ANIMALS.length].id })
 
 function toDraft(p: FamilyProfile): Draft {
   return {
@@ -26,7 +28,8 @@ function toDraft(p: FamilyProfile): Draft {
     birth_year: p.birth_year ? String(p.birth_year) : '',
     allergens: Object.fromEntries(p.allergens.map((a) => [a.key, a.severity])),
     conditions: p.conditions ?? [],
-    custom: (p.custom_terms ?? []).join(', ')
+    custom: (p.custom_terms ?? []).join(', '),
+    avatar: p.avatar ?? null
   }
 }
 
@@ -39,27 +42,46 @@ function summary(p: FamilyProfile) {
   return [...conds, ...parts, ...(p.custom_terms ?? [])].join(' · ') || 'Ingen allergier registrert'
 }
 
+function ShareButton() {
+  const [copied, setCopied] = useState(false)
+  async function share() {
+    const url = window.location.origin
+    const data = { title: 'Okei', text: 'Sjekk mat mot allergiene i familien med Okei (beta).', url }
+    try {
+      if (navigator.share) return await navigator.share(data)
+      await navigator.clipboard.writeText(url)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2500)
+    } catch {
+      /* avbrutt */
+    }
+  }
+  return (
+    <button className="btn" onClick={share}>
+      {copied ? 'Lenken er kopiert' : 'Del Okei med andre'}
+    </button>
+  )
+}
+
 function Profiles() {
   const session = useSession()
   const [profiles, setProfiles] = useState<FamilyProfile[]>([])
   const [draft, setDraft] = useState<Draft | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
-  const [isAdmin, setIsAdmin] = useState(false)
 
   async function load() {
     const { data } = await supabase()
       .from('family_profiles')
-      .select('id, name, birth_year, allergens, custom_terms, conditions')
+      .select('id, name, birth_year, allergens, custom_terms, conditions, avatar')
       .order('created_at')
     setProfiles((data ?? []) as FamilyProfile[])
     return (data ?? []) as FamilyProfile[]
   }
 
   useEffect(() => {
-    supabase().rpc('is_admin').then(({ data }) => setIsAdmin(!!data))
     load().then((list) => {
-      if (!list.length || new URLSearchParams(window.location.search).has('ny')) setDraft(empty())
+      if (!list.length || new URLSearchParams(window.location.search).has('ny')) setDraft(empty(list.length))
     })
   }, [])
 
@@ -98,6 +120,7 @@ function Profiles() {
       birth_year: year,
       allergens: Object.entries(draft.allergens).map(([key, severity]) => ({ key, severity })),
       conditions: draft.conditions,
+      avatar: draft.avatar,
       custom_terms: draft.custom.split(',').map((s) => s.trim()).filter(Boolean).slice(0, 20)
     }
     const q = draft.id
@@ -122,7 +145,10 @@ function Profiles() {
     const selected = ALLERGENS.filter((a) => draft.allergens[a.key])
     return (
       <main className="page">
-        <h1>{draft.id ? `Endre ${draft.name}` : 'Ny profil'}</h1>
+        <div className="row" style={{ gap: 14 }}>
+          {draft.avatar && <Animal id={animalFor(draft.avatar, 0)} size={60} />}
+          <h1>{draft.id ? `Endre ${draft.name}` : 'Ny profil'}</h1>
+        </div>
         <form onSubmit={save} className="stack" style={{ gap: 18 }}>
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 12 }}>
             <label className="field">
@@ -133,6 +159,17 @@ function Profiles() {
               Fødselsår
               <input className="input" inputMode="numeric" placeholder="valgfritt" value={draft.birth_year} onChange={(e) => setDraft({ ...draft, birth_year: e.target.value })} />
             </label>
+          </div>
+
+          <div className="stack" style={{ gap: 8 }}>
+            <h2>Velg et dyr</h2>
+            <div className="animal-grid" role="radiogroup" aria-label="Velg et dyr">
+              {ANIMALS.map((a) => (
+                <button type="button" key={a.id} role="radio" aria-checked={draft.avatar === a.id} aria-label={a.label} className="animal-pick" onClick={() => setDraft({ ...draft, avatar: a.id })}>
+                  <Animal id={a.id} size={52} />
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="stack">
@@ -207,12 +244,17 @@ function Profiles() {
 
   return (
     <main className="page">
-      <h1>Profiler</h1>
-      <p className="muted">Én profil per person du sjekker mat for.</p>
+      <div className="hero-row">
+        <div className="stack" style={{ gap: 6 }}>
+          <h1>Familien</h1>
+          <p className="muted">Én profil per person du sjekker mat for. Barna kan velge sitt eget dyr.</p>
+        </div>
+        <Mascot mood="wave" size={92} />
+      </div>
       <div className="stack">
         {profiles.map((p, i) => (
           <button key={p.id} className="card row" style={{ textAlign: 'left', cursor: 'pointer', gap: 14 }} onClick={() => setDraft(toDraft(p))}>
-            <span className="avatar" style={{ ...avatarStyle(i), width: 46, height: 46, borderRadius: 23, fontSize: 18 }}>{p.name.charAt(0).toUpperCase()}</span>
+            <Animal id={animalFor(p.avatar, i)} size={52} />
             <span className="stack" style={{ gap: 4, flex: 1 }}>
               <span style={{ fontSize: 16, fontWeight: 700 }}>
                 {p.name}
@@ -222,10 +264,10 @@ function Profiles() {
             </span>
           </button>
         ))}
-        <button className="btn" onClick={() => setDraft(empty())}>+ Legg til profil</button>
+        <button className="btn" onClick={() => setDraft(empty(profiles.length))}>+ Legg til profil</button>
       </div>
       <div className="spacer" />
-      {isAdmin && <Link className="btn" href="/admin">Inviter testere</Link>}
+      <ShareButton />
       <Link className="linkbtn" href="/personvern">Personvern</Link>
       <button className="linkbtn" onClick={() => supabase().auth.signOut()}>Logg ut ({session.user.email})</button>
     </main>

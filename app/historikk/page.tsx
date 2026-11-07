@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { Mascot } from '@/components/Art'
 import AuthGate from '@/components/AuthGate'
 import { supabase } from '@/lib/supabase-browser'
 import { StatusIcon } from '@/components/AllergenIcon'
@@ -47,7 +48,11 @@ function History() {
       {rows === null ? (
         <div className="spinner" role="status" aria-label="Laster" />
       ) : rows.length === 0 ? (
-        <p className="muted">Ingen skann ennå.</p>
+        <div className="empty">
+          <Mascot mood="wave" size={130} />
+          <p className="muted">Ingen skann ennå. Det du sjekker havner her, så du finner det igjen i butikken neste gang.</p>
+          <Link className="btn btn-primary" href="/skann">Skann noe</Link>
+        </div>
       ) : (
         <div className="card" style={{ paddingTop: 2, paddingBottom: 2 }}>
           {rows.map((r) => (

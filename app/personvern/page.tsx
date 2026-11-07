@@ -9,7 +9,7 @@ export default function Personvern() {
     <main className="page" style={{ paddingBottom: 40, lineHeight: 1.6 }}>
       <Link href="/" style={{ textDecoration: 'none' }}><Logo /></Link>
       <h1>Personvernerklæring</h1>
-      <p className="tiny">Gjelder lukket beta. Sist oppdatert 7. november 2026.</p>
+      <p className="tiny">Gjelder beta. Sist oppdatert 7. november 2026.</p>
 
       <section className="stack">
         <h2>Hvem er ansvarlig</h2>
