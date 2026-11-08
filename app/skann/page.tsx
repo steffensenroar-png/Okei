@@ -163,7 +163,6 @@ function FullScan() {
   return (
     <main className="page scan-page">
       <div className="scan-who" role="group" aria-label={t('scan.who')}>
-        <LogoMark size={30} />
         <div className="chip-scroll">
           {profiles.length > 1 && (
             <button className="who-chip" aria-pressed={selected.length === profiles.length} onClick={toggleAll}>
@@ -202,6 +201,8 @@ function FullScan() {
         ))}
       </div>
 
+      <div className="scan-stage">
+      <span className="cam-logo" aria-hidden="true"><LogoMark size={22} />Okei</span>
       {busy ? (
         <div className="camera scan-fill" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16, color: '#fff' }}>
           <div className="bob"><Mascot mood="unsure" size={120} /></div>
@@ -220,6 +221,7 @@ function FullScan() {
           <input ref={fileRef} type="file" accept="image/*" capture="environment" hidden onChange={onFile} />
         </>
       )}
+      </div>
 
       {error && <div className="alert error" role="alert">{error}</div>}
     </main>
