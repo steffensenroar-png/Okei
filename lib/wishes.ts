@@ -1,6 +1,5 @@
 // Ønsker: kostholdsvalg som ikke handler om sikkerhet. De påvirker aldri flagget, bare informasjon og alternativer.
 
-import { normalize } from './allergens'
 import type { Nutrition, ProductData } from './rules'
 import { fmt, Msg } from './i18n/core'
 
@@ -32,16 +31,6 @@ const note = (key: keyof Wishes, ok: boolean | null, m: Msg, rawText?: string): 
   msg: rawText ? undefined : m
 })
 
-const MEAT = /kjøtt|svin|storfe|okse|kylling|kalkun|lam\b|lammekjøtt|bacon|skinke|pølse|gelatin|karmin|e120|kollagen|fiskegelatin|ansjos|reke|laks|torsk|tunfisk|fisk|skalldyr|blekksprut|meat|pork|beef|chicken|gelatine|anchov|shrimp|salmon/
-const ANIMAL = /melk|fløte|smør|ost\b|ost |myse|kasein|laktose|yoghurt|rømme|egg|honning|honey|milk|butter|cheese|whey|casein|cream/
-
-function veg(text: string, vegan: boolean): boolean | null {
-  if (!text.trim()) return null
-  const t = normalize(text).replace(/kokosmelk|havremelk|soyamelk|mandelmelk|rismelk|melkefri|kakaosmør|peanøttsmør|melkesyre|eggfri/g, ' ')
-  if (MEAT.test(t)) return false
-  if (vegan && ANIMAL.test(t)) return false
-  return true
-}
 
 const fmtNum = (n: number) => (Math.round(n * 10) / 10).toString().replace('.', ',')
 
@@ -71,11 +60,6 @@ export function evaluateWishes(product: ProductData, wishes: Wishes | null | und
   }
   if (wishes.keyhole) {
     out.push(note('keyhole', product.keyhole ? true : product.labels?.length || product.mode !== 'barcode' ? false : null, { k: product.keyhole ? 'w.keyholeYes' : 'w.keyholeNo' }))
-  }
-  if (wishes.vegan || wishes.vegetarian) {
-    const vegan = !!wishes.vegan
-    const r = veg(text, vegan)
-    out.push(note(vegan ? 'vegan' : 'vegetarian', r, { k: r == null ? 'w.noIngredients' : r ? 'w.vegOk' : 'w.vegNo' }))
   }
   return out
 }

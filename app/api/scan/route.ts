@@ -29,6 +29,14 @@ interface Body {
 const LANGS = ['no', 'en', 'sv', 'da', 'fi', 'de', 'es', 'fr', 'it']
 const AI_DAILY_LIMIT = Number(process.env.AI_DAILY_LIMIT || 30)
 
+/** Vegetar og vegansk lå før som ønsker. Nå er de kosthold i regelmotoren. */
+function dietFromWishes(c: ConditionKey[], w: Wishes | null): ConditionKey[] {
+  if (c.includes('vegan') || c.includes('vegetarian')) return c
+  if (w?.vegan) return [...c, 'vegan']
+  if (w?.vegetarian) return [...c, 'vegetarian']
+  return c
+}
+
 export async function POST(req: Request) {
   try {
     const { db, user } = await userClient(req)
@@ -65,7 +73,7 @@ export async function POST(req: Request) {
       name: r.name,
       allergens: (r.allergens ?? []) as ProfileAllergen[],
       customTerms: r.custom_terms ?? [],
-      conditions: (r.conditions ?? []) as ConditionKey[]
+      conditions: dietFromWishes((r.conditions ?? []) as ConditionKey[], r.wishes as Wishes | null)
     }))
     const base = {
       owner_id: user.id,

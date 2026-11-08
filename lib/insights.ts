@@ -82,6 +82,20 @@ export const INSIGHTS: Record<string, Insight> = {
       'I merkereglene er peanøtt en belgfrukt og eget allergen, ikke en nøtt. Okei sjekker peanøtt for seg. Avklar med lege om nøtteallergien også gjelder peanøtt.',
     source: NAAF_MERKING
   },
+  diet_traces: {
+    id: 'diet_traces',
+    title: '«Kan inneholde spor» og vegansk',
+    text:
+      'Spor av melk, egg eller fisk betyr at varen er laget der slike råvarer også brukes. Selve oppskriften er uten dyreprodukter. The Vegan Society godtar slike varer, men noen veganere velger å unngå dem.',
+    source: { label: 'The Vegan Society', url: 'https://www.vegansociety.com/news/blog/TM2021/allergen-vs-vegan-labelling' }
+  },
+  vegan_not_free: {
+    id: 'vegan_not_free',
+    title: 'Vegansk betyr ikke melkefritt',
+    text:
+      'En vare merket vegansk kan likevel ha spor av melk, egg eller fisk fra fabrikken. Ved allergi er det allergenmerkingen som gjelder, ikke veganmerket.',
+    source: { label: 'Food Standards Agency (UK)', url: 'https://www.food.gov.uk/vegan-food' }
+  },
   birch_cross: {
     id: 'birch_cross',
     title: 'Kryssreaksjon ved bjørkepollenallergi',

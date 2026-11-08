@@ -565,6 +565,20 @@ const no: Record<string, string> = {
   'mode.food.short': 'Mat',
   'mode.menu.short': 'Meny',
   'mode.product.short': 'Medisin',
+  'cond.vegetarian': 'Vegetar',
+  'cond.vegan': 'Vegansk',
+  'cond.vegetarian.hint': 'Kjøtt, fisk, skalldyr og gelatin gir rødt. Egg og melk er OK.',
+  'cond.vegan.hint': 'Alle dyreprodukter gir rødt: kjøtt, fisk, melk, egg, honning og gelatin. «Kan inneholde spor» teller ikke. E471 og vitamin D3 gir gult.',
+  'label.vegetarian': 'Kjøtt eller fisk',
+  'label.vegan': 'Dyreprodukter',
+  'note.dietAmbiguous': 'Kan komme fra dyr eller planter, og etiketten sier ikke hvilket. Spør produsenten eller se etter veganmerke.',
+  'h.noneOf': 'Fant ikke {items}',
+  'prof.diet': 'Kosthold',
+  'prof.dietAll': 'Spiser alt',
+  'ins.diet_traces.title': '«Kan inneholde spor» og vegansk',
+  'ins.diet_traces.text': 'Spor av melk, egg eller fisk betyr at varen er laget der slike råvarer også brukes. Selve oppskriften er uten dyreprodukter. The Vegan Society godtar slike varer, men noen veganere velger å unngå dem.',
+  'ins.vegan_not_free.title': 'Vegansk betyr ikke melkefritt',
+  'ins.vegan_not_free.text': 'En vare merket vegansk kan likevel ha spor av melk, egg eller fisk fra fabrikken. Ved allergi er det allergenmerkingen som gjelder, ikke veganmerket.',
 }
 
 export default no

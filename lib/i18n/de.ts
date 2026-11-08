@@ -510,6 +510,20 @@ const d: Record<string, string> = {
   'mode.food.short': 'Essen',
   'mode.menu.short': 'Menü',
   'mode.product.short': 'Medizin',
+  'cond.vegetarian': 'Vegetarisch',
+  'cond.vegan': 'Vegan',
+  'cond.vegetarian.hint': 'Fleisch, Fisch, Meeresfrüchte und Gelatine zeigen Rot. Eier und Milch sind in Ordnung.',
+  'cond.vegan.hint': 'Alle tierischen Produkte zeigen Rot: Fleisch, Fisch, Milch, Eier, Honig und Gelatine. „Kann Spuren enthalten“ zählt nicht. E471 und Vitamin D3 zeigen Gelb.',
+  'label.vegetarian': 'Fleisch oder Fisch',
+  'label.vegan': 'Tierische Produkte',
+  'note.dietAmbiguous': 'Kann tierischen oder pflanzlichen Ursprungs sein, und das Etikett sagt nicht, welches. Frag den Hersteller oder achte auf ein Vegan-Siegel.',
+  'h.noneOf': 'Nicht gefunden: {items}',
+  'prof.diet': 'Ernährung',
+  'prof.dietAll': 'Isst alles',
+  'ins.diet_traces.title': '„Kann Spuren enthalten“ und vegan',
+  'ins.diet_traces.text': 'Spuren von Milch, Ei oder Fisch bedeuten, dass das Produkt dort hergestellt wird, wo diese Zutaten auch verwendet werden. Das Rezept selbst ist ohne tierische Produkte. The Vegan Society akzeptiert solche Produkte, aber manche Veganer meiden sie.',
+  'ins.vegan_not_free.title': 'Vegan heißt nicht milchfrei',
+  'ins.vegan_not_free.text': 'Ein als vegan gekennzeichnetes Produkt kann trotzdem Spuren von Milch, Ei oder Fisch aus der Fabrik enthalten. Bei Allergie zählt die Allergenkennzeichnung, nicht das Vegan-Siegel.',
 }
 
 export default d

@@ -313,7 +313,9 @@ for (const def of ALLERGENS) {
 }
 
 // Tilstander: sykdommer og intoleranser som regelmotoren oversetter til hva man må passe på.
-export type ConditionKey = 'coeliac' | 'coeliac_strict' | 'lactose' | 'birch'
+export type ConditionKey = 'coeliac' | 'coeliac_strict' | 'lactose' | 'birch' | 'vegetarian' | 'vegan'
+export type DietKey = 'vegetarian' | 'vegan'
+export const DIETS: DietKey[] = ['vegetarian', 'vegan']
 
 /** Tilstander som vises som egne kort. «coeliac_strict» er et valg under cøliaki, ikke eget kort. */
 export const CONDITIONS: { key: ConditionKey; label: string; hint: string }[] = [
@@ -384,6 +386,76 @@ export const LACTOSE_DEF: AllergenDef = {
 export function isLactoseFree(text: string): boolean {
   return /laktosefri|laktosfri|lactose[\s-]free|laktosefritt/.test(normalize(text))
 }
+
+// ---------- Kosthold: vegetar og vegansk ----------
+// Kjøtt og andre ingredienser fra slaktede dyr. Fisk og skalldyr hentes fra allergenlistene.
+export const MEAT_DEF: AllergenDef = {
+  key: 'fish',
+  label: 'Kjøtt',
+  terms: [
+    // norsk, svensk, dansk
+    ...s('kjøtt', 'svinekjøtt', 'storfekjøtt', 'oksekjøtt', 'kalvekjøtt', 'lammekjøtt', 'kyllingkjøtt', 'kylling', 'kalkun',
+      'bacon', 'skinke', 'svinefett', 'svinesvor', 'smult', 'talg', 'kjøttkraft', 'kjøttbuljong', 'hønsekraft', 'kyllingkraft',
+      'oksekraft', 'kjøttekstrakt', 'gelatin', 'kollagen', 'karmin', 'kochenille', 'e120', 'e 120', 'blodpølse', 'leverpostei',
+      'kött', 'fläsk', 'nötkött', 'kyckling', 'kalkon', 'skinka', 'ister', 'köttbuljong', 'hönsbuljong',
+      'kød', 'svinekød', 'oksekød', 'svinefedt', 'spæk', 'hønsebouillon', 'kødbouillon'),
+    ...st('svin', 'okse', 'storfe', 'liha'),
+    ...w('lam', 'lamm', 'ham', 'lard', 'tali', 'sego', 'sebo', 'kana', 'broileri', 'blod', 'lever', 'porc'),
+    // engelsk
+    ...s('meat', 'pork', 'beef', 'veal', 'chicken', 'turkey', 'mutton', 'gelatine', 'tallow', 'beef fat', 'chicken stock',
+      'beef stock', 'chicken fat', 'collagen', 'carmine', 'cochineal', 'anchovy'),
+    ...st('lardon'),
+    // tysk
+    ...s('fleisch', 'schwein', 'hähnchen', 'huhn', 'truthahn', 'speck', 'schinken', 'schmalz', 'rindertalg', 'karmin',
+      'hühnerbrühe', 'rinderbrühe', 'fleischbrühe', 'kollagen'),
+    ...st('rind', 'pute'),
+    // spansk og italiensk
+    ...s('carne', 'cerdo', 'ternera', 'vacuno', 'pollo', 'pavo', 'cordero', 'tocino', 'jamón', 'manteca de cerdo', 'carmín',
+      'caldo de pollo', 'colágeno', 'maiale', 'manzo', 'vitello', 'tacchino', 'agnello', 'pancetta', 'prosciutto', 'strutto',
+      'carminio', 'brodo di pollo', 'collagene'),
+    // fransk
+    ...s('viande', 'bœuf', 'boeuf', 'veau', 'poulet', 'dinde', 'agneau', 'jambon', 'saindoux', 'suif', 'gélatine',
+      'collagène', 'bouillon de poule', 'bouillon de bœuf'),
+    // finsk
+    ...s('sianliha', 'naudanliha', 'kanaliha', 'broilerinliha', 'kalkkuna', 'lammas', 'pekoni', 'kinkku', 'liivate',
+      'laardi', 'karmiini', 'kanaliemi', 'lihaliemi', 'kollageeni')
+  ],
+  exclude: [
+    'kjøttfri', 'uten kjøtt', 'kjøtterstatning', 'soyakjøtt', 'plantebasert kjøtt', 'vegetarisk', 'vegansk', 'köttfri',
+    'kødfri', 'meat-free', 'meat free', 'meatless', 'meat substitute', 'fleischlos', 'fleischfrei', 'fleischersatz',
+    'sin carne', 'senza carne', 'sans viande', 'lihaton', 'kyllingkrydder', 'kycklingkrydda', 'kokoskjøtt'
+  ]
+}
+
+// Andre dyreprodukter som veganere unngår, utover melk, egg, fisk og skalldyr.
+export const ANIMAL_EXTRA_DEF: AllergenDef = {
+  key: 'milk',
+  label: 'Dyreprodukter',
+  terms: [
+    ...s('honning', 'honung', 'honey', 'honig', 'miel', 'miele', 'hunaja', 'bivoks', 'bivax', 'beeswax', 'bienenwachs',
+      "cire d'abeille", "cera d'api", 'cera de abeja', 'mehiläisvaha', 'e901', 'skjellakk', 'schellack', 'shellac',
+      'gomme-laque', 'gommalacca', 'goma laca', 'sellakka', 'e904', 'lanolin', 'lanoliini', 'propolis', 'gelatin',
+      'gelatine', 'gélatine', 'liivate', 'karmin', 'carmine', 'carmín', 'karmiini', 'e120', 'e 120')
+  ],
+  exclude: ['honningmelon', 'honeydew', 'honungsmelon', 'honigmelone', 'honingmelon']
+}
+
+// Kan komme fra dyr eller planter. Etiketten sier sjelden hvilket.
+export const DIET_AMBIGUOUS: Term[] = [
+  ...s('e471', 'e 471', 'e472', 'e 472', 'mono- og diglyserider', 'monoglyserider', 'mono- och diglycerider',
+    'mono- og diglycerider', 'mono- and diglycerides', 'mono- und diglyceride', 'mono- y diglicéridos',
+    'mono- et diglycérides', 'mono- e digliceridi', 'mono- ja diglyseridit', 'vitamin d3', 'd3-vitamin', 'kolekalsiferol',
+    'cholecalciferol', 'colecalciferol', 'cholécalciférol', 'kolekalsiferoli')
+]
+export const RENNET: Term[] = [
+  ...w('løpe', 'löpe', 'osteløpe', 'rennet', 'lab', 'cuajo', 'présure', 'caglio', 'juoksute', 'animalsk løpe')
+]
+export const DIET_AMBIGUOUS_EXCLUDE = [
+  'vegetabilske mono- og diglyserider', 'vegetabilsk e471', 'e471 (vegetabilsk)', 'vegetable mono- and diglycerides',
+  'pflanzliche mono- und diglyceride', 'vegansk vitamin d3', 'vitamin d3 (vegansk)', 'vitamin d3 fra lav', 'vegan vitamin d3',
+  'mikrobiell løpe', 'mikrobielt løpe', 'vegetabilsk løpe', 'mikrobiell löpe', 'microbial rennet', 'vegetable rennet',
+  'vegetarian rennet', 'mikrobielles lab', 'cuajo microbiano', 'présure microbienne', 'caglio microbico', 'mikrobijuoksute'
+]
 
 export const ALLERGEN_BY_KEY: Record<AllergenKey, AllergenDef> = Object.fromEntries(
   ALLERGENS.map((a) => [a.key, a])

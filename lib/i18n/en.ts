@@ -510,6 +510,20 @@ const d: Record<string, string> = {
   'mode.food.short': 'Food',
   'mode.menu.short': 'Menu',
   'mode.product.short': 'Medicine',
+  'cond.vegetarian': 'Vegetarian',
+  'cond.vegan': 'Vegan',
+  'cond.vegetarian.hint': 'Meat, fish, seafood and gelatine show red. Eggs and dairy are fine.',
+  'cond.vegan.hint': 'All animal products show red: meat, fish, milk, eggs, honey and gelatine. "May contain traces" does not count. E471 and vitamin D3 show yellow.',
+  'label.vegetarian': 'Meat or fish',
+  'label.vegan': 'Animal products',
+  'note.dietAmbiguous': 'Can come from animals or plants, and the label does not say which. Ask the manufacturer or look for a vegan label.',
+  'h.noneOf': 'No {items} found',
+  'prof.diet': 'Diet',
+  'prof.dietAll': 'Eats everything',
+  'ins.diet_traces.title': '"May contain traces" and vegan',
+  'ins.diet_traces.text': 'Traces of milk, egg or fish mean the product is made where those ingredients are also used. The recipe itself has no animal products. The Vegan Society accepts such products, but some vegans choose to avoid them.',
+  'ins.vegan_not_free.title': 'Vegan does not mean dairy-free',
+  'ins.vegan_not_free.text': 'A product labelled vegan can still contain traces of milk, egg or fish from the factory. With an allergy, the allergen labelling is what counts, not the vegan label.',
 }
 
 export default d

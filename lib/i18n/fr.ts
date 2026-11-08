@@ -510,6 +510,20 @@ const d: Record<string, string> = {
   'mode.food.short': 'Plat',
   'mode.menu.short': 'Menu',
   'mode.product.short': 'Médicament',
+  'cond.vegetarian': 'Végétarien',
+  'cond.vegan': 'Végétalien',
+  'cond.vegetarian.hint': 'La viande, le poisson, les fruits de mer et la gélatine s’affichent en rouge. Les œufs et le lait conviennent.',
+  'cond.vegan.hint': 'Tous les produits animaux s’affichent en rouge : viande, poisson, lait, œufs, miel et gélatine. « Peut contenir des traces » ne compte pas. E471 et la vitamine D3 s’affichent en jaune.',
+  'label.vegetarian': 'Viande ou poisson',
+  'label.vegan': 'Produits d\'origine animale',
+  'note.dietAmbiguous': 'Peut être d’origine animale ou végétale, et l’étiquette ne dit pas laquelle. Demande au fabricant ou cherche un label vegan.',
+  'h.noneOf': 'Aucun ingrédient trouvé : {items}',
+  'prof.diet': 'Alimentation',
+  'prof.dietAll': 'Mange de tout',
+  'ins.diet_traces.title': '« Peut contenir des traces » et végétalien',
+  'ins.diet_traces.text': 'Des traces de lait, d’œuf ou de poisson signifient que le produit est fabriqué là où ces ingrédients sont aussi utilisés. La recette elle-même est sans produits animaux. The Vegan Society accepte ces produits, mais certains végétaliens préfèrent les éviter.',
+  'ins.vegan_not_free.title': 'Végétalien ne veut pas dire sans lait',
+  'ins.vegan_not_free.text': 'Un produit étiqueté vegan peut quand même contenir des traces de lait, d’œuf ou de poisson provenant de l’usine. En cas d’allergie, c’est l’étiquetage des allergènes qui compte, pas le label vegan.',
 }
 
 export default d

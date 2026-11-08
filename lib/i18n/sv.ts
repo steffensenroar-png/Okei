@@ -510,6 +510,20 @@ const d: Record<string, string> = {
   'mode.food.short': 'Mat',
   'mode.menu.short': 'Meny',
   'mode.product.short': 'Medicin',
+  'cond.vegetarian': 'Vegetarian',
+  'cond.vegan': 'Vegan',
+  'cond.vegetarian.hint': 'Kött, fisk, skaldjur och gelatin ger rött. Ägg och mjölk går bra.',
+  'cond.vegan.hint': 'Alla animaliska produkter ger rött: kött, fisk, mjölk, ägg, honung och gelatin. "Kan innehålla spår" räknas inte. E471 och vitamin D3 ger gult.',
+  'label.vegetarian': 'Kött eller fisk',
+  'label.vegan': 'Animaliska produkter',
+  'note.dietAmbiguous': 'Kan komma från djur eller växter, och etiketten säger inte vilket. Fråga tillverkaren eller leta efter veganmärkning.',
+  'h.noneOf': 'Hittade inte {items}',
+  'prof.diet': 'Kost',
+  'prof.dietAll': 'Äter allt',
+  'ins.diet_traces.title': '"Kan innehålla spår" och vegan',
+  'ins.diet_traces.text': 'Spår av mjölk, ägg eller fisk betyder att varan tillverkas där sådana råvaror också används. Själva receptet är utan animaliska produkter. The Vegan Society godtar sådana varor, men en del veganer väljer att undvika dem.',
+  'ins.vegan_not_free.title': 'Vegansk betyder inte mjölkfri',
+  'ins.vegan_not_free.text': 'En vara märkt vegansk kan ändå innehålla spår av mjölk, ägg eller fisk från fabriken. Vid allergi är det allergenmärkningen som gäller, inte veganmärkningen.',
 }
 
 export default d

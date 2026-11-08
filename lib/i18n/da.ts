@@ -510,6 +510,20 @@ const d: Record<string, string> = {
   'mode.food.short': 'Mad',
   'mode.menu.short': 'Menu',
   'mode.product.short': 'Medicin',
+  'cond.vegetarian': 'Vegetar',
+  'cond.vegan': 'Vegansk',
+  'cond.vegetarian.hint': 'Kød, fisk, skaldyr og gelatine giver rødt. Æg og mælk er fint.',
+  'cond.vegan.hint': 'Alle animalske produkter giver rødt: kød, fisk, mælk, æg, honning og gelatine. "Kan indeholde spor" tæller ikke. E471 og vitamin D3 giver gult.',
+  'label.vegetarian': 'Kød eller fisk',
+  'label.vegan': 'Animalske produkter',
+  'note.dietAmbiguous': 'Kan komme fra dyr eller planter, og etiketten siger ikke hvilket. Spørg producenten eller se efter veganmærke.',
+  'h.noneOf': 'Fandt ikke {items}',
+  'prof.diet': 'Kost',
+  'prof.dietAll': 'Spiser alt',
+  'ins.diet_traces.title': '"Kan indeholde spor" og vegansk',
+  'ins.diet_traces.text': 'Spor af mælk, æg eller fisk betyder, at varen er lavet, hvor sådanne råvarer også bruges. Selve opskriften er uden animalske produkter. The Vegan Society godkender sådanne varer, men nogle veganere vælger at undgå dem.',
+  'ins.vegan_not_free.title': 'Vegansk betyder ikke mælkefri',
+  'ins.vegan_not_free.text': 'En vare mærket vegansk kan stadig have spor af mælk, æg eller fisk fra fabrikken. Ved allergi er det allergenmærkningen, der gælder, ikke veganmærket.',
 }
 
 export default d

@@ -510,6 +510,20 @@ const d: Record<string, string> = {
   'mode.food.short': 'Ruoka',
   'mode.menu.short': 'Menu',
   'mode.product.short': 'Lääke',
+  'cond.vegetarian': 'Kasvissyöjä',
+  'cond.vegan': 'Vegaani',
+  'cond.vegetarian.hint': 'Liha, kala, äyriäiset ja liivate näkyvät punaisena. Kananmuna ja maito sopivat.',
+  'cond.vegan.hint': 'Kaikki eläinperäiset tuotteet näkyvät punaisena: liha, kala, maito, kananmuna, hunaja ja liivate. "Voi sisältää pieniä määriä" ei lasketa. E471 ja D3-vitamiini näkyvät keltaisena.',
+  'label.vegetarian': 'Liha tai kala',
+  'label.vegan': 'Eläinperäisiä tuotteita',
+  'note.dietAmbiguous': 'Voi olla eläin- tai kasviperäinen, eikä etiketti kerro kumpi. Kysy valmistajalta tai etsi vegaanimerkintää.',
+  'h.noneOf': 'Ei löytynyt: {items}',
+  'prof.diet': 'Ruokavalio',
+  'prof.dietAll': 'Syö kaikkea',
+  'ins.diet_traces.title': '"Voi sisältää pieniä määriä" ja vegaanisuus',
+  'ins.diet_traces.text': 'Pienet määrät maitoa, kananmunaa tai kalaa tarkoittavat, että tuote valmistetaan paikassa, jossa käytetään myös niitä. Itse resepti on ilman eläinperäisiä tuotteita. The Vegan Society hyväksyy tällaiset tuotteet, mutta osa vegaaneista välttää niitä.',
+  'ins.vegan_not_free.title': 'Vegaaninen ei tarkoita maidotonta',
+  'ins.vegan_not_free.text': 'Vegaaniseksi merkitty tuote voi silti sisältää pieniä määriä maitoa, kananmunaa tai kalaa tehtaalta. Allergiassa ratkaisee allergeenimerkintä, ei vegaanimerkintä.',
 }
 
 export default d

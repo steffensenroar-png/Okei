@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import AuthGate, { useSession } from '@/components/AuthGate'
 import { supabase } from '@/lib/supabase-browser'
-import { ALLERGENS, AllergenKey, CONDITIONS, ConditionKey, Severity } from '@/lib/allergens'
+import { ALLERGENS, AllergenKey, CONDITIONS, ConditionKey, DIETS, DietKey, Severity } from '@/lib/allergens'
 import { FamilyProfile } from '@/lib/client'
 import AllergenIcon from '@/components/AllergenIcon'
 import { Animal, ANIMALS, animalFor, Mascot } from '@/components/Art'
@@ -35,13 +35,24 @@ function toDraft(p: FamilyProfile): Draft {
     name: p.name,
     birth_year: p.birth_year ? String(p.birth_year) : '',
     allergens: Object.fromEntries(p.allergens.map((a) => [a.key, a.severity])),
-    conditions: p.conditions ?? [],
+    conditions: withDiet(p.conditions ?? [], p.wishes as Wishes | null),
     custom: (p.custom_terms ?? []).join(', '),
     avatar: p.avatar ?? null,
     emergency_note: p.emergency_note ?? '',
     epipen_expiry: p.epipen_expiry ?? '',
-    wishes: (p.wishes ?? {}) as Wishes
+    wishes: (() => {
+      const { vegetarian: _v, vegan: _vg, ...rest } = (p.wishes ?? {}) as Wishes
+      return rest
+    })()
   }
+}
+
+/** Vegetar og vegansk var tidligere «ønsker». Nå er de kosthold som påvirker flagget. */
+function withDiet(conditions: ConditionKey[], wishes: Wishes | null): ConditionKey[] {
+  if (conditions.includes('vegan') || conditions.includes('vegetarian')) return conditions
+  if (wishes?.vegan) return [...conditions, 'vegan']
+  if (wishes?.vegetarian) return [...conditions, 'vegetarian']
+  return conditions
 }
 
 function summary(p: FamilyProfile, t: (k: string, p?: Record<string, string>) => string) {
@@ -260,6 +271,12 @@ function Profiles() {
     setDraft({ ...draft, allergens: next })
   }
 
+  function setDiet(d: DietKey | null) {
+    if (!draft) return
+    const rest = draft.conditions.filter((c) => c !== 'vegetarian' && c !== 'vegan')
+    setDraft({ ...draft, conditions: d ? [...rest, d] : rest })
+  }
+
   function toggleCondition(key: ConditionKey) {
     if (!draft) return
     const has = draft.conditions.includes(key)
@@ -340,6 +357,19 @@ function Profiles() {
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="stack" style={{ gap: 10 }}>
+            <h2>{t('prof.diet')}</h2>
+            <div className="seg" role="radiogroup" aria-label={t('prof.diet')}>
+              <button type="button" role="radio" aria-checked={!draft.conditions.some((c) => c === 'vegetarian' || c === 'vegan')} aria-pressed={!draft.conditions.some((c) => c === 'vegetarian' || c === 'vegan')} onClick={() => setDiet(null)}>{t('prof.dietAll')}</button>
+              {DIETS.map((d) => (
+                <button key={d} type="button" role="radio" aria-checked={draft.conditions.includes(d)} aria-pressed={draft.conditions.includes(d)} onClick={() => setDiet(d)}>{t(`cond.${d}`)}</button>
+              ))}
+            </div>
+            {DIETS.filter((d) => draft.conditions.includes(d)).map((d) => (
+              <p key={d} className="tiny" style={{ margin: 0 }}>{t(`cond.${d}.hint`)}</p>
+            ))}
           </div>
 
           <div className="stack">

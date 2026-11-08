@@ -25,8 +25,6 @@ export function WishesEditor({ value, onChange }: { value: Wishes; onChange: (w:
         <button type="button" className="chip" aria-pressed={!!value.fiber} onClick={() => toggle('fiber')}>{t('w.fiber')}</button>
         <button type="button" className="chip" aria-pressed={!!value.wholegrain} onClick={() => toggle('wholegrain')}>{t('w.wholegrain')}</button>
         <button type="button" className="chip" aria-pressed={!!value.keyhole} onClick={() => toggle('keyhole')}>{t('w.keyhole')}</button>
-        <button type="button" className="chip" aria-pressed={!!value.vegetarian} onClick={() => toggle('vegetarian')}>{t('w.vegetarian')}</button>
-        <button type="button" className="chip" aria-pressed={!!value.vegan} onClick={() => toggle('vegan')}>{t('w.vegan')}</button>
       </div>
       {value.lowcarb != null && (
         <label className="field">

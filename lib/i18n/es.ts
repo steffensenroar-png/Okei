@@ -510,6 +510,20 @@ const d: Record<string, string> = {
   'mode.food.short': 'Comida',
   'mode.menu.short': 'Menú',
   'mode.product.short': 'Medicina',
+  'cond.vegetarian': 'Vegetariano',
+  'cond.vegan': 'Vegano',
+  'cond.vegetarian.hint': 'La carne, el pescado, el marisco y la gelatina salen en rojo. Huevos y lácteos están bien.',
+  'cond.vegan.hint': 'Todos los productos animales salen en rojo: carne, pescado, leche, huevos, miel y gelatina. «Puede contener trazas» no cuenta. E471 y vitamina D3 salen en amarillo.',
+  'label.vegetarian': 'Carne o pescado',
+  'label.vegan': 'Productos animales',
+  'note.dietAmbiguous': 'Puede ser de origen animal o vegetal, y la etiqueta no dice cuál. Pregunta al fabricante o busca un sello vegano.',
+  'h.noneOf': 'No se encontraron {items}',
+  'prof.diet': 'Alimentación',
+  'prof.dietAll': 'Come de todo',
+  'ins.diet_traces.title': '«Puede contener trazas» y vegano',
+  'ins.diet_traces.text': 'Las trazas de leche, huevo o pescado significan que el producto se fabrica donde también se usan esos ingredientes. La receta en sí no tiene productos animales. The Vegan Society acepta estos productos, pero algunos veganos prefieren evitarlos.',
+  'ins.vegan_not_free.title': 'Vegano no significa sin lácteos',
+  'ins.vegan_not_free.text': 'Un producto etiquetado como vegano puede tener trazas de leche, huevo o pescado de la fábrica. Con alergia, lo que cuenta es el etiquetado de alérgenos, no el sello vegano.',
 }
 
 export default d

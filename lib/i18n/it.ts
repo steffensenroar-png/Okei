@@ -510,6 +510,20 @@ const d: Record<string, string> = {
   'mode.food.short': 'Cibo',
   'mode.menu.short': 'Menù',
   'mode.product.short': 'Farmaci',
+  'cond.vegetarian': 'Vegetariano',
+  'cond.vegan': 'Vegano',
+  'cond.vegetarian.hint': 'Carne, pesce, frutti di mare e gelatina danno il rosso. Uova e latte vanno bene.',
+  'cond.vegan.hint': 'Tutti i prodotti animali danno il rosso: carne, pesce, latte, uova, miele e gelatina. «Può contenere tracce» non conta. E471 e vitamina D3 danno il giallo.',
+  'label.vegetarian': 'Carne o pesce',
+  'label.vegan': 'Prodotti di origine animale',
+  'note.dietAmbiguous': 'Può essere di origine animale o vegetale, e l’etichetta non dice quale. Chiedi al produttore o cerca un marchio vegano.',
+  'h.noneOf': 'Nessun ingrediente trovato: {items}',
+  'prof.diet': 'Alimentazione',
+  'prof.dietAll': 'Mangia di tutto',
+  'ins.diet_traces.title': '«Può contenere tracce» e vegano',
+  'ins.diet_traces.text': 'Tracce di latte, uova o pesce significano che il prodotto è fatto dove si usano anche questi ingredienti. La ricetta in sé non ha prodotti animali. The Vegan Society accetta questi prodotti, ma alcuni vegani preferiscono evitarli.',
+  'ins.vegan_not_free.title': 'Vegano non vuol dire senza latte',
+  'ins.vegan_not_free.text': 'Un prodotto etichettato vegano può comunque avere tracce di latte, uova o pesce dalla fabbrica. In caso di allergia conta l’etichettatura degli allergeni, non il marchio vegano.',
 }
 
 export default d

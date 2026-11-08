@@ -15,6 +15,12 @@ import {
   BIRCH_DEF,
   COELIAC_EXCLUDE,
   ConditionKey,
+  DIET_AMBIGUOUS,
+  DIET_AMBIGUOUS_EXCLUDE,
+  DietKey,
+  ANIMAL_EXTRA_DEF,
+  MEAT_DEF,
+  RENNET,
   LACTOSE_DEF,
   WHEAT_STARCH,
   claimsGlutenFree,
@@ -165,7 +171,18 @@ interface Check {
   lactose?: boolean
   coeliac?: boolean
   birch?: boolean
+  diet?: DietKey
 }
+
+const DIET_KEYS: Record<DietKey, AllergenKey[]> = {
+  vegetarian: ['fish', 'crustaceans', 'molluscs'],
+  vegan: ['fish', 'crustaceans', 'molluscs', 'milk', 'egg']
+}
+const dietDefs = (d: DietKey): AllergenDef[] => [
+  MEAT_DEF,
+  ...DIET_KEYS[d].map((k) => ALLERGEN_BY_KEY[k]),
+  ...(d === 'vegan' ? [ANIMAL_EXTRA_DEF] : [])
+]
 
 function otherAllergens(product: ProductData, main: string, traces: string, findings: Finding[]): OtherAllergen[] {
   if (product.mode === 'food') return []
@@ -210,6 +227,19 @@ export function buildChecks(profile: ProfileInput): Check[] {
   if (conditions.includes('lactose') && !profile.allergens.some((a) => a.key === 'milk')) {
     checks.push({ key: 'lactose', label: 'Laktose', labelKey: 'label.lactose', severity: 'moderate', def: LACTOSE_DEF, dataKey: 'milk', lactose: true })
   }
+  // Kosthold: vegansk dekker vegetar. Spor teller ikke, det er et valg og ikke en allergi.
+  const diet: DietKey | null = conditions.includes('vegan') ? 'vegan' : conditions.includes('vegetarian') ? 'vegetarian' : null
+  if (diet) {
+    checks.push({
+      key: `diet:${diet}`,
+      label: diet === 'vegan' ? 'Dyreprodukter' : 'Kjøtt eller fisk',
+      labelKey: `label.${diet}`,
+      severity: 'moderate',
+      def: MEAT_DEF,
+      dataKey: 'fish',
+      diet
+    })
+  }
   return checks
 }
 
@@ -229,11 +259,47 @@ function evaluateCore(product: ProductData, profile: ProfileInput, flags: CoreFl
   let sawOats = false
   let sawBirch = false
   let aiUpgraded = false
-  const sync = () => Object.assign(flags, { usedWheatStarch, sawOats, sawBirch, glutenFree, aiUpgraded })
+  let sawDietTraces = false
+  const sync = () => Object.assign(flags, { usedWheatStarch, sawOats, sawBirch, glutenFree, aiUpgraded, sawDietTraces })
 
   for (const c of buildChecks(profile)) {
     const def = c.def
     const f: Finding = { key: c.key, label: c.label, labelKey: c.labelKey, severity: c.severity, status: 'none', evidence: [] }
+
+    if (c.diet) {
+      const keys = DIET_KEYS[c.diet]
+      if (product.mode === 'food') {
+        f.status = product.likely?.some((k) => keys.includes(k)) ? 'likely' : 'unknown'
+        findings.push(f)
+        continue
+      }
+      const hits = hasText ? [...new Set(dietDefs(c.diet).flatMap((d) => matchAllergen(main, d).hits))] : []
+      const stContains = keys.some((k) => product.structured?.[k] === 'contains')
+      const aiContains = keys.some((k) => product.aiDeclared?.contains.includes(k))
+      const amb = hasText
+        ? findTerms(blankOut(normalize(main), DIET_AMBIGUOUS_EXCLUDE), c.diet === 'vegan' ? [...DIET_AMBIGUOUS, ...RENNET] : RENNET)
+        : []
+      if (hits.length || stContains) {
+        f.status = 'contains'
+        f.evidence = hits.length ? hits : ['oppgitt i produktdata']
+      } else if (aiContains) {
+        f.status = 'contains'
+        f.evidence = ['sett på etiketten av AI']
+        f.note = 'Ordlisten fant ikke ordet, men AI-en så allergenet på etiketten. Les etiketten selv.'
+        f.noteKey = 'note.ai'
+        aiUpgraded = true
+      } else if (amb.length) {
+        f.status = 'ambiguous'
+        f.evidence = amb
+        f.noteKey = 'note.dietAmbiguous'
+      } else if (!(hasText && legible)) {
+        f.status = 'unknown'
+      }
+      if (tracesAll && keys.some((k) => matchAllergen(tracesAll, ALLERGEN_BY_KEY[k]).hits.length)) sawDietTraces = true
+      if (keys.some((k) => product.structured?.[k] === 'traces')) sawDietTraces = true
+      findings.push(f)
+      continue
+    }
 
     if (product.mode === 'food') {
       if (c.birch) {
@@ -406,6 +472,10 @@ function evaluateCore(product: ProductData, profile: ProfileInput, flags: CoreFl
     R('r.noAllergies')
     return out('green', 'h.noAllergies', undefined, others)
   }
+  if (findings.every((f) => f.key.startsWith('diet:'))) {
+    R('r.checkLabel')
+    return out('green', 'h.noneOf', { items: items(findings) }, others)
+  }
 
   R('r.checkLabel')
   const n = profile.name?.trim()
@@ -423,6 +493,7 @@ interface CoreFlags {
   sawOats?: boolean
   sawBirch?: boolean
   glutenFree?: boolean
+  sawDietTraces?: boolean
 }
 
 /** Bygg «Godt å vite» ut fra hva som faktisk skjedde i vurderingen. */
@@ -444,6 +515,9 @@ function buildInsights(product: ProductData, profile: ProfileInput, ev: Evaluati
   const nutsOnly = profile.allergens.some((a) => a.key === 'nuts') && !profile.allergens.some((a) => a.key === 'peanut')
   if (nutsOnly && /peanøtt|jordnøtt|peanut/.test(text)) out.push(INSIGHTS.peanut_not_nut)
   if (flags.sawBirch) out.push(INSIGHTS.birch_cross)
+  if (flags.sawDietTraces) out.push(INSIGHTS.diet_traces)
+  const animalAllergy = profile.allergens.some((a) => ['milk', 'egg', 'fish', 'crustaceans', 'molluscs'].includes(a.key)) || conditions.includes('lactose')
+  if (animalAllergy && /\b(vegansk|veganskt|vegan|vegano|vegana|végétalien|vegaaninen)\b/.test(normalize(`${product.name ?? ''} ${text}`))) out.push(INSIGHTS.vegan_not_free)
   if (flags.aiUpgraded) out.push(INSIGHTS.ai_net)
   return out
 }

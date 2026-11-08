@@ -314,3 +314,51 @@ describe('språk', () => {
     for (const l of LANG_IDS) expect(fmt(l, { k: 'h.noneFound', p: { name: 'Klaus' } })).not.toMatch(/[{}]/)
   })
 })
+
+describe('vegetar og vegansk', () => {
+  const vegan: ProfileInput = { name: 'Mia', allergens: [], conditions: ['vegan'] }
+  const vegetar: ProfileInput = { name: 'Ola', allergens: [], conditions: ['vegetarian'] }
+  it('vegansk: melk, egg og honning gir rødt', () => {
+    expect(evaluate(label('Hvetemel, sukker, melkepulver.'), vegan).flag).toBe('red')
+    expect(evaluate(label('Havregryn, honning, salt.'), vegan).flag).toBe('red')
+    expect(evaluate(label('Pasta (durumhvete, egg).'), vegan).flag).toBe('red')
+  })
+  it('vegetar: egg og melk er OK, kjøtt og gelatin gir rødt', () => {
+    expect(evaluate(label('Pasta (durumhvete, egg), ost, melk.'), vegetar).flag).toBe('green')
+    expect(evaluate(label('Sukker, glukosesirup, gelatin, aroma.'), vegetar).flag).toBe('red')
+    expect(evaluate(label('Pizzadeig, tomat, ost, skinke.'), vegetar).flag).toBe('red')
+    expect(evaluate(label('Pasta, ansjos, olivenolje.'), vegetar).flag).toBe('red')
+  })
+  it('plantebaserte varer gir grønt', () => {
+    const r = evaluate(label('Vann, havre (10 %), rapsolje, kokosmelk, kakaosmør, salt.'), vegan)
+    expect(r.flag).toBe('green')
+    expect(r.headlineMsg?.k).toBe('h.noneOf')
+  })
+  it('spor av melk gjør ikke varen ikke-vegansk, men gir forklaring', () => {
+    const r = evaluateFamily(label('Sukker, kakaomasse, kakaosmør. Kan inneholde spor av melk.'), [{ id: '1', ...vegan }])
+    expect(r.flag).toBe('green')
+    expect(r.insights.map((i) => i.id)).toContain('diet_traces')
+  })
+  it('E471 og vitamin D3 gir gult for veganere', () => {
+    expect(evaluate(label('Hvetemel, vann, gjær, emulgator (E471), salt.'), vegan).flag).toBe('yellow')
+    expect(evaluate(label('Hvetemel, vann, gjær, emulgator (E471), salt.'), vegetar).flag).toBe('green')
+  })
+  it('honningmelon og kakaosmør er ikke dyreprodukter', () => {
+    expect(evaluate(label('Honningmelon, eple, kakaosmør, sukker.'), vegan).flag).toBe('green')
+  })
+  it('andre språk', () => {
+    expect(evaluate(label('Zutaten: Weizenmehl, Schweinefleisch, Salz.'), vegetar).flag).toBe('red')
+    expect(evaluate(label('Ingredientes: harina, azúcar, miel.'), vegan).flag).toBe('red')
+    expect(evaluate(label('Ingrédients : farine, beurre, sel.'), vegan).flag).toBe('red')
+    expect(evaluate(label('Ainesosat: vehnäjauho, kananmuna, sokeri.'), vegetar).flag).toBe('green')
+    expect(evaluate(label('Ingredienti: farina, funghi porcini, sale.'), vegetar).flag).toBe('green')
+  })
+  it('vegansk merket vare gir allergiforklaring ved melkeallergi', () => {
+    const r = evaluateFamily(label('Vegansk. Sukker, kakaosmør. Kan inneholde spor av melk.'), [{ id: '1', ...emma }])
+    expect(r.insights.map((i) => i.id)).toContain('vegan_not_free')
+  })
+  it('kombinert med allergi', () => {
+    const r = evaluate(label('Pasta (durumhvete, egg), peanøtter.'), { ...vegan, allergens: [{ key: 'peanut', severity: 'severe' }] })
+    expect(r.flag).toBe('red')
+  })
+})

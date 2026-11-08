@@ -42,6 +42,8 @@ const T: Record<Lang, {
   coeliacStrict: string
   lactose: string
   birch: string
+  vegetarian: string
+  vegan: string
   also: string
   cross: string
   thanks: string
@@ -55,6 +57,8 @@ const T: Record<Lang, {
     coeliacStrict: 'Reagerer også på små spor av gluten.',
     lactose: 'Laktoseintoleranse: laktosefrie meieriprodukter er OK.',
     birch: 'Bjørkepollenallergi: rå frukt, rå grønnsaker og nøtter kan gi kløe. Kokt eller stekt er som regel OK.',
+    vegetarian: 'Vegetar: ikke kjøtt, fisk, skalldyr eller gelatin. Egg og melk er OK.',
+    vegan: 'Veganer: ingen dyreprodukter – ikke kjøtt, fisk, skalldyr, melk, smør, ost, egg, honning eller gelatin.',
     also: 'Unngå også:',
     cross: 'Bruk rent utstyr, egen stekeolje og eget skjærebrett.',
     thanks: 'Si fra hvis du er usikker. Tusen takk!'
@@ -68,6 +72,8 @@ const T: Record<Lang, {
     coeliacStrict: 'Also reacts to small traces of gluten.',
     lactose: 'Lactose intolerance: lactose-free dairy is fine.',
     birch: 'Birch pollen allergy: raw fruit, raw vegetables and nuts may cause itching. Cooked or baked is usually fine.',
+    vegetarian: 'Vegetarian: no meat, fish, seafood or gelatine. Eggs and dairy are fine.',
+    vegan: 'Vegan: no animal products – no meat, fish, seafood, milk, butter, cheese, eggs, honey or gelatine.',
     also: 'Please also avoid:',
     cross: 'Please use clean utensils, separate frying oil and a separate cutting board.',
     thanks: 'Please tell me if you are unsure. Thank you!'
@@ -81,6 +87,8 @@ const T: Record<Lang, {
     coeliacStrict: 'Reagiert auch auf kleine Spuren von Gluten.',
     lactose: 'Laktoseintoleranz: laktosefreie Milchprodukte sind in Ordnung.',
     birch: 'Birkenpollenallergie: rohes Obst, rohes Gemüse und Nüsse können Juckreiz auslösen. Gekocht oder gebacken ist meist in Ordnung.',
+    vegetarian: 'Vegetarisch: kein Fleisch, Fisch, Meeresfrüchte oder Gelatine. Eier und Milchprodukte sind in Ordnung.',
+    vegan: 'Vegan: keine tierischen Produkte – kein Fleisch, Fisch, Meeresfrüchte, Milch, Butter, Käse, Eier, Honig oder Gelatine.',
     also: 'Bitte auch vermeiden:',
     cross: 'Bitte sauberes Geschirr, separates Frittierfett und ein eigenes Schneidebrett verwenden.',
     thanks: 'Bitte sagen Sie es mir, wenn Sie unsicher sind. Vielen Dank!'
@@ -94,6 +102,8 @@ const T: Record<Lang, {
     coeliacStrict: 'También reacciona a pequeñas trazas de gluten.',
     lactose: 'Intolerancia a la lactosa: los lácteos sin lactosa están bien.',
     birch: 'Alergia al polen de abedul: la fruta cruda, las verduras crudas y los frutos secos pueden causar picor. Cocinado u horneado suele estar bien.',
+    vegetarian: 'Vegetariano: sin carne, pescado, marisco ni gelatina. Huevos y lácteos están bien.',
+    vegan: 'Vegano: ningún producto animal – sin carne, pescado, marisco, leche, mantequilla, queso, huevos, miel ni gelatina.',
     also: 'Evite también:',
     cross: 'Use utensilios limpios, aceite de freír aparte y una tabla de cortar aparte.',
     thanks: 'Dígame si tiene dudas. ¡Muchas gracias!'
@@ -107,6 +117,8 @@ const T: Record<Lang, {
     coeliacStrict: 'Réagit aussi à de petites traces de gluten.',
     lactose: 'Intolérance au lactose : les produits laitiers sans lactose conviennent.',
     birch: 'Allergie au pollen de bouleau : les fruits crus, les légumes crus et les noix peuvent provoquer des démangeaisons. Cuit, c’est généralement bien.',
+    vegetarian: 'Végétarien : pas de viande, poisson, fruits de mer ni gélatine. Les œufs et les produits laitiers conviennent.',
+    vegan: 'Végétalien : aucun produit animal – pas de viande, poisson, fruits de mer, lait, beurre, fromage, œufs, miel ni gélatine.',
     also: 'Évitez aussi :',
     cross: 'Merci d’utiliser des ustensiles propres, une huile de friture séparée et une planche à découper séparée.',
     thanks: 'Dites-le-moi en cas de doute. Merci beaucoup !'
@@ -120,6 +132,8 @@ const T: Record<Lang, {
     coeliacStrict: 'Reagisce anche a piccole tracce di glutine.',
     lactose: 'Intolleranza al lattosio: i latticini senza lattosio vanno bene.',
     birch: 'Allergia al polline di betulla: frutta cruda, verdura cruda e frutta secca possono dare prurito. Cotto di solito va bene.',
+    vegetarian: 'Vegetariano: niente carne, pesce, frutti di mare o gelatina. Uova e latticini vanno bene.',
+    vegan: 'Vegano: nessun prodotto animale – niente carne, pesce, frutti di mare, latte, burro, formaggio, uova, miele o gelatina.',
     also: 'Evitare anche:',
     cross: 'Usate utensili puliti, olio per friggere separato e un tagliere separato.',
     thanks: 'Ditemi se avete dubbi. Grazie mille!'
@@ -133,6 +147,8 @@ const T: Record<Lang, {
     coeliacStrict: 'Reagerar även på små spår av gluten.',
     lactose: 'Laktosintolerans: laktosfria mejeriprodukter går bra.',
     birch: 'Björkpollenallergi: rå frukt, råa grönsaker och nötter kan ge klåda. Kokt eller bakat går oftast bra.',
+    vegetarian: 'Vegetarian: inget kött, fisk, skaldjur eller gelatin. Ägg och mejeriprodukter går bra.',
+    vegan: 'Vegan: inga animaliska produkter – inget kött, fisk, skaldjur, mjölk, smör, ost, ägg, honung eller gelatin.',
     also: 'Undvik även:',
     cross: 'Använd rena redskap, separat frityrolja och en egen skärbräda.',
     thanks: 'Säg till om du är osäker. Tack så mycket!'
@@ -147,6 +163,8 @@ const T: Record<Lang, {
     coeliacStrict: 'Reagerer også på små spor af gluten.',
     lactose: 'Laktoseintolerance: laktosefri mejeriprodukter er OK.',
     birch: 'Birkepollenallergi: rå frugt, rå grøntsager og nødder kan give kløe. Kogt eller bagt er som regel OK.',
+    vegetarian: 'Vegetar: intet kød, fisk, skaldyr eller gelatine. Æg og mejeriprodukter er fint.',
+    vegan: 'Veganer: ingen animalske produkter – intet kød, fisk, skaldyr, mælk, smør, ost, æg, honning eller gelatine.',
     also: 'Undgå også:',
     cross: 'Brug rent køkkengrej, separat friturefedt og eget skærebræt.',
     thanks: 'Sig til, hvis du er i tvivl. Mange tak!'
@@ -160,6 +178,8 @@ const T: Record<Lang, {
     coeliacStrict: 'Reagoi myös pieniin gluteenimääriin.',
     lactose: 'Laktoosi-intoleranssi: laktoosittomat maitotuotteet sopivat.',
     birch: 'Koivun siitepölyallergia: raa’at hedelmät, raa’at vihannekset ja pähkinät voivat aiheuttaa kutinaa. Kypsennettynä ne sopivat yleensä.',
+    vegetarian: 'Kasvissyöjä: ei lihaa, kalaa, äyriäisiä eikä liivatetta. Kananmuna ja maitotuotteet sopivat.',
+    vegan: 'Vegaani: ei eläinperäisiä tuotteita – ei lihaa, kalaa, äyriäisiä, maitoa, voita, juustoa, kananmunaa, hunajaa eikä liivatetta.',
     also: 'Vältä myös:',
     cross: 'Käytä puhtaita välineitä, erillistä paistorasvaa ja omaa leikkuulautaa.',
     thanks: 'Kerro, jos olet epävarma. Kiitos paljon!'
@@ -186,6 +206,8 @@ export function buildChefCard(
   if (p.conditions.includes('coeliac')) notes.push(t.coeliac + (p.conditions.includes('coeliac_strict') ? ` ${t.coeliacStrict}` : ''))
   if (p.conditions.includes('lactose')) notes.push(t.lactose)
   if (p.conditions.includes('birch')) notes.push(t.birch)
+  if (p.conditions.includes('vegan')) notes.push(t.vegan)
+  else if (p.conditions.includes('vegetarian')) notes.push(t.vegetarian)
   if (p.custom_terms?.length) notes.push(`${t.also} ${p.custom_terms.join(', ')}`)
   if (items.length || p.conditions.includes('coeliac')) notes.push(t.cross)
   return { title: t.title, intro: items.length ? t.intro(p.name) : t.needs(p.name), items, notes, thanks: t.thanks }
