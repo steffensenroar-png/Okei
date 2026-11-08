@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import AuthGate, { useSession } from '@/components/AuthGate'
 import BarcodeScanner from '@/components/BarcodeScanner'
-import { CameraIcon, Logo } from '@/components/Icons'
+import { CameraIcon, Logo, LogoMark } from '@/components/Icons'
 import { supabase } from '@/lib/supabase-browser'
 import { compressImage, FamilyProfile, postScan, storeGet, storeSet } from '@/lib/client'
 import { Animal, animalFor, Mascot, ModeArt } from '@/components/Art'
@@ -161,36 +161,31 @@ function FullScan() {
 
 
   return (
-    <main className="page">
-      <div className="row" style={{ justifyContent: 'space-between' }}>
-        <Logo />
-      </div>
-
-      <div className="stack" style={{ gap: 10 }}>
-        <h2 style={{ fontSize: 19 }}>{t('scan.who')}</h2>
-        <div className="row" style={{ flexWrap: 'wrap', gap: 8 }}>
+    <main className="page scan-page">
+      <div className="scan-who" role="group" aria-label={t('scan.who')}>
+        <LogoMark size={30} />
+        <div className="chip-scroll">
           {profiles.length > 1 && (
-            <button className="profile-pill" aria-pressed={selected.length === profiles.length} onClick={toggleAll}>
+            <button className="who-chip" aria-pressed={selected.length === profiles.length} onClick={toggleAll}>
               <span className="family-stack" aria-hidden="true">
                 {profiles.slice(0, 3).map((p, i) => (
-                  <Animal key={p.id} id={animalFor(p.avatar, i)} size={28} />
+                  <Animal key={p.id} id={animalFor(p.avatar, i)} size={22} />
                 ))}
               </span>
-              {t('scan.wholeFamily')}
+              {t('scan.all')}
             </button>
           )}
           {profiles.map((p, i) => (
-            <button key={p.id} className="profile-pill" aria-pressed={selected.includes(p.id)} onClick={() => toggleProfile(p.id)}>
-              <Animal id={animalFor(p.avatar, i)} size={36} />
+            <button key={p.id} className="who-chip" aria-pressed={selected.includes(p.id)} onClick={() => toggleProfile(p.id)}>
+              <Animal id={animalFor(p.avatar, i)} size={26} />
               {p.name}
-              <span className="check" aria-hidden="true">✓</span>
             </button>
           ))}
         </div>
       </div>
 
       {sharedWith.length > 0 && (
-        <p className="share-note">
+        <p className="share-line">
           <span aria-hidden="true">👀</span> {t('scan.sharedWith', { names: sharedWith })}
         </p>
       )}
@@ -198,46 +193,35 @@ function FullScan() {
       <RecallBanner />
       <PenReminder profiles={profiles} />
 
-      <div className="stack" style={{ gap: 8 }} role="group" aria-label={t('scan.what')}>
-        <div className="mode-tiles">
-          {MODES.slice(0, 3).map((m) => (
-            <button key={m.id} className={`mode-tile ${m.id}`} aria-pressed={m.id === mode} onClick={() => pickMode(m.id)}>
-              <ModeArt mode={m.id} size={48} />
-              <span>{t(`mode.${m.id}`)}</span>
-            </button>
-          ))}
-        </div>
-        <div className="mode-tiles more">
-          {MODES.slice(3).map((m) => (
-            <button key={m.id} className={`mode-tile ${m.id}`} aria-pressed={m.id === mode} onClick={() => pickMode(m.id)}>
-              <ModeArt mode={m.id} size={34} />
-              <span>{t(`mode.${m.id}`)}</span>
-            </button>
-          ))}
-        </div>
+      <div className="mode-bar" role="group" aria-label={t('scan.what')}>
+        {MODES.map((m) => (
+          <button key={m.id} className={`mode-btn ${m.id}`} aria-pressed={m.id === mode} aria-label={t(`mode.${m.id}`)} onClick={() => pickMode(m.id)}>
+            <ModeArt mode={m.id} size={28} />
+            <span>{t(`mode.${m.id}.short`)}</span>
+          </button>
+        ))}
       </div>
 
       {busy ? (
-        <div className="camera" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16, color: '#fff' }}>
+        <div className="camera scan-fill" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16, color: '#fff' }}>
           <div className="bob"><Mascot mood="unsure" size={120} /></div>
           <span style={{ fontWeight: 600 }}>{t(`mode.${mode}.busy`)}</span>
         </div>
       ) : mode === 'barcode' ? (
-        <BarcodeScanner onCode={(ean) => run({ ean })} paused={busy} />
+        <BarcodeScanner onCode={(ean) => run({ ean })} paused={busy} fill />
       ) : (
         <>
-          <button className={`photo-drop ${mode}`} onClick={() => fileRef.current?.click()}>
-            <span className="photo-art"><ModeArt mode={mode} size={96} /></span>
+          <button className={`photo-drop scan-fill ${mode}`} onClick={() => fileRef.current?.click()}>
+            <span className="photo-art"><ModeArt mode={mode} size={84} /></span>
             <span className="photo-cta"><CameraIcon /></span>
             {t(`mode.${mode}.photo`)}
+            <span className="photo-hint">{t(`mode.${mode}.hint`)}</span>
           </button>
-          <p className="small muted" style={{ textAlign: 'center' }}>{t(`mode.${mode}.hint`)}</p>
           <input ref={fileRef} type="file" accept="image/*" capture="environment" hidden onChange={onFile} />
         </>
       )}
 
       {error && <div className="alert error" role="alert">{error}</div>}
-      <p className="tiny" style={{ textAlign: 'center' }}>{t('disclaimer')}</p>
     </main>
   )
 }

@@ -559,6 +559,12 @@ const no: Record<string, string> = {
   'word.green': 'OK',
   'word.red': 'Nei',
   'word.yellow': 'Usikkert',
+  'scan.all': 'Alle',
+  'mode.barcode.short': 'Strekkode',
+  'mode.label.short': 'Etikett',
+  'mode.food.short': 'Mat',
+  'mode.menu.short': 'Meny',
+  'mode.product.short': 'Medisin',
 }
 
 export default no

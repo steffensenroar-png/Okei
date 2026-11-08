@@ -504,6 +504,12 @@ const d: Record<string, string> = {
   'word.green': 'OK',
   'word.red': 'Nein',
   'word.yellow': 'Unsicher',
+  'scan.all': 'Alle',
+  'mode.barcode.short': 'Barcode',
+  'mode.label.short': 'Etikett',
+  'mode.food.short': 'Essen',
+  'mode.menu.short': 'Menü',
+  'mode.product.short': 'Medizin',
 }
 
 export default d

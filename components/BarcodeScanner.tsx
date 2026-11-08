@@ -7,9 +7,11 @@ import { validGtin } from '@/lib/client'
 interface Props {
   onCode: (code: string) => void
   paused?: boolean
+  /** Fyll resten av skjermen (skannesiden). */
+  fill?: boolean
 }
 
-export default function BarcodeScanner({ onCode, paused }: Props) {
+export default function BarcodeScanner({ onCode, paused, fill }: Props) {
   const { t } = useT()
   const videoRef = useRef<HTMLVideoElement>(null)
   const [status, setStatus] = useState<'starting' | 'running' | 'denied' | 'unsupported'>('starting')
@@ -79,17 +81,18 @@ export default function BarcodeScanner({ onCode, paused }: Props) {
   }
 
   return (
-    <div className="stack" style={{ gap: 14 }}>
-      <div className="camera">
+    <div className={fill ? 'scan-fill bc-wrap' : 'stack'} style={fill ? undefined : { gap: 14 }}>
+      <div className={fill ? 'camera bc-camera' : 'camera'}>
         <video ref={videoRef} muted playsInline autoPlay />
         <div className="frame" />
+        {fill && status === 'running' && <div className="cam-hint">{t('bc.hold')}</div>}
         {status === 'starting' && <div className="msg">{t('bc.starting')}</div>}
         {status === 'denied' && (
           <div className="msg">{t('bc.denied')}</div>
         )}
         {status === 'unsupported' && <div className="msg">{t('bc.unsupported')}</div>}
       </div>
-      {status === 'running' && <p className="small muted" style={{ textAlign: 'center' }}>{t('bc.hold')}</p>}
+      {!fill && status === 'running' && <p className="small muted" style={{ textAlign: 'center' }}>{t('bc.hold')}</p>}
       <form onSubmit={submitManual} className="row">
         <input
           className="input"
