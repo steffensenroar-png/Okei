@@ -528,8 +528,8 @@ const d: Record<string, string> = {
   'prof.photoPick': 'Vælg fra billeder',
   'prof.photoTake': 'Tag billede',
   'prof.photoRemove': 'Fjern billede',
-  'prof.photoHint': 'Valgfrit. Billedet gemmes i lille størrelse og vises kun for familien, ikke på allergikortet, du deler.',
-  'prof.animalFallback': 'Dyret bruges, hvor billedet ikke vises, for eksempel på allergikortet.',
+  'prof.photoHint': 'Valgfrit. Billedet gemmes i lille størrelse og vises for familien og på allergikortet, du deler, så andre kan genkende personen.',
+  'prof.animalFallback': 'Dyret bruges, når profilen ikke har et billede.',
 }
 
 export default d

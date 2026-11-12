@@ -467,7 +467,7 @@ const d: Record<string, string> = {
   'share.confirmRevoke': 'Revoke the link? It stops working straight away.',
   'share.created': 'Link created {date}',
   'share.heading': 'Share {nameGen} allergy card',
-  'share.intro': 'For nursery, school, grandparents or parents hosting a birthday party. They see the allergies and emergency info, and can scan products against {nameGen} profile without signing in. The link can be revoked at any time.',
+  'share.intro': 'For nursery, school, grandparents or parents hosting a birthday party. They see the photo, allergies and emergency info, and can scan products against {nameGen} profile without signing in. The link can be revoked at any time.',
   'share.new': 'Make a new link to the allergy card',
   'share.revoke': 'Revoke',
   'share.text': 'Here is {nameGen} allergy card in Okei. You can see what {name} can\'t tolerate, and scan products to check.',
@@ -528,8 +528,8 @@ const d: Record<string, string> = {
   'prof.photoPick': 'Choose from photos',
   'prof.photoTake': 'Take photo',
   'prof.photoRemove': 'Remove photo',
-  'prof.photoHint': 'Optional. The photo is stored small and only shown to your family, not on the allergy card you share.',
-  'prof.animalFallback': 'The animal is used where the photo is not shown, such as on the allergy card.',
+  'prof.photoHint': 'Optional. The photo is stored small and shown to your family and on the allergy card you share, so others can recognise the person.',
+  'prof.animalFallback': 'The animal is used when the profile has no photo.',
 }
 
 export default d

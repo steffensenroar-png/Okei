@@ -528,8 +528,8 @@ const d: Record<string, string> = {
   'prof.photoPick': 'Valitse kuvista',
   'prof.photoTake': 'Ota kuva',
   'prof.photoRemove': 'Poista kuva',
-  'prof.photoHint': 'Vapaaehtoinen. Kuva tallennetaan pienenä ja näkyy vain perheelle, ei jakamallasi allergiakortilla.',
-  'prof.animalFallback': 'Eläintä käytetään, kun kuvaa ei näytetä, esimerkiksi allergiakortilla.',
+  'prof.photoHint': 'Vapaaehtoinen. Kuva tallennetaan pienenä ja näkyy perheelle sekä jakamallasi allergiakortilla, jotta muut tunnistavat henkilön.',
+  'prof.animalFallback': 'Eläintä käytetään, kun profiilissa ei ole kuvaa.',
 }
 
 export default d

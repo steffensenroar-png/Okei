@@ -528,8 +528,8 @@ const d: Record<string, string> = {
   'prof.photoPick': 'Välj från bilder',
   'prof.photoTake': 'Ta bild',
   'prof.photoRemove': 'Ta bort bild',
-  'prof.photoHint': 'Valfritt. Bilden sparas i liten storlek och visas bara för familjen, inte på allergikortet du delar.',
-  'prof.animalFallback': 'Djuret används där bilden inte visas, till exempel på allergikortet.',
+  'prof.photoHint': 'Valfritt. Bilden sparas i liten storlek och visas för familjen och på allergikortet du delar, så att andra känner igen personen.',
+  'prof.animalFallback': 'Djuret används när profilen inte har någon bild.',
 }
 
 export default d

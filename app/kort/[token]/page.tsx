@@ -9,7 +9,7 @@ import { compressImage, errorText } from '@/lib/client'
 import { useT } from '@/components/I18n'
 import type { Msg } from '@/lib/i18n/core'
 import AllergenIcon from '@/components/AllergenIcon'
-import { Animal, animalFor, Mascot, ModeArt } from '@/components/Art'
+import { animalFor, Avatar, Mascot, ModeArt } from '@/components/Art'
 import { CameraIcon, FlagIcon, Logo } from '@/components/Icons'
 import BarcodeScanner from '@/components/BarcodeScanner'
 import { Insights, sourceText } from '@/components/ResultParts'
@@ -19,6 +19,7 @@ interface CardProfile {
   id: string
   name: string
   avatar: string | null
+  photo?: string | null
   allergens: { key: AllergenKey; severity: Severity }[]
   conditions: ConditionKey[]
   custom_terms: string[]
@@ -107,7 +108,7 @@ export default function SharedCard() {
       {profiles.map((p, i) => (
         <section key={p.id} className="card stack" style={{ gap: 12 }}>
           <div className="row" style={{ gap: 12 }}>
-            <Animal id={animalFor(p.avatar, i)} size={60} />
+            <Avatar photo={p.photo} id={animalFor(p.avatar, i)} size={72} />
             <h1 style={{ fontSize: 28 }}>{p.name}</h1>
           </div>
           {(p.conditions ?? []).filter((c) => c !== 'coeliac_strict').map((c) => (

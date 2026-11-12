@@ -528,8 +528,8 @@ const d: Record<string, string> = {
   'prof.photoPick': 'Choisir dans les photos',
   'prof.photoTake': 'Prendre une photo',
   'prof.photoRemove': 'Retirer la photo',
-  'prof.photoHint': 'Facultatif. La photo est enregistrée en petit format et visible seulement par ta famille, pas sur la carte d’allergies que tu partages.',
-  'prof.animalFallback': 'L’animal est utilisé là où la photo n’est pas affichée, par exemple sur la carte d’allergies.',
+  'prof.photoHint': 'Facultatif. La photo est enregistrée en petit format et visible par ta famille et sur la carte d’allergies que tu partages, pour que les autres reconnaissent la personne.',
+  'prof.animalFallback': 'L’animal est utilisé quand le profil n’a pas de photo.',
 }
 
 export default d

@@ -23,7 +23,7 @@ export default function Privacy() {
         <ul style={{ margin: 0, paddingLeft: 20 }}>
           <li>E-postadresse og navn fra innloggingen (Google eller e-postlenke).</li>
           <li>Profilene du lager: navn, valgfritt fødselsår, allergier og alvorlighetsgrad. Allergier er helseopplysninger.</li>
-          <li>Valgfritt profilbilde. Det lagres lite (320 × 320 piksler), vises bare for familien og deles ikke på allergikortet.</li>
+          <li>Valgfritt profilbilde. Det lagres lite (320 × 320 piksler) og vises for familien og på allergikort du deler.</li>
           <li>Resultatene av skann: produktnavn, ingrediensliste, flagg og eventuell tilbakemelding.</li>
         </ul>
         <p>Bilder du tar lagres ikke av Okei. De sendes til analyse og forkastes.</p>
@@ -36,7 +36,7 @@ export default function Privacy() {
 
       <section className="stack">
         <h2>Delte allergikort</h2>
-        <p>Du kan lage en lenke til et allergikort. Den som har lenken, ser navn, dyr, allergier, tilstander, egne ord og nødinfo for profilene du har valgt, og kan skanne varer mot dem uten å logge inn. Det som skannes via lenken, lagres ikke. Du kan trekke lenken tilbake når som helst, og den slutter å virke etter 180 dager.</p>
+        <p>Du kan lage en lenke til et allergikort. Den som har lenken, ser navn, bilde eller dyr, allergier, tilstander, egne ord og nødinfo for profilene du har valgt, og kan skanne varer mot dem uten å logge inn. Det som skannes via lenken, lagres ikke. Du kan trekke lenken tilbake når som helst, og den slutter å virke etter 180 dager.</p>
       </section>
 
       <section className="stack">
@@ -90,7 +90,7 @@ function PrivacyEn() {
         <ul style={{ margin: 0, paddingLeft: 20 }}>
           <li>Email address and name from your sign-in (Google or email link).</li>
           <li>The profiles you create: name, optional birth year, allergies and severity. Allergies are health data.</li>
-          <li>An optional profile photo. It is stored small (320 × 320 pixels), shown only to your family and not shared on the allergy card.</li>
+          <li>An optional profile photo. It is stored small (320 × 320 pixels) and shown to your family and on allergy cards you share.</li>
           <li>Scan results: product name, ingredient list, flag and any feedback.</li>
         </ul>
         <p>Okei does not store the photos you scan. They are sent for analysis and discarded.</p>
@@ -103,7 +103,7 @@ function PrivacyEn() {
 
       <section className="stack">
         <h2>Shared allergy cards</h2>
-        <p>You can create a link to an allergy card. Anyone with the link sees name, animal, allergies, conditions, custom words and emergency info for the profiles you chose, and can scan products against them without signing in. Scans made through the link are not stored. You can revoke the link at any time, and it stops working after 180 days.</p>
+        <p>You can create a link to an allergy card. Anyone with the link sees name, photo or animal, allergies, conditions, custom words and emergency info for the profiles you chose, and can scan products against them without signing in. Scans made through the link are not stored. You can revoke the link at any time, and it stops working after 180 days.</p>
       </section>
 
       <section className="stack">

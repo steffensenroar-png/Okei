@@ -516,7 +516,7 @@ const no: Record<string, string> = {
   'share.confirmRevoke': 'Trekke tilbake lenken? Den slutter å virke med en gang.',
   'share.created': 'Lenke laget {date}',
   'share.heading': 'Del {nameGen} allergikort',
-  'share.intro': 'Til barnehage, skole, besteforeldre eller foreldre som arrangerer bursdag. De ser allergiene og nødinfo, og kan skanne varer mot {nameGen} profil uten å logge inn. Lenken kan trekkes tilbake når som helst.',
+  'share.intro': 'Til barnehage, skole, besteforeldre eller foreldre som arrangerer bursdag. De ser bildet, allergiene og nødinfo, og kan skanne varer mot {nameGen} profil uten å logge inn. Lenken kan trekkes tilbake når som helst.',
   'share.new': 'Lag ny lenke til allergikortet',
   'share.revoke': 'Trekk tilbake',
   'share.text': 'Her er {nameGen} allergikort i Okei. Du kan se hva {name} ikke tåler, og skanne varer for å sjekke.',
@@ -583,8 +583,8 @@ const no: Record<string, string> = {
   'prof.photoPick': 'Velg fra bilder',
   'prof.photoTake': 'Ta bilde',
   'prof.photoRemove': 'Fjern bilde',
-  'prof.photoHint': 'Valgfritt. Bildet lagres lite og vises bare for familien, ikke på allergikortet du deler.',
-  'prof.animalFallback': 'Dyret brukes der bildet ikke vises, for eksempel på allergikortet.',
+  'prof.photoHint': 'Valgfritt. Bildet lagres lite og vises for familien og på allergikortet du deler, så andre kjenner igjen personen.',
+  'prof.animalFallback': 'Dyret brukes når profilen ikke har bilde.',
 }
 
 export default no
