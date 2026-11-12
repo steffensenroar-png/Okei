@@ -524,6 +524,12 @@ const d: Record<string, string> = {
   'ins.diet_traces.text': 'Tracce di latte, uova o pesce significano che il prodotto è fatto dove si usano anche questi ingredienti. La ricetta in sé non ha prodotti animali. The Vegan Society accetta questi prodotti, ma alcuni vegani preferiscono evitarli.',
   'ins.vegan_not_free.title': 'Vegano non vuol dire senza latte',
   'ins.vegan_not_free.text': 'Un prodotto etichettato vegano può comunque avere tracce di latte, uova o pesce dalla fabbrica. In caso di allergia conta l’etichettatura degli allergeni, non il marchio vegano.',
+  'prof.photo': 'Foto profilo',
+  'prof.photoPick': 'Scegli dalle foto',
+  'prof.photoTake': 'Scatta foto',
+  'prof.photoRemove': 'Rimuovi foto',
+  'prof.photoHint': 'Facoltativo. La foto viene salvata in piccolo e la vede solo la tua famiglia, non compare sulla scheda allergie che condividi.',
+  'prof.animalFallback': 'L’animale viene usato dove la foto non appare, per esempio sulla scheda allergie.',
 }
 
 export default d

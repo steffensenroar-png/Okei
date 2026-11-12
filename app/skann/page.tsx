@@ -9,7 +9,7 @@ import BarcodeScanner from '@/components/BarcodeScanner'
 import { CameraIcon, Logo, LogoMark } from '@/components/Icons'
 import { supabase } from '@/lib/supabase-browser'
 import { compressImage, FamilyProfile, postScan, storeGet, storeSet } from '@/lib/client'
-import { Animal, animalFor, Mascot, ModeArt } from '@/components/Art'
+import { animalFor, Avatar, Mascot, ModeArt } from '@/components/Art'
 import RecallBanner from '@/components/RecallBanner'
 import { KidScan, getKidMode } from '@/components/KidMode'
 
@@ -71,7 +71,7 @@ function FullScan() {
   useEffect(() => {
     supabase()
       .from('family_profiles')
-      .select('id, name, birth_year, allergens, custom_terms, conditions, avatar, epipen_expiry')
+      .select('id, name, birth_year, allergens, custom_terms, conditions, avatar, photo, epipen_expiry')
       .order('created_at')
       .then(({ data }) => {
         const list = (data ?? []) as FamilyProfile[]
@@ -168,7 +168,7 @@ function FullScan() {
             <button className="who-chip" aria-pressed={selected.length === profiles.length} onClick={toggleAll}>
               <span className="family-stack" aria-hidden="true">
                 {profiles.slice(0, 3).map((p, i) => (
-                  <Animal key={p.id} id={animalFor(p.avatar, i)} size={22} />
+                  <Avatar key={p.id} photo={p.photo} id={animalFor(p.avatar, i)} size={22} />
                 ))}
               </span>
               {t('scan.all')}
@@ -176,7 +176,7 @@ function FullScan() {
           )}
           {profiles.map((p, i) => (
             <button key={p.id} className="who-chip" aria-pressed={selected.includes(p.id)} onClick={() => toggleProfile(p.id)}>
-              <Animal id={animalFor(p.avatar, i)} size={26} />
+              <Avatar photo={p.photo} id={animalFor(p.avatar, i)} size={26} />
               {p.name}
             </button>
           ))}

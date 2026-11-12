@@ -524,6 +524,12 @@ const d: Record<string, string> = {
   'ins.diet_traces.text': 'Las trazas de leche, huevo o pescado significan que el producto se fabrica donde también se usan esos ingredientes. La receta en sí no tiene productos animales. The Vegan Society acepta estos productos, pero algunos veganos prefieren evitarlos.',
   'ins.vegan_not_free.title': 'Vegano no significa sin lácteos',
   'ins.vegan_not_free.text': 'Un producto etiquetado como vegano puede tener trazas de leche, huevo o pescado de la fábrica. Con alergia, lo que cuenta es el etiquetado de alérgenos, no el sello vegano.',
+  'prof.photo': 'Foto de perfil',
+  'prof.photoPick': 'Elegir de fotos',
+  'prof.photoTake': 'Hacer foto',
+  'prof.photoRemove': 'Quitar foto',
+  'prof.photoHint': 'Opcional. La foto se guarda en tamaño pequeño y solo la ve tu familia, no aparece en la tarjeta de alergias que compartes.',
+  'prof.animalFallback': 'El animal se usa donde no se muestra la foto, por ejemplo en la tarjeta de alergias.',
 }
 
 export default d

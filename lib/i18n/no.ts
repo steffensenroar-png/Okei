@@ -579,6 +579,12 @@ const no: Record<string, string> = {
   'ins.diet_traces.text': 'Spor av melk, egg eller fisk betyr at varen er laget der slike råvarer også brukes. Selve oppskriften er uten dyreprodukter. The Vegan Society godtar slike varer, men noen veganere velger å unngå dem.',
   'ins.vegan_not_free.title': 'Vegansk betyr ikke melkefritt',
   'ins.vegan_not_free.text': 'En vare merket vegansk kan likevel ha spor av melk, egg eller fisk fra fabrikken. Ved allergi er det allergenmerkingen som gjelder, ikke veganmerket.',
+  'prof.photo': 'Profilbilde',
+  'prof.photoPick': 'Velg fra bilder',
+  'prof.photoTake': 'Ta bilde',
+  'prof.photoRemove': 'Fjern bilde',
+  'prof.photoHint': 'Valgfritt. Bildet lagres lite og vises bare for familien, ikke på allergikortet du deler.',
+  'prof.animalFallback': 'Dyret brukes der bildet ikke vises, for eksempel på allergikortet.',
 }
 
 export default no

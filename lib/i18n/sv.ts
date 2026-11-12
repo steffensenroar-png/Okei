@@ -524,6 +524,12 @@ const d: Record<string, string> = {
   'ins.diet_traces.text': 'Spår av mjölk, ägg eller fisk betyder att varan tillverkas där sådana råvaror också används. Själva receptet är utan animaliska produkter. The Vegan Society godtar sådana varor, men en del veganer väljer att undvika dem.',
   'ins.vegan_not_free.title': 'Vegansk betyder inte mjölkfri',
   'ins.vegan_not_free.text': 'En vara märkt vegansk kan ändå innehålla spår av mjölk, ägg eller fisk från fabriken. Vid allergi är det allergenmärkningen som gäller, inte veganmärkningen.',
+  'prof.photo': 'Profilbild',
+  'prof.photoPick': 'Välj från bilder',
+  'prof.photoTake': 'Ta bild',
+  'prof.photoRemove': 'Ta bort bild',
+  'prof.photoHint': 'Valfritt. Bilden sparas i liten storlek och visas bara för familjen, inte på allergikortet du delar.',
+  'prof.animalFallback': 'Djuret används där bilden inte visas, till exempel på allergikortet.',
 }
 
 export default d

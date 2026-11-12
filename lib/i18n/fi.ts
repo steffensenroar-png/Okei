@@ -524,6 +524,12 @@ const d: Record<string, string> = {
   'ins.diet_traces.text': 'Pienet määrät maitoa, kananmunaa tai kalaa tarkoittavat, että tuote valmistetaan paikassa, jossa käytetään myös niitä. Itse resepti on ilman eläinperäisiä tuotteita. The Vegan Society hyväksyy tällaiset tuotteet, mutta osa vegaaneista välttää niitä.',
   'ins.vegan_not_free.title': 'Vegaaninen ei tarkoita maidotonta',
   'ins.vegan_not_free.text': 'Vegaaniseksi merkitty tuote voi silti sisältää pieniä määriä maitoa, kananmunaa tai kalaa tehtaalta. Allergiassa ratkaisee allergeenimerkintä, ei vegaanimerkintä.',
+  'prof.photo': 'Profiilikuva',
+  'prof.photoPick': 'Valitse kuvista',
+  'prof.photoTake': 'Ota kuva',
+  'prof.photoRemove': 'Poista kuva',
+  'prof.photoHint': 'Vapaaehtoinen. Kuva tallennetaan pienenä ja näkyy vain perheelle, ei jakamallasi allergiakortilla.',
+  'prof.animalFallback': 'Eläintä käytetään, kun kuvaa ei näytetä, esimerkiksi allergiakortilla.',
 }
 
 export default d

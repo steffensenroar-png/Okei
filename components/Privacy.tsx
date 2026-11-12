@@ -11,7 +11,7 @@ export default function Privacy() {
     <main className="page" style={{ paddingBottom: 40, lineHeight: 1.6 }}>
       <Link href="/" style={{ textDecoration: 'none' }}><Logo /></Link>
       <h1>Personvernerklæring</h1>
-      <p className="tiny">Gjelder beta. Sist oppdatert 8. november 2026.</p>
+      <p className="tiny">Gjelder beta. Sist oppdatert 12. november 2026.</p>
 
       <section className="stack">
         <h2>Hvem er ansvarlig</h2>
@@ -23,6 +23,7 @@ export default function Privacy() {
         <ul style={{ margin: 0, paddingLeft: 20 }}>
           <li>E-postadresse og navn fra innloggingen (Google eller e-postlenke).</li>
           <li>Profilene du lager: navn, valgfritt fødselsår, allergier og alvorlighetsgrad. Allergier er helseopplysninger.</li>
+          <li>Valgfritt profilbilde. Det lagres lite (320 × 320 piksler), vises bare for familien og deles ikke på allergikortet.</li>
           <li>Resultatene av skann: produktnavn, ingrediensliste, flagg og eventuell tilbakemelding.</li>
         </ul>
         <p>Bilder du tar lagres ikke av Okei. De sendes til analyse og forkastes.</p>
@@ -77,7 +78,7 @@ function PrivacyEn() {
     <main className="page" style={{ paddingBottom: 40, lineHeight: 1.6 }}>
       <Link href="/" style={{ textDecoration: 'none' }}><Logo /></Link>
       <h1>Privacy policy</h1>
-      <p className="tiny">Beta version. Last updated 8 November 2026. This is a translation; the Norwegian version applies.</p>
+      <p className="tiny">Beta version. Last updated 12 November 2026. This is a translation; the Norwegian version applies.</p>
 
       <section className="stack">
         <h2>Who is responsible</h2>
@@ -89,9 +90,10 @@ function PrivacyEn() {
         <ul style={{ margin: 0, paddingLeft: 20 }}>
           <li>Email address and name from your sign-in (Google or email link).</li>
           <li>The profiles you create: name, optional birth year, allergies and severity. Allergies are health data.</li>
+          <li>An optional profile photo. It is stored small (320 × 320 pixels), shown only to your family and not shared on the allergy card.</li>
           <li>Scan results: product name, ingredient list, flag and any feedback.</li>
         </ul>
-        <p>Okei does not store the photos you take. They are sent for analysis and discarded.</p>
+        <p>Okei does not store the photos you scan. They are sent for analysis and discarded.</p>
       </section>
 
       <section className="stack">

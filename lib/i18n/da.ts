@@ -524,6 +524,12 @@ const d: Record<string, string> = {
   'ins.diet_traces.text': 'Spor af mælk, æg eller fisk betyder, at varen er lavet, hvor sådanne råvarer også bruges. Selve opskriften er uden animalske produkter. The Vegan Society godkender sådanne varer, men nogle veganere vælger at undgå dem.',
   'ins.vegan_not_free.title': 'Vegansk betyder ikke mælkefri',
   'ins.vegan_not_free.text': 'En vare mærket vegansk kan stadig have spor af mælk, æg eller fisk fra fabrikken. Ved allergi er det allergenmærkningen, der gælder, ikke veganmærket.',
+  'prof.photo': 'Profilbillede',
+  'prof.photoPick': 'Vælg fra billeder',
+  'prof.photoTake': 'Tag billede',
+  'prof.photoRemove': 'Fjern billede',
+  'prof.photoHint': 'Valgfrit. Billedet gemmes i lille størrelse og vises kun for familien, ikke på allergikortet, du deler.',
+  'prof.animalFallback': 'Dyret bruges, hvor billedet ikke vises, for eksempel på allergikortet.',
 }
 
 export default d

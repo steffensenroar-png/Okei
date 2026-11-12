@@ -1,12 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase-browser'
-import type { FamilyProfile } from '@/lib/client'
+import { squarePhoto, type FamilyProfile } from '@/lib/client'
 import type { Wishes } from '@/lib/wishes'
 import { getKidMode, hashPin, PinUnlock, setKidMode } from '@/components/KidMode'
-import { Animal, animalFor } from '@/components/Art'
+import { Animal, AnimalId, Avatar, animalFor } from '@/components/Art'
 import { useT } from '@/components/I18n'
 
 /** Ønsker: påvirker aldri flagget, bare informasjon og alternativer. */
@@ -147,7 +147,7 @@ export function KidModeSetup({ profiles }: { profiles: FamilyProfile[] }) {
           <div className="row" style={{ flexWrap: 'wrap', gap: 8 }}>
             {profiles.map((p, i) => (
               <button type="button" key={p.id} className="profile-pill" aria-pressed={profileId === p.id} onClick={() => setProfileId(p.id)}>
-                <Animal id={animalFor(p.avatar, i)} size={32} /> {p.name}
+                <Avatar photo={p.photo} id={animalFor(p.avatar, i)} size={32} /> {p.name}
               </button>
             ))}
           </div>
@@ -186,4 +186,51 @@ export function KidGate({ children }: { children: React.ReactNode }) {
       </main>
     )
   return <>{children}</>
+}
+
+/** Profilbilde fra bilder på telefonen eller kamera. Lagres lite og kvadratisk. */
+export function PhotoPicker({
+  photo,
+  animal,
+  onChange,
+  onError
+}: {
+  photo: string | null
+  animal: AnimalId
+  onChange: (photo: string | null) => void
+  onError: (msg: string) => void
+}) {
+  const { t } = useT()
+  const pickRef = useRef<HTMLInputElement>(null)
+  const camRef = useRef<HTMLInputElement>(null)
+  const [busy, setBusy] = useState(false)
+  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    setBusy(true)
+    try {
+      onChange(await squarePhoto(file))
+    } catch (err) {
+      onError(err instanceof Error ? err.message : t('err.image'))
+    } finally {
+      setBusy(false)
+    }
+  }
+  return (
+    <div className="stack" style={{ gap: 8 }}>
+      <h2>{t('prof.photo')}</h2>
+      <div className="photo-pick">
+        <Avatar photo={photo} id={animal} size={72} />
+        <div className="btns">
+          <button type="button" className="btn btn-small" disabled={busy} onClick={() => pickRef.current?.click()}>{t('prof.photoPick')}</button>
+          <button type="button" className="btn btn-small" disabled={busy} onClick={() => camRef.current?.click()}>{t('prof.photoTake')}</button>
+          {photo && <button type="button" className="btn btn-small btn-danger" onClick={() => onChange(null)}>{t('prof.photoRemove')}</button>}
+        </div>
+      </div>
+      <p className="tiny" style={{ margin: 0 }}>{t('prof.photoHint')}</p>
+      <input ref={pickRef} type="file" accept="image/*" hidden onChange={onFile} />
+      <input ref={camRef} type="file" accept="image/*" capture="environment" hidden onChange={onFile} />
+    </div>
+  )
 }

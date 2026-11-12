@@ -7,9 +7,9 @@ import { supabase } from '@/lib/supabase-browser'
 import { ALLERGENS, AllergenKey, CONDITIONS, ConditionKey, DIETS, DietKey, Severity } from '@/lib/allergens'
 import { FamilyProfile } from '@/lib/client'
 import AllergenIcon from '@/components/AllergenIcon'
-import { Animal, ANIMALS, animalFor, Mascot } from '@/components/Art'
+import { Animal, ANIMALS, animalFor, Avatar, Mascot } from '@/components/Art'
 import { Accent, ACCENTS, getAccent, getTheme, saveTheme, Theme, THEMES } from '@/lib/theme'
-import { KidGate, KidModeSetup, ShareCard, WishesEditor } from '@/components/ProfileExtras'
+import { KidGate, KidModeSetup, PhotoPicker, ShareCard, WishesEditor } from '@/components/ProfileExtras'
 import type { Wishes } from '@/lib/wishes'
 import { useT } from '@/components/I18n'
 import { LANGUAGES } from '@/lib/i18n/core'
@@ -22,12 +22,13 @@ type Draft = {
   conditions: ConditionKey[]
   custom: string
   avatar: string | null
+  photo: string | null
   emergency_note: string
   epipen_expiry: string
   wishes: Wishes
 }
 
-const empty = (n = 0): Draft => ({ name: '', birth_year: '', allergens: {}, conditions: [], custom: '', avatar: ANIMALS[n % ANIMALS.length].id, emergency_note: '', epipen_expiry: '', wishes: {} })
+const empty = (n = 0): Draft => ({ name: '', birth_year: '', allergens: {}, conditions: [], custom: '', avatar: ANIMALS[n % ANIMALS.length].id, photo: null, emergency_note: '', epipen_expiry: '', wishes: {} })
 
 function toDraft(p: FamilyProfile): Draft {
   return {
@@ -38,6 +39,7 @@ function toDraft(p: FamilyProfile): Draft {
     conditions: withDiet(p.conditions ?? [], p.wishes as Wishes | null),
     custom: (p.custom_terms ?? []).join(', '),
     avatar: p.avatar ?? null,
+    photo: p.photo ?? null,
     emergency_note: p.emergency_note ?? '',
     epipen_expiry: p.epipen_expiry ?? '',
     wishes: (() => {
@@ -235,7 +237,7 @@ function Profiles() {
   async function load() {
     const { data } = await supabase()
       .from('family_profiles')
-      .select('id, owner_id, name, birth_year, allergens, custom_terms, conditions, avatar, emergency_note, epipen_expiry, wishes')
+      .select('id, owner_id, name, birth_year, allergens, custom_terms, conditions, avatar, photo, emergency_note, epipen_expiry, wishes')
       .order('created_at')
     const all = (data ?? []) as FamilyProfile[]
     const own = all.filter((p) => p.owner_id === session.user.id)
@@ -305,6 +307,7 @@ function Profiles() {
       allergens: Object.entries(draft.allergens).map(([key, severity]) => ({ key, severity })),
       conditions: draft.conditions,
       avatar: draft.avatar,
+      photo: draft.photo,
       emergency_note: draft.emergency_note.trim() || null,
       epipen_expiry: draft.epipen_expiry || null,
       wishes: draft.wishes,
@@ -333,7 +336,7 @@ function Profiles() {
     return (
       <main className="page">
         <div className="row" style={{ gap: 14 }}>
-          {draft.avatar && <Animal id={animalFor(draft.avatar, 0)} size={60} />}
+          <Avatar photo={draft.photo} id={animalFor(draft.avatar, 0)} size={60} />
           <h1>{draft.id ? t('prof.edit', { name: draft.name }) : t('prof.new')}</h1>
         </div>
         <form onSubmit={save} className="stack" style={{ gap: 18 }}>
@@ -348,8 +351,16 @@ function Profiles() {
             </label>
           </div>
 
+          <PhotoPicker
+            photo={draft.photo}
+            animal={animalFor(draft.avatar, 0)}
+            onChange={(photo) => setDraft({ ...draft, photo })}
+            onError={setError}
+          />
+
           <div className="stack" style={{ gap: 8 }}>
             <h2>{t('prof.pickAnimal')}</h2>
+            {draft.photo && <p className="tiny" style={{ margin: 0 }}>{t('prof.animalFallback')}</p>}
             <div className="animal-grid" role="radiogroup" aria-label={t('prof.pickAnimal')}>
               {ANIMALS.map((a) => (
                 <button type="button" key={a.id} role="radio" aria-checked={draft.avatar === a.id} aria-label={t(`animal.${a.id}`)} className="animal-pick" onClick={() => setDraft({ ...draft, avatar: a.id })}>
@@ -489,7 +500,7 @@ function Profiles() {
       <div className="stack">
         {profiles.map((p, i) => (
           <button key={p.id} className="card row" style={{ textAlign: 'left', cursor: 'pointer', gap: 14 }} onClick={() => setDraft(toDraft(p))}>
-            <Animal id={animalFor(p.avatar, i)} size={52} />
+            <Avatar photo={p.photo} id={animalFor(p.avatar, i)} size={52} />
             <span className="stack" style={{ gap: 4, flex: 1 }}>
               <span style={{ fontSize: 16, fontWeight: 700 }}>
                 {p.name}
@@ -506,7 +517,7 @@ function Profiles() {
           <h2>{t('prof.linkedTitle')}</h2>
           {linked.map((p, i) => (
             <div key={p.id} className="card row" style={{ gap: 14 }}>
-              <Animal id={animalFor(p.avatar, i)} size={52} />
+              <Avatar photo={p.photo} id={animalFor(p.avatar, i)} size={52} />
               <span className="stack" style={{ gap: 4, flex: 1, minWidth: 0 }}>
                 <span style={{ fontSize: 16, fontWeight: 700 }}>{p.name}</span>
                 <span className="small muted">{summary(p, t)}</span>

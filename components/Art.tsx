@@ -376,3 +376,14 @@ export function FoodSticker({ kind, size = 44 }: { kind: Food; size?: number }) 
     </svg>
   )
 }
+
+/** Profilbilde hvis det finnes, ellers dyret. */
+export function Avatar({ photo, id, size = 40 }: { photo?: string | null; id: AnimalId; size?: number }) {
+  if (photo && photo.startsWith('data:image/jpeg;base64,')) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={photo} alt="" width={size} height={size} className="avatar-photo" style={{ width: size, height: size }} />
+    )
+  }
+  return <Animal id={id} size={size} />
+}

@@ -524,6 +524,12 @@ const d: Record<string, string> = {
   'ins.diet_traces.text': 'Des traces de lait, d’œuf ou de poisson signifient que le produit est fabriqué là où ces ingrédients sont aussi utilisés. La recette elle-même est sans produits animaux. The Vegan Society accepte ces produits, mais certains végétaliens préfèrent les éviter.',
   'ins.vegan_not_free.title': 'Végétalien ne veut pas dire sans lait',
   'ins.vegan_not_free.text': 'Un produit étiqueté vegan peut quand même contenir des traces de lait, d’œuf ou de poisson provenant de l’usine. En cas d’allergie, c’est l’étiquetage des allergènes qui compte, pas le label vegan.',
+  'prof.photo': 'Photo de profil',
+  'prof.photoPick': 'Choisir dans les photos',
+  'prof.photoTake': 'Prendre une photo',
+  'prof.photoRemove': 'Retirer la photo',
+  'prof.photoHint': 'Facultatif. La photo est enregistrée en petit format et visible seulement par ta famille, pas sur la carte d’allergies que tu partages.',
+  'prof.animalFallback': 'L’animal est utilisé là où la photo n’est pas affichée, par exemple sur la carte d’allergies.',
 }
 
 export default d

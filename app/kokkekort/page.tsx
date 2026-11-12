@@ -6,7 +6,7 @@ import AuthGate from '@/components/AuthGate'
 import { useT } from '@/components/I18n'
 import { supabase } from '@/lib/supabase-browser'
 import { FamilyProfile, storeGet, storeSet } from '@/lib/client'
-import { Animal, animalFor } from '@/components/Art'
+import { animalFor, Avatar } from '@/components/Art'
 import { buildChefCard, Lang, LANGS } from '@/lib/chefcard'
 
 function ChefCardPage() {
@@ -22,7 +22,7 @@ function ChefCardPage() {
     else setLang(appLang === 'en' ? 'de' : 'en')
     supabase()
       .from('family_profiles')
-      .select('id, name, birth_year, allergens, custom_terms, conditions, avatar')
+      .select('id, name, birth_year, allergens, custom_terms, conditions, avatar, photo')
       .order('created_at')
       .then(({ data }) => {
         const list = (data ?? []) as FamilyProfile[]
@@ -51,7 +51,7 @@ function ChefCardPage() {
       <div className="row no-print" style={{ flexWrap: 'wrap', gap: 8 }}>
         {profiles.map((x, i) => (
           <button key={x.id} className="profile-pill" aria-pressed={x.id === id} onClick={() => setId(x.id)}>
-            <Animal id={animalFor(x.avatar, i)} size={32} /> {x.name}
+            <Avatar photo={x.photo} id={animalFor(x.avatar, i)} size={32} /> {x.name}
           </button>
         ))}
       </div>

@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import BarcodeScanner from '@/components/BarcodeScanner'
 import { CameraIcon } from '@/components/Icons'
-import { Animal, animalFor, Mascot, ModeArt } from '@/components/Art'
+import { Animal, Avatar, animalFor, Mascot, ModeArt } from '@/components/Art'
 import { supabase } from '@/lib/supabase-browser'
 import { compressImage, FamilyProfile, postScan, storeGet, storeSet } from '@/lib/client'
 
@@ -115,7 +115,7 @@ export function KidScan({ kid }: { kid: KidMode }) {
   useEffect(() => {
     supabase()
       .from('family_profiles')
-      .select('id, name, birth_year, allergens, custom_terms, conditions, avatar')
+      .select('id, name, birth_year, allergens, custom_terms, conditions, avatar, photo')
       .eq('id', kid.profileId)
       .maybeSingle()
       .then(({ data }) => setProfile(data as FamilyProfile | null))
@@ -149,7 +149,7 @@ export function KidScan({ kid }: { kid: KidMode }) {
     <main className="page kid">
       <div className="row" style={{ justifyContent: 'space-between' }}>
         <span className="row" style={{ gap: 10 }}>
-          {profile && <Animal id={animalFor(profile.avatar, 0)} size={52} />}
+          {profile && <Avatar photo={profile.photo} id={animalFor(profile.avatar, 0)} size={52} />}
           <h1 style={{ fontSize: 26 }}>{profile ? t('kid.hiName', { name: profile.name }) : t('kid.hi')}</h1>
         </span>
         <button className="linkbtn small" onClick={() => setUnlock(true)}>{t('kid.adult')}</button>

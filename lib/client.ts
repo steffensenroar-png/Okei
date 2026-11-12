@@ -13,6 +13,7 @@ export interface FamilyProfile {
   custom_terms: string[]
   conditions: ConditionKey[]
   avatar?: string | null
+  photo?: string | null
   emergency_note?: string | null
   epipen_expiry?: string | null
   wishes?: Record<string, unknown> | null
@@ -67,6 +68,35 @@ export async function compressImage(file: File, max = 1600): Promise<{ data: str
     canvas.getContext('2d')!.drawImage(img, 0, 0, w, h)
     const dataUrl = canvas.toDataURL('image/jpeg', 0.85)
     return { data: dataUrl.split(',')[1], mediaType: 'image/jpeg' }
+  } finally {
+    URL.revokeObjectURL(url)
+  }
+}
+
+/** Kvadratisk profilbilde: beskåret på midten, 320 × 320 piksler, JPEG. Returnerer en data-URL. */
+export async function squarePhoto(file: File, size = 320): Promise<string> {
+  const url = URL.createObjectURL(file)
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const i = new Image()
+      i.onload = () => resolve(i)
+      i.onerror = () => reject(new Error(tr(currentLang(), 'err.image')))
+      i.src = url
+    })
+    const side = Math.min(img.naturalWidth, img.naturalHeight)
+    const sx = (img.naturalWidth - side) / 2
+    const sy = (img.naturalHeight - side) / 2
+    const canvas = document.createElement('canvas')
+    canvas.width = size
+    canvas.height = size
+    canvas.getContext('2d')!.drawImage(img, sx, sy, side, side, 0, 0, size, size)
+    let q = 0.82
+    let out = canvas.toDataURL('image/jpeg', q)
+    while (out.length > 130000 && q > 0.4) {
+      q -= 0.1
+      out = canvas.toDataURL('image/jpeg', q)
+    }
+    return out
   } finally {
     URL.revokeObjectURL(url)
   }

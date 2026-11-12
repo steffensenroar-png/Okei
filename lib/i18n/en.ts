@@ -524,6 +524,12 @@ const d: Record<string, string> = {
   'ins.diet_traces.text': 'Traces of milk, egg or fish mean the product is made where those ingredients are also used. The recipe itself has no animal products. The Vegan Society accepts such products, but some vegans choose to avoid them.',
   'ins.vegan_not_free.title': 'Vegan does not mean dairy-free',
   'ins.vegan_not_free.text': 'A product labelled vegan can still contain traces of milk, egg or fish from the factory. With an allergy, the allergen labelling is what counts, not the vegan label.',
+  'prof.photo': 'Profile photo',
+  'prof.photoPick': 'Choose from photos',
+  'prof.photoTake': 'Take photo',
+  'prof.photoRemove': 'Remove photo',
+  'prof.photoHint': 'Optional. The photo is stored small and only shown to your family, not on the allergy card you share.',
+  'prof.animalFallback': 'The animal is used where the photo is not shown, such as on the allergy card.',
 }
 
 export default d

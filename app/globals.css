@@ -477,3 +477,8 @@ sup.who { font-size: 10px; font-weight: 800; color: var(--quiet); margin-left: 1
   background: rgba(10, 16, 14, 0.55); color: #fff; font-size: 15px; font-weight: 800; letter-spacing: -0.3px;
   backdrop-filter: blur(6px);
 }
+
+/* Profilbilde */
+.avatar-photo { display: block; flex: none; border-radius: 50%; object-fit: cover; background: var(--surface-2, #eee); box-shadow: 0 0 0 2px var(--surface); }
+.photo-pick { display: flex; align-items: center; gap: 14px; }
+.photo-pick .btns { display: flex; flex-wrap: wrap; gap: 8px; }

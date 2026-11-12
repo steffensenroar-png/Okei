@@ -524,6 +524,12 @@ const d: Record<string, string> = {
   'ins.diet_traces.text': 'Spuren von Milch, Ei oder Fisch bedeuten, dass das Produkt dort hergestellt wird, wo diese Zutaten auch verwendet werden. Das Rezept selbst ist ohne tierische Produkte. The Vegan Society akzeptiert solche Produkte, aber manche Veganer meiden sie.',
   'ins.vegan_not_free.title': 'Vegan heißt nicht milchfrei',
   'ins.vegan_not_free.text': 'Ein als vegan gekennzeichnetes Produkt kann trotzdem Spuren von Milch, Ei oder Fisch aus der Fabrik enthalten. Bei Allergie zählt die Allergenkennzeichnung, nicht das Vegan-Siegel.',
+  'prof.photo': 'Profilbild',
+  'prof.photoPick': 'Aus Fotos wählen',
+  'prof.photoTake': 'Foto aufnehmen',
+  'prof.photoRemove': 'Bild entfernen',
+  'prof.photoHint': 'Optional. Das Bild wird klein gespeichert und nur deiner Familie gezeigt, nicht auf der Allergiekarte, die du teilst.',
+  'prof.animalFallback': 'Das Tier wird verwendet, wo das Bild nicht angezeigt wird, zum Beispiel auf der Allergiekarte.',
 }
 
 export default d
