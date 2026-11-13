@@ -1,9 +1,9 @@
 import Landing from '@/components/Landing'
 
 export const metadata = {
-  title: 'Okei – sjekk mat mot allergiene i familien',
+  title: 'Okei – matsjekk laget for barn med allergi',
   description:
-    'Ta bilde av ingredienslisten eller skann strekkoden. Okei sjekker mot allergiene til deg og barna og svarer med rødt, gult eller grønt.'
+    'Så enkel at barnet kan bruke den selv: ta bilde av maten og få et svar barnet forstår. Foreldre ser hva barnet har sjekket, og kan dele allergikort med barnehage og bursdagsverter.'
 }
 
 export default function Page() {
