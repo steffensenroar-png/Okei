@@ -226,6 +226,10 @@ function ShareButton() {
 }
 
 function Profiles() {
+  const [isAdmin, setIsAdmin] = useState(false)
+  useEffect(() => {
+    supabase().rpc('is_admin').then(({ data }) => setIsAdmin(!!data))
+  }, [])
   const session = useSession()
   const [profiles, setProfiles] = useState<FamilyProfile[]>([])
   const [linked, setLinked] = useState<(FamilyProfile & { parent: string | null })[]>([])
@@ -533,6 +537,7 @@ function Profiles() {
       <Appearance />
       <div className="spacer" />
       <ShareButton />
+      {isAdmin && <Link className="linkbtn" href="/admin">Admin</Link>}
       <Link className="linkbtn" href="/?om=1">{t('prof.about')}</Link>
       <Link className="linkbtn" href="/personvern">{t('privacy')}</Link>
       <button className="linkbtn" onClick={() => supabase().auth.signOut()}>{t('logout')} ({session.user.email})</button>

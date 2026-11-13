@@ -2,6 +2,7 @@
 // og gjetter hva uemballert mat er. Regelmotoren (lib/rules.ts) avgjør resten.
 
 import Anthropic from '@anthropic-ai/sdk'
+import { AsyncLocalStorage } from 'node:async_hooks'
 import { AllergenKey } from '../allergens'
 import { Legibility, Nutrition, ProductData } from '../rules'
 
@@ -18,6 +19,14 @@ function client() {
 }
 
 type ImageMedia = 'image/jpeg' | 'image/png' | 'image/webp'
+
+/** Teller tokens for AI-kallene i én forespørsel, så admin kan se faktisk kostnad. */
+const usageStore = new AsyncLocalStorage<{ input: number; output: number }>()
+export async function withUsage<T>(fn: () => Promise<T>): Promise<{ value: T; input: number; output: number; model: string }> {
+  const acc = { input: 0, output: 0 }
+  const value = await usageStore.run(acc, fn)
+  return { value, input: acc.input, output: acc.output, model: MODEL }
+}
 
 // Noen modeller støtter ikke tvunget verktøyvalg (tool_choice: tool), så vi ber
 // om verktøykallet i instruksen og faller tilbake på JSON i tekstsvaret.
@@ -40,6 +49,11 @@ async function callTool<T>(image: string, media: ImageMedia, prompt: string, too
       }
     ]
   })
+  const acc = usageStore.getStore()
+  if (acc && res.usage) {
+    acc.input += res.usage.input_tokens ?? 0
+    acc.output += res.usage.output_tokens ?? 0
+  }
   const block = res.content.find((b) => b.type === 'tool_use')
   if (block && block.type === 'tool_use') return block.input as T
 

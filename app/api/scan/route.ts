@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { errorResponse, HttpError, userClient } from '@/lib/server/auth'
 import { lookupBarcode } from '@/lib/server/products'
-import { guessFood, readLabel, readMenu } from '@/lib/server/vision'
+import { guessFood, readLabel, readMenu, withUsage } from '@/lib/server/vision'
 import { evaluateFamily, evaluateMenu, ProductData, ProfileAllergen } from '@/lib/rules'
 import type { ConditionKey } from '@/lib/allergens'
 import { evaluateWishes, Wishes } from '@/lib/wishes'
@@ -60,6 +60,12 @@ export async function POST(req: Request) {
         throw new HttpError(429, `Du har brukt ${AI_DAILY_LIMIT} bildeskann siste døgn. Strekkode virker fortsatt, og bildeskann åpner igjen i morgen.`, 'rate_limit', { n: AI_DAILY_LIMIT })
       await db.from('usage_log').insert({ owner_id: user.id, kind: 'ai' })
     }
+    // Logg tokenforbruket etter AI-kallet, så admin ser faktisk kostnad.
+    const track = async <T,>(fn: () => Promise<T>): Promise<T> => {
+      const r = await withUsage(fn)
+      await db.from('usage_log').insert({ owner_id: user.id, kind: 'ai_tokens', input_tokens: r.input, output_tokens: r.output, model: r.model })
+      return r.value
+    }
 
     const { data: rows, error: pErr } = await db
       .from('family_profiles')
@@ -94,7 +100,7 @@ export async function POST(req: Request) {
 
     // Meny: én vurdering per rett.
     if (body.mode === 'menu') {
-      const menu = await readMenu(image, media)
+      const menu = await track(() => readMenu(image, media))
       if (!menu || !menu.dishes.length) throw new HttpError(422, 'Fant ingen meny på bildet. Ta bilde av menyen eller allergenlisten, så tett at teksten er lesbar.', 'no_menu')
       const ev = evaluateMenu(menu.dishes, profiles)
       const { data: scan, error } = await db
@@ -119,9 +125,9 @@ export async function POST(req: Request) {
       if (ean.length < 8 || ean.length > 14) throw new HttpError(400, 'Ugyldig strekkode', 'bad_barcode')
       product = await lookupBarcode(ean)
     } else if (body.mode === 'food') {
-      product = await guessFood(image, media)
+      product = await track(() => guessFood(image, media))
     } else {
-      product = await readLabel(image, media, body.mode === 'product' ? 'product' : 'food', LANGS.includes(String(body.lang)) ? String(body.lang) : 'no')
+      product = await track(() => readLabel(image, media, body.mode === 'product' ? 'product' : 'food', LANGS.includes(String(body.lang)) ? String(body.lang) : 'no'))
     }
 
     const family = evaluateFamily(product, profiles)

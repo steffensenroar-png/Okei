@@ -56,6 +56,7 @@ export default function Privacy() {
           <li>Vercel: drift av nettsiden.</li>
           <li>Anthropic: leser og oversetter bilder av ingredienslister og mat. Bildet sendes uten navn eller profil. Anthropic er et amerikansk selskap.</li>
           <li>Kassalapp og Open Food Facts: oppslag på strekkode. Bare strekkoden sendes.</li>
+          <li>Stripe: betaling av abonnement. Stripe behandler kortopplysningene. Vi lagrer abonnement, beløp og eventuell kampanjekode.</li>
         </ul>
         <p>Vi selger aldri data og bruker dem ikke til reklame.</p>
       </section>
@@ -123,6 +124,7 @@ function PrivacyEn() {
           <li>Vercel: hosting of the website.</li>
           <li>Anthropic: reads and translates photos of ingredient lists and food. The photo is sent without name or profile. Anthropic is a US company.</li>
           <li>Kassalapp and Open Food Facts: barcode lookup. Only the barcode is sent.</li>
+          <li>Stripe: subscription payments. Stripe handles card details. We store the subscription, amount and any campaign code.</li>
         </ul>
         <p>We never sell data and do not use it for advertising.</p>
       </section>
