@@ -546,3 +546,8 @@ html[data-theme='dark'] .ld-h1b { color: var(--ink); opacity: 0.85; }
   .ld-day { grid-template-columns: repeat(5, 1fr); }
   .ld-day li { flex-direction: column; }
 }
+.ld-phone-result { color: #15201b; }
+.ld-phone { border: 2px solid rgba(255,255,255,0.14); }
+.ld-phone-wrap { padding-bottom: 70px; }
+.ld-notif { bottom: 8px; }
+html[data-theme='dark'] .ld-phone-screen { background: #1b2622; }
