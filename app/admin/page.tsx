@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import AdminMfa from '@/components/AdminMfa'
 import AuthGate, { useSession } from '@/components/AuthGate'
 import { supabase } from '@/lib/supabase-browser'
 import { apiPost } from '@/lib/client'
@@ -228,10 +229,18 @@ function Admin() {
     setAdmins((ad.data ?? []) as { email: string; added_at: string }[])
   }, [days])
 
+  // Admin krever tofaktor: først sjekkes admin-listen, så om innloggingen er bekreftet med kode (aal2).
+  const [needMfa, setNeedMfa] = useState(false)
   useEffect(() => {
-    supabase()
-      .rpc('is_admin')
-      .then(({ data }) => setIsAdmin(!!data))
+    ;(async () => {
+      const sb = supabase()
+      const { data: member } = await sb.rpc('is_admin_member')
+      if (!member) return setIsAdmin(false)
+      const { data: aal } = await sb.auth.mfa.getAuthenticatorAssuranceLevel()
+      if (aal?.currentLevel === 'aal2') return setIsAdmin(true)
+      setNeedMfa(true)
+      setIsAdmin(false)
+    })()
   }, [])
 
   useEffect(() => {
@@ -256,6 +265,7 @@ function Admin() {
     return { cost: perScan * Math.max(ov.ai_period, ov.ai_with_tokens), perScan, estimated: ov.ai_period > ov.ai_with_tokens }
   }, [ov, settings])
 
+  if (needMfa) return <AdminMfa onDone={() => { setNeedMfa(false); setIsAdmin(true) }} />
   if (isAdmin === null) return <main className="page center" style={{ alignItems: 'center' }}><div className="spinner" /></main>
   if (!isAdmin) {
     return (

@@ -12,6 +12,7 @@ import { Accent, ACCENTS, getAccent, getTheme, saveTheme, Theme, THEMES } from '
 import { KidGate, KidModeSetup, PhotoPicker, ShareCard, WishesEditor } from '@/components/ProfileExtras'
 import type { Wishes } from '@/lib/wishes'
 import { useT } from '@/components/I18n'
+import DeleteAccount from '@/components/DeleteAccount'
 import { LANGUAGES } from '@/lib/i18n/core'
 
 type Draft = {
@@ -228,7 +229,7 @@ function ShareButton() {
 function Profiles() {
   const [isAdmin, setIsAdmin] = useState(false)
   useEffect(() => {
-    supabase().rpc('is_admin').then(({ data }) => setIsAdmin(!!data))
+    supabase().rpc('is_admin_member').then(({ data }) => setIsAdmin(!!data))
   }, [])
   const session = useSession()
   const [profiles, setProfiles] = useState<FamilyProfile[]>([])
@@ -547,6 +548,7 @@ function Profiles() {
       <Link className="linkbtn" href="/personvern">{t('privacy')}</Link>
       <Link className="linkbtn" href="/vilkar">{t('terms.link')}</Link>
       <button className="linkbtn" onClick={() => supabase().auth.signOut()}>{t('logout')} ({session.user.email})</button>
+      <DeleteAccount />
     </main>
   )
 }

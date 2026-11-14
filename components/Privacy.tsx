@@ -63,7 +63,7 @@ export default function Privacy() {
 
       <section className="stack">
         <h2>Dine rettigheter</h2>
-        <p>Du kan se, endre og slette profilene dine og historikken i appen. Vil du ha hele kontoen slettet, eller innsyn i alt vi har, send e-post til adressen over. Du kan klage til Datatilsynet.</p>
+        <p>Du kan se, endre og slette profilene dine og historikken i appen. Hele kontoen sletter du selv under Familien, med «Slett konto». Da slettes alle profiler, bilder, historikk, delte kort og familiekoblinger, og et abonnement kjøpt på nettsiden sies opp. Kvitteringer for betaling beholdes i fem år etter bokføringsloven, uten kobling til kontoen. Vil du ha innsyn i alt vi har, send e-post til adressen over. Du kan klage til Datatilsynet.</p>
       </section>
 
       <section className="stack">
@@ -131,7 +131,7 @@ function PrivacyEn() {
 
       <section className="stack">
         <h2>Your rights</h2>
-        <p>You can view, change and delete your profiles and history in the app. To have your whole account deleted, or to see everything we hold, email the address above. You can complain to the Norwegian Data Protection Authority (Datatilsynet).</p>
+        <p>You can view, change and delete your profiles and history in the app. You can delete your whole account yourself under Family, with “Delete account”. All profiles, photos, history, shared cards and family links are deleted, and a subscription bought on the website is cancelled. Payment receipts are kept for five years under Norwegian bookkeeping law, with no link to the account. To see everything we hold, email the address above. You can complain to the Norwegian Data Protection Authority (Datatilsynet).</p>
       </section>
 
       <section className="stack">
