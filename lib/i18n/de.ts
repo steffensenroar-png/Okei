@@ -271,7 +271,7 @@ const d: Record<string, string> = {
   'kidSetup.pinRule': 'Die PIN muss 4 bis 8 Ziffern haben.',
   'kidSetup.start': 'Kindermodus starten',
   'kidSetup.title': 'Kindermodus',
-  'ld.by': 'Okei wird von Steffin AS in Vesterålen gemacht.',
+  'ld.by': 'Okei wird von Makeway AS in Vesterålen gemacht.',
   'ld.demoAria': 'Beispiel für ein Ergebnis für eine Familie',
   'ld.demoProduct': 'Gemüsepastete',
   'ld.f1': 'Zöliakie und Laktoseintoleranz trägst du als Erkrankungen ein. Okei weiß, was das für die Zutatenliste bedeutet.',

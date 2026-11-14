@@ -271,7 +271,7 @@ const d: Record<string, string> = {
   'kidSetup.pinRule': 'PIN-koodissa on oltava 4–8 numeroa.',
   'kidSetup.start': 'Käynnistä lapsitila',
   'kidSetup.title': 'Lapsitila',
-  'ld.by': 'Okein on tehnyt Steffin AS, Vesterålen.',
+  'ld.by': 'Okein on tehnyt Makeway AS, Vesterålen.',
   'ld.demoAria': 'Esimerkki perheen tuloksesta',
   'ld.demoProduct': 'Kasvispasteija',
   'ld.f1': 'Keliakia ja laktoosi-intoleranssi lisätään sairauksina. Okei tietää, mitä ne tarkoittavat ainesosaluettelolle.',

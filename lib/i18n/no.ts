@@ -305,7 +305,7 @@ const no: Record<string, string> = {
   'kidSetup.start': 'Start barnemodus',
   'kidSetup.title': 'Barnemodus',
 
-  'ld.by': 'Okei er laget av Steffin AS i Vesterålen.',
+  'ld.by': 'Okei er laget av Makeway AS i Vesterålen.',
   'ld.demoAria': 'Eksempel på et resultat for en familie',
   'ld.demoProduct': 'Grønnsakspostei',
   'ld.f1': 'Cøliaki og laktoseintoleranse legges inn som tilstander. Okei vet hva det betyr for ingredienslisten.',
