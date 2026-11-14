@@ -7,12 +7,20 @@ import { useT } from '@/components/I18n'
 import { Mascot } from '@/components/Art'
 import { supabase } from '@/lib/supabase-browser'
 import { PENDING_KEY, storeGet, storeSet } from '@/lib/client'
+import { setKidMode } from '@/components/KidMode'
+
+interface Accepted {
+  profile: string
+  parent: string
+  profile_id?: string
+  kid_mode?: { pinHash?: string; phone?: string; callName?: string } | null
+}
 
 function Connect() {
   const { t } = useT()
   const [code, setCode] = useState('')
   const [state, setState] = useState<'idle' | 'busy' | 'done' | 'error'>('idle')
-  const [result, setResult] = useState<{ profile: string; parent: string } | null>(null)
+  const [result, setResult] = useState<Accepted | null>(null)
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -39,7 +47,12 @@ function Connect() {
       )
       return
     }
-    setResult(data as { profile: string; parent: string })
+    const r = data as Accepted
+    // Forelderen har satt opp barnemodus i koden: telefonen går rett i barnemodus.
+    if (r.kid_mode?.pinHash && r.profile_id) {
+      setKidMode({ profileId: r.profile_id, pinHash: r.kid_mode.pinHash, phone: r.kid_mode.phone, callName: r.kid_mode.callName })
+    }
+    setResult(r)
     setState('done')
   }
 
@@ -50,7 +63,9 @@ function Connect() {
           <Mascot mood="happy" size={150} />
           <h1>{t('link.done')}</h1>
           <p className="muted">
-            {t('link.doneText', { profile: result.profile, parent: result.parent || t('link.yourParent') })}
+            {result.kid_mode?.pinHash
+              ? t('link.doneKid', { profile: result.profile })
+              : t('link.doneText', { profile: result.profile, parent: result.parent || t('link.yourParent') })}
           </p>
           <Link className="btn btn-primary" href="/skann">{t('link.start')}</Link>
         </div>

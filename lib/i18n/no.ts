@@ -234,6 +234,11 @@ const no: Record<string, string> = {
   'child.title': '{name} sin egen telefon',
   'child.unknown': 'ukjent konto',
   'child.validity': 'Gjelder i 7 dager og kan brukes én gang.',
+  'child.kidAuto': 'Start barnemodus på telefonen til {name}',
+  'child.kidAutoHint': 'Når koden brukes, går telefonen rett i barnemodus. PIN-koden trengs for å gå ut av den.',
+  'child.kidOn': 'Barnemodus slås på når koden brukes.',
+  'child.shareTextKid': 'Åpne lenken på telefonen din og logg inn. Da kobles du til familien, og Okei starter i barnemodus. Koden er {code}.',
+  'link.doneKid': 'Telefonen er koblet til {profile} og står nå i barnemodus. En voksen kan gå ut av barnemodus med PIN-koden.',
 
   'conf.high': 'høy',
   'conf.low': 'lav',

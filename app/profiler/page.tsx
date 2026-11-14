@@ -13,6 +13,7 @@ import { KidGate, KidModeSetup, PhotoPicker, ShareCard, WishesEditor } from '@/c
 import type { Wishes } from '@/lib/wishes'
 import { useT } from '@/components/I18n'
 import DeleteAccount from '@/components/DeleteAccount'
+import { hashPin } from '@/components/KidMode'
 import { LANGUAGES } from '@/lib/i18n/core'
 
 type Draft = {
@@ -69,13 +70,19 @@ function summary(p: FamilyProfile, t: (k: string, p?: Record<string, string>) =>
 
 interface Link_ { id: string; child_email: string | null; created_at: string }
 
-function ChildPhone({ profileId, name }: { profileId: string; name: string }) {
+function ChildPhone({ profileId, name, isChild }: { profileId: string; name: string; isChild: boolean }) {
   const [links, setLinks] = useState<Link_[]>([])
   const [code, setCode] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
   const { t } = useT()
+  // Barnemodus følger med koden: PIN settes her, og barnets telefon starter i barnemodus.
+  const [kidAuto, setKidAuto] = useState(isChild)
+  const [pin, setPin] = useState('')
+  const [callName, setCallName] = useState(() => t('kidSetup.defaultCall'))
+  const [phone, setPhone] = useState('')
+  const [withKid, setWithKid] = useState(false)
 
   async function load() {
     const { data } = await supabase()
@@ -93,16 +100,28 @@ function ChildPhone({ profileId, name }: { profileId: string; name: string }) {
   async function makeCode() {
     setBusy(true)
     setError('')
-    const { data, error } = await supabase().from('family_invites').insert({ profile_id: profileId }).select('code').single()
+    let kid_mode: Record<string, string> | null = null
+    if (kidAuto) {
+      if (!/^\d{4,8}$/.test(pin)) {
+        setBusy(false)
+        return setError(t('kidSetup.pinRule'))
+      }
+      kid_mode = { pinHash: await hashPin(pin) }
+      if (callName.trim()) kid_mode.callName = callName.trim()
+      if (phone.trim()) kid_mode.phone = phone.trim()
+    }
+    const { data, error } = await supabase().from('family_invites').insert({ profile_id: profileId, kid_mode }).select('code').single()
     setBusy(false)
     if (error || !data) return setError(t('child.codeFail'))
+    setWithKid(!!kid_mode)
+    setPin('')
     setCode(data.code)
   }
 
   async function share() {
     if (!code) return
     const url = `${window.location.origin}/koble?kode=${code}`
-    const text = t('child.shareText', { code })
+    const text = t(withKid ? 'child.shareTextKid' : 'child.shareText', { code })
     try {
       if (navigator.share) return await navigator.share({ title: 'Okei', text, url })
       await navigator.clipboard.writeText(`${text} ${url}`)
@@ -135,10 +154,41 @@ function ChildPhone({ profileId, name }: { profileId: string; name: string }) {
         <div className="stack" style={{ gap: 8 }}>
           <div className="code-box" aria-label={t('child.codeAria', { code: code.split('').join(' ') })}>{code}</div>
           <p className="tiny">{t('child.validity')}</p>
+          {withKid && <p className="tiny" style={{ fontWeight: 600 }}>{t('child.kidOn')}</p>}
           <button type="button" className="btn btn-primary" onClick={share}>{copied ? t('linkCopied') : t('child.send')}</button>
         </div>
       ) : (
-        <button type="button" className="btn" onClick={makeCode} disabled={busy}>{busy ? t('child.making') : t('child.make')}</button>
+        <div className="stack" style={{ gap: 10 }}>
+          {isChild && (
+            <label className="row" style={{ alignItems: 'flex-start', gap: 10 }}>
+              <input type="checkbox" checked={kidAuto} onChange={(e) => setKidAuto(e.target.checked)} style={{ width: 22, height: 22, marginTop: 1 }} />
+              <span>
+                <b>{t('child.kidAuto', { name })}</b>
+                <br />
+                <span className="tiny">{t('child.kidAutoHint')}</span>
+              </span>
+            </label>
+          )}
+          {isChild && kidAuto && (
+            <>
+              <label className="field">
+                {t('kidSetup.pin')}
+                <input className="input" inputMode="numeric" autoComplete="off" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))} maxLength={8} />
+              </label>
+              <div className="grid2">
+                <label className="field">
+                  {t('kidSetup.callWho')}
+                  <input className="input" value={callName} onChange={(e) => setCallName(e.target.value)} placeholder={t('kidSetup.defaultCall')} maxLength={20} />
+                </label>
+                <label className="field">
+                  {t('kidSetup.phone')}
+                  <input className="input" inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={t('optional')} maxLength={20} />
+                </label>
+              </div>
+            </>
+          )}
+          <button type="button" className={isChild ? 'btn btn-primary' : 'btn'} onClick={makeCode} disabled={busy}>{busy ? t('child.making') : t('child.make')}</button>
+        </div>
       )}
       {error && <div className="alert error" role="alert">{error}</div>}
     </div>
@@ -338,6 +388,7 @@ function Profiles() {
 
   if (draft) {
     const selected = ALLERGENS.filter((a) => draft.allergens[a.key])
+    const isKid = !draft.birth_year || new Date().getFullYear() - Number(draft.birth_year) < 18
     return (
       <main className="page">
         <div className="row" style={{ gap: 14 }}>
@@ -356,8 +407,11 @@ function Profiles() {
             </label>
           </div>
 
-          {draft.id && (!draft.birth_year || new Date().getFullYear() - Number(draft.birth_year) < 18) && (
-            <KidModeSetup profiles={profiles} fixedId={draft.id} name={draft.name || t('prof.theChild')} />
+          {draft.id && isKid && (
+            <>
+              <ChildPhone profileId={draft.id} name={draft.name || t('prof.theChild')} isChild />
+              <KidModeSetup profiles={profiles} fixedId={draft.id} name={draft.name || t('prof.theChild')} />
+            </>
           )}
 
           <PhotoPicker
@@ -484,7 +538,7 @@ function Profiles() {
           </div>
 
           {draft.id && <ShareCard profileId={draft.id} name={draft.name || t('prof.theChild')} />}
-          {draft.id && <ChildPhone profileId={draft.id} name={draft.name || t('prof.theChild')} />}
+          {draft.id && !isKid && <ChildPhone profileId={draft.id} name={draft.name || t('prof.theChild')} isChild={false} />}
 
           {error && <div className="alert error" role="alert">{error}</div>}
           <button className="btn btn-primary" type="submit" disabled={saving}>{saving ? t('saving') : t('prof.save')}</button>
