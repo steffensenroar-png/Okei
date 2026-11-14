@@ -15,7 +15,7 @@ export default function Privacy() {
 
       <section className="stack">
         <h2>Hvem er ansvarlig</h2>
-        <p>Okei drives av Makeway AS (org.nr. 912 444 376), 8445 Melbu. Makeway AS er behandlingsansvarlig og selger av abonnementet. Spørsmål om personvern: steffensenroar@gmail.com.</p>
+        <p>Okei drives av Makeway AS (org.nr. 912 444 376), Vikaveien 10, 8445 Melbu. Makeway AS er behandlingsansvarlig og selger av abonnementet. Spørsmål om personvern: steffensenroar@gmail.com.</p>
       </section>
 
       <section className="stack">
@@ -83,7 +83,7 @@ function PrivacyEn() {
 
       <section className="stack">
         <h2>Who is responsible</h2>
-        <p>Okei is run by Makeway AS (org. no. 912 444 376), 8445 Melbu, Norway. Makeway AS is the data controller and the seller of the subscription. Privacy questions: steffensenroar@gmail.com.</p>
+        <p>Okei is run by Makeway AS (org. no. 912 444 376), Vikaveien 10, 8445 Melbu, Norway. Makeway AS is the data controller and the seller of the subscription. Privacy questions: steffensenroar@gmail.com.</p>
       </section>
 
       <section className="stack">

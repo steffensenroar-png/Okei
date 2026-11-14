@@ -543,7 +543,9 @@ function Profiles() {
       <ShareButton />
       {isAdmin && <Link className="linkbtn" href="/admin">Admin</Link>}
       <Link className="linkbtn" href="/?om=1">{t('prof.about')}</Link>
+      <Link className="linkbtn" href="/abonnement">{t('sub.title')}</Link>
       <Link className="linkbtn" href="/personvern">{t('privacy')}</Link>
+      <Link className="linkbtn" href="/vilkar">{t('terms.link')}</Link>
       <button className="linkbtn" onClick={() => supabase().auth.signOut()}>{t('logout')} ({session.user.email})</button>
     </main>
   )

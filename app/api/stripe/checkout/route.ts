@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { errorResponse, HttpError, userClient } from '@/lib/server/auth'
 import { stripe } from '@/lib/server/stripe'
-import { isInterval, isPlan, PLANS } from '@/lib/plans'
+import { isInterval, isPlan, PLANS, TRIAL_DAYS } from '@/lib/plans'
 
 export const runtime = 'nodejs'
 
@@ -26,6 +26,10 @@ export async function POST(req: Request) {
       promoId = (row?.stripe_promotion_code_id as string | null) ?? null
     }
 
+    // Prøveperioden gis bare til den som aldri har hatt abonnement før.
+    const { count: earlier } = await db.from('subscriptions').select('id', { count: 'exact', head: true }).eq('user_id', user.id)
+    const trial = (earlier ?? 0) === 0 && TRIAL_DAYS > 0
+
     const origin = new URL(req.url).origin
     const session = await s.checkout.sessions.create({
       mode: 'subscription',
@@ -44,7 +48,11 @@ export async function POST(req: Request) {
       ],
       ...(promoId ? { discounts: [{ promotion_code: promoId }] } : { allow_promotion_codes: true }),
       metadata: { user_id: user.id, plan: body.plan, interval: body.interval, code: codeName },
-      subscription_data: { metadata: { user_id: user.id, plan: body.plan, interval: body.interval, code: codeName } },
+      subscription_data: {
+        ...(trial ? { trial_period_days: TRIAL_DAYS } : {}),
+        metadata: { user_id: user.id, plan: body.plan, interval: body.interval, code: codeName }
+      },
+      custom_text: { submit: { message: `Ved å fortsette godtar du vilkårene for Okei: ${origin}/vilkar` } },
       success_url: `${origin}/abonnement?ok=1`,
       cancel_url: `${origin}/abonnement`
     })

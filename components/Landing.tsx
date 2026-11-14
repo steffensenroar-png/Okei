@@ -211,7 +211,7 @@ export default function Landing() {
       <footer className="ld-foot ld-wrap">
         <span>{t('ld.by')}</span>
         <span>
-          <Link href="/personvern">{t('privacy')}</Link> · <Link href="/logg-inn">{t('ld.login')}</Link>
+          <Link href="/personvern">{t('privacy')}</Link> · <Link href="/vilkar">{t('terms.link')}</Link> · <Link href="/logg-inn">{t('ld.login')}</Link>
         </span>
       </footer>
     </div>

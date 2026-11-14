@@ -7,7 +7,8 @@ import { apiPost } from '@/lib/client'
 import { storedCode } from '@/components/CodeCapture'
 import { useT } from '@/components/I18n'
 import { Mascot } from '@/components/Art'
-import { Interval, PlanId, PLANS } from '@/lib/plans'
+import Link from 'next/link'
+import { Interval, PlanId, PLANS, TRIAL_DAYS } from '@/lib/plans'
 
 interface Sub {
   plan: string | null
@@ -50,6 +51,16 @@ function Abonnement() {
     }
   }
 
+  async function manage() {
+    setError('')
+    try {
+      const r = await apiPost<{ url: string }>('/api/stripe/portal', {})
+      window.location.href = r.url
+    } catch (e) {
+      setError(e instanceof Error ? e.message : t('err.generic'))
+    }
+  }
+
   const price = (n: number) => new Intl.NumberFormat(locale).format(n)
 
   return (
@@ -67,6 +78,9 @@ function Abonnement() {
           {sub ? t('sub.active', { plan: PLANS[(sub.plan as PlanId) ?? 'personal']?.name ?? 'Okei' }) : t('sub.thanks')}
         </div>
       )}
+
+      {sub && <button className="btn" onClick={manage}>{t('sub.manage')}</button>}
+      {!sub && TRIAL_DAYS > 0 && <div className="alert info" role="note">{t('sub.trial', { days: TRIAL_DAYS })}</div>}
 
       <div className="seg" role="group" aria-label={t('sub.title')}>
         <button aria-pressed={interval === 'month'} onClick={() => setInterval('month')}>{t('sub.month')}</button>
@@ -96,7 +110,7 @@ function Abonnement() {
         <input className="input" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder={t('sub.codePh')} autoCapitalize="characters" />
       </label>
       {error && <div className="alert error" role="alert">{error}</div>}
-      <p className="tiny">{t('sub.fine')}</p>
+      <p className="tiny">{t('sub.fine')} <Link href="/vilkar">{t('sub.terms')}</Link> · <Link href="/personvern">{t('privacy')}</Link></p>
     </main>
   )
 }

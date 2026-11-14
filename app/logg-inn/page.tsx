@@ -84,7 +84,7 @@ export default function Login() {
         )}
         {error && <div className="alert error" role="alert">{error}</div>}
         <p className="tiny" style={{ textAlign: 'center' }}>
-          {t('disclaimer')} <a href="/personvern">{t('privacy')}</a> · <a href="/">{t('prof.about')}</a>
+          {t('disclaimer')} <a href="/personvern">{t('privacy')}</a> · <a href="/vilkar">{t('terms.link')}</a> · <a href="/">{t('prof.about')}</a>
         </p>
       </div>
     </main>

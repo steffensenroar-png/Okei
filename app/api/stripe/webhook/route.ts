@@ -101,6 +101,8 @@ async function recordInvoice(s: Stripe, db: SupabaseClient, invoice: Stripe.Invo
   const subRef = invoice.parent?.subscription_details?.subscription
   const subId = typeof subRef === 'string' ? subRef : subRef?.id
   if (!subId) return
+  // Fakturaen ved start av prøveperioden er på 0 kr og er ikke et salg.
+  if (!invoice.amount_paid) return
   let { data: sub } = await db.from('subscriptions').select('id, promo_code_id, user_id').eq('stripe_subscription_id', subId).maybeSingle()
   if (!sub) sub = await upsertSubscription(s, db, subId, {})
 

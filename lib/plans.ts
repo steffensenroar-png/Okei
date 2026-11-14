@@ -9,3 +9,6 @@ export const PLANS: Record<PlanId, { name: string; month: number; year: number }
 
 export const isPlan = (v: unknown): v is PlanId => v === 'personal' || v === 'family'
 export const isInterval = (v: unknown): v is Interval => v === 'month' || v === 'year'
+
+/** Gratis prøveperiode for nye abonnenter, i dager. Endres her. */
+export const TRIAL_DAYS = 14
