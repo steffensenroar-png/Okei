@@ -58,7 +58,7 @@ export default function Privacy() {
           <li>Kassalapp og Open Food Facts: oppslag på strekkode. Bare strekkoden sendes.</li>
           <li>Stripe: betaling av abonnement. Stripe behandler kortopplysningene. Vi lagrer abonnement, beløp og eventuell kampanjekode.</li>
         </ul>
-        <p>Vi har databehandleravtaler med <a href="https://supabase.com/legal/dpa" target="_blank" rel="noopener">Supabase</a>, <a href="https://vercel.com/legal/dpa" target="_blank" rel="noopener">Vercel</a> og <a href="https://www.anthropic.com/legal/data-processing-addendum" target="_blank" rel="noopener">Anthropic</a>. Overføring utenfor EØS skjer med EUs standardavtaler (SCC).</p>
+        <p>Vi har databehandleravtaler med <a href="https://supabase.com/legal/dpa" target="_blank" rel="noopener">Supabase</a> og <a href="https://www.anthropic.com/legal/data-processing-addendum" target="_blank" rel="noopener">Anthropic</a>. Avtalen med <a href="https://vercel.com/legal/dpa" target="_blank" rel="noopener">Vercel</a> gjelder fra vi går over på Vercels betalte plan, før Okei tar betalt. Overføring utenfor EØS skjer med EUs standardavtaler (SCC).</p>
         <p>Vi selger aldri data og bruker dem ikke til reklame.</p>
       </section>
 
@@ -127,7 +127,7 @@ function PrivacyEn() {
           <li>Kassalapp and Open Food Facts: barcode lookup. Only the barcode is sent.</li>
           <li>Stripe: subscription payments. Stripe handles card details. We store the subscription, amount and any campaign code.</li>
         </ul>
-        <p>We have data processing agreements with <a href="https://supabase.com/legal/dpa" target="_blank" rel="noopener">Supabase</a>, <a href="https://vercel.com/legal/dpa" target="_blank" rel="noopener">Vercel</a> and <a href="https://www.anthropic.com/legal/data-processing-addendum" target="_blank" rel="noopener">Anthropic</a>. Transfers outside the EEA use the EU Standard Contractual Clauses (SCCs).</p>
+        <p>We have data processing agreements with <a href="https://supabase.com/legal/dpa" target="_blank" rel="noopener">Supabase</a> and <a href="https://www.anthropic.com/legal/data-processing-addendum" target="_blank" rel="noopener">Anthropic</a>. The agreement with <a href="https://vercel.com/legal/dpa" target="_blank" rel="noopener">Vercel</a> applies once we move to Vercel’s paid plan, before Okei starts charging. Transfers outside the EEA use the EU Standard Contractual Clauses (SCCs).</p>
         <p>We never sell data and do not use it for advertising.</p>
       </section>
 
