@@ -115,15 +115,22 @@ interface Status {
   model: string
 }
 
-type Tab = 'oversikt' | 'brukere' | 'salg' | 'influencere' | 'kostnader' | 'oppsett'
+type Tab = 'oversikt' | 'brukere' | 'salg' | 'influencere' | 'kostnader' | 'oppsett' | 'logg'
 const TABS: { id: Tab; label: string }[] = [
   { id: 'oversikt', label: 'Oversikt' },
   { id: 'brukere', label: 'Brukere' },
   { id: 'salg', label: 'Salg' },
   { id: 'influencere', label: 'Influencere' },
   { id: 'kostnader', label: 'Kostnader' },
-  { id: 'oppsett', label: 'Oppsett' }
+  { id: 'oppsett', label: 'Oppsett' },
+  { id: 'logg', label: 'Logg' }
 ]
+
+// Visninger av faner som ikke allerede logges i databasen. Brukere, oversikt og influencere logges der.
+const VIEW_LOG: Partial<Record<Tab, string>> = { salg: 'så salg', kostnader: 'så kostnader', oppsett: 'så oppsett', logg: 'så logg' }
+function logAdmin(action: string, detail: Record<string, unknown> = {}) {
+  supabase().rpc('admin_log', { p_action: action, p_detail: detail }).then(() => undefined)
+}
 
 const nok = (n: number) => `${new Intl.NumberFormat('nb-NO', { maximumFractionDigits: n < 100 ? 2 : 0 }).format(n)} kr`
 const num = (n: number) => new Intl.NumberFormat('nb-NO').format(n)
@@ -265,7 +272,16 @@ function Admin() {
     return { cost: perScan * Math.max(ov.ai_period, ov.ai_with_tokens), perScan, estimated: ov.ai_period > ov.ai_with_tokens }
   }, [ov, settings])
 
-  if (needMfa) return <AdminMfa onDone={() => { setNeedMfa(false); setIsAdmin(true) }} />
+  if (needMfa)
+    return (
+      <AdminMfa
+        onDone={() => {
+          setNeedMfa(false)
+          setIsAdmin(true)
+          logAdmin('innlogget med tofaktor')
+        }}
+      />
+    )
   if (isAdmin === null) return <main className="page center" style={{ alignItems: 'center' }}><div className="spinner" /></main>
   if (!isAdmin) {
     return (
@@ -291,7 +307,7 @@ function Admin() {
       </header>
       <nav className="admin-tabs" aria-label="Admin">
         {TABS.map((t) => (
-          <button key={t.id} aria-pressed={tab === t.id} onClick={() => setTab(t.id)}>{t.label}</button>
+          <button key={t.id} aria-pressed={tab === t.id} onClick={() => { setTab(t.id); if (VIEW_LOG[t.id]) logAdmin(VIEW_LOG[t.id]!) }}>{t.label}</button>
         ))}
       </nav>
       {msg && <div className="alert info" role="status">{msg}</div>}
@@ -366,6 +382,7 @@ function Admin() {
         />
       )}
       {tab === 'kostnader' && <CostsTab costs={costs} ov={ov} ai={ai} days={days} vat={settings.vat_percent ?? 25} reload={load} />}
+      {tab === 'logg' && <AuditTab />}
       {tab === 'oppsett' && (
         <SetupTab status={status} settings={settings} admins={admins} me={session.user.email ?? ''} reload={load} flash={flash} />
       )}
@@ -385,6 +402,7 @@ function UsersTab({ users }: { users: UserRow[] }) {
     a.href = URL.createObjectURL(new Blob(['﻿' + text], { type: 'text/csv' }))
     a.download = 'okei-brukere.csv'
     a.click()
+    logAdmin('eksporterte brukere', { rader: rows.length })
   }
   return (
     <section className="stack">
@@ -884,5 +902,57 @@ export default function Page() {
     <AuthGate>
       <Admin />
     </AuthGate>
+  )
+}
+
+// ---------- Logg ----------
+interface AuditRow {
+  id: number
+  at: string
+  admin_email: string | null
+  action: string
+  detail: Record<string, unknown>
+}
+
+function AuditTab() {
+  const [rows, setRows] = useState<AuditRow[] | null>(null)
+  useEffect(() => {
+    supabase()
+      .from('admin_audit_log')
+      .select('id, at, admin_email, action, detail')
+      .order('at', { ascending: false })
+      .limit(300)
+      .then(({ data }) => setRows((data ?? []) as AuditRow[]))
+  }, [])
+  const when = (s: string) => new Date(s).toLocaleString('nb-NO', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+  const det = (d: Record<string, unknown>) => Object.entries(d).map(([k, v]) => `${k}: ${v}`).join(', ')
+  return (
+    <section className="stack">
+      <h1>Logg</h1>
+      <p className="small muted">Hva administratorer har sett og endret, nyeste først. Loggen kan ikke endres eller slettes, og samme visning logges høyst én gang per 10 minutter.</p>
+      {!rows ? (
+        <div className="spinner" />
+      ) : rows.length === 0 ? (
+        <p className="muted">Ingen hendelser ennå.</p>
+      ) : (
+        <div className="card admin-scroll">
+          <table className="admin-table">
+            <thead>
+              <tr><th>Tid</th><th>Hvem</th><th>Hva</th><th>Detaljer</th></tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.id}>
+                  <td>{when(r.at)}</td>
+                  <td>{r.admin_email ?? 'system'}</td>
+                  <td>{r.action}</td>
+                  <td className="small muted">{det(r.detail)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
   )
 }
