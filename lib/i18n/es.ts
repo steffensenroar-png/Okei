@@ -594,6 +594,13 @@ const d: Record<string, string> = {
   'ld2.finalH': 'Dale a tu peque un buen aliado para el día a día',
   'ld2.finalT': 'Gratis mientras Okei esté en beta. Configura tu familia en un par de minutos.',
   'ld2.start': 'Empezar',
+  'kidSetup.titleFor': 'Modo niños para {name}',
+  'kidSetup.step1': 'Elige para qué niño es el móvil',
+  'kidSetup.step1For': 'El móvil comprueba la comida con el perfil de {name}',
+  'kidSetup.step2': 'Crea un PIN que solo conozcan los adultos',
+  'kidSetup.step3': 'Dale el móvil al niño: botones grandes, respuestas leídas en voz alta y un botón para llamarte',
+  'kidSetup.cta': 'Poner el móvil en modo niños',
+  'kidSetup.ctaFor': 'Poner este móvil en modo niños para {name}',
 }
 
 export default d

@@ -355,6 +355,10 @@ function Profiles() {
             </label>
           </div>
 
+          {draft.id && (!draft.birth_year || new Date().getFullYear() - Number(draft.birth_year) < 18) && (
+            <KidModeSetup profiles={profiles} fixedId={draft.id} name={draft.name || t('prof.theChild')} />
+          )}
+
           <PhotoPicker
             photo={draft.photo}
             animal={animalFor(draft.avatar, 0)}
@@ -532,8 +536,8 @@ function Profiles() {
           ))}
         </div>
       )}
-      <Link className="linkbtn" href="/koble">{t('prof.haveCode')}</Link>
       <KidModeSetup profiles={profiles} />
+      <Link className="linkbtn" href="/koble">{t('prof.haveCode')}</Link>
       <Appearance />
       <div className="spacer" />
       <ShareButton />

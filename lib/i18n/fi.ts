@@ -594,6 +594,13 @@ const d: Record<string, string> = {
   'ld2.finalH': 'Anna lapsellesi luotettava apuri arkeen',
   'ld2.finalT': 'Ilmainen niin kauan kuin Okei on betassa. Perheen käyttöönotto vie vain pari minuuttia.',
   'ld2.start': 'Aloita',
+  'kidSetup.titleFor': 'Lapsitila: {name}',
+  'kidSetup.step1': 'Valitse, kenen lapsen puhelin on',
+  'kidSetup.step1For': 'Puhelin tarkistaa ruoan profiilia vasten: {name}',
+  'kidSetup.step2': 'Tee PIN-koodi, jonka vain aikuiset tietävät',
+  'kidSetup.step3': 'Anna puhelin lapselle: isot painikkeet, ääneen luettavat vastaukset ja painike, jolla hän voi soittaa sinulle',
+  'kidSetup.cta': 'Laita puhelin lapsitilaan',
+  'kidSetup.ctaFor': 'Laita tämä puhelin lapsitilaan: {name}',
 }
 
 export default d

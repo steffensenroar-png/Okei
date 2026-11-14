@@ -551,3 +551,10 @@ html[data-theme='dark'] .ld-h1b { color: var(--ink); opacity: 0.85; }
 .ld-phone-wrap { padding-bottom: 70px; }
 .ld-notif { bottom: 8px; }
 html[data-theme='dark'] .ld-phone-screen { background: #1b2622; }
+
+/* Barnemodus-kortet på Familien */
+.kid-setup { background: var(--sun); border-color: transparent; color: #15201b; }
+.kid-setup h2 { color: #15201b; }
+.kid-setup .small, .kid-setup .field { color: #15201b; }
+.kid-steps { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 4px; font-size: 15px; font-weight: 600; }
+.kid-setup .btn:not(.btn-primary) { background: rgba(255,255,255,0.6); color: #15201b; }

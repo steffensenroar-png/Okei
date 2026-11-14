@@ -594,6 +594,13 @@ const d: Record<string, string> = {
   'ld2.finalH': 'Give your child a trusty helper for everyday life',
   'ld2.finalT': 'Free while Okei is in beta. Set up your family in a couple of minutes.',
   'ld2.start': 'Get started',
+  'kidSetup.titleFor': 'Kid mode for {name}',
+  'kidSetup.step1': 'Choose which child the phone is for',
+  'kidSetup.step1For': 'The phone checks food against {name}’s profile',
+  'kidSetup.step2': 'Make a PIN that only adults know',
+  'kidSetup.step3': 'Hand the phone to your child: big buttons, answers read aloud and a button to call you',
+  'kidSetup.cta': 'Put this phone in kid mode',
+  'kidSetup.ctaFor': 'Put this phone in kid mode for {name}',
 }
 
 export default d

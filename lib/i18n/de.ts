@@ -594,6 +594,13 @@ const d: Record<string, string> = {
   'ld2.finalH': 'Gib deinem Kind einen verlässlichen Helfer für den Alltag',
   'ld2.finalT': 'Kostenlos, solange Okei in der Beta ist. Richte deine Familie in wenigen Minuten ein.',
   'ld2.start': 'Jetzt starten',
+  'kidSetup.titleFor': 'Kindermodus für {name}',
+  'kidSetup.step1': 'Wähle, für welches Kind das Handy ist',
+  'kidSetup.step1For': 'Das Handy prüft Essen mit dem Profil von {name}',
+  'kidSetup.step2': 'Lege eine PIN fest, die nur Erwachsene kennen',
+  'kidSetup.step3': 'Gib dem Kind das Handy: große Knöpfe, vorgelesene Antworten und ein Knopf, um dich anzurufen',
+  'kidSetup.cta': 'Handy in den Kindermodus setzen',
+  'kidSetup.ctaFor': 'Dieses Handy in den Kindermodus für {name} setzen',
 }
 
 export default d

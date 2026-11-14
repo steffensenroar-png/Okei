@@ -594,6 +594,13 @@ const d: Record<string, string> = {
   'ld2.finalH': 'Giv barnet en tryg hjælper i hverdagen',
   'ld2.finalT': 'Gratis, mens Okei er i beta. Opret familien på et par minutter.',
   'ld2.start': 'Kom i gang',
+  'kidSetup.titleFor': 'Børnetilstand for {name}',
+  'kidSetup.step1': 'Vælg hvilket barn telefonen er til',
+  'kidSetup.step1For': 'Telefonen tjekker mad mod profilen for {name}',
+  'kidSetup.step2': 'Lav en pinkode, som kun voksne kender',
+  'kidSetup.step3': 'Giv telefonen til barnet: store knapper, svar der læses op og en knap til at ringe til dig',
+  'kidSetup.cta': 'Sæt telefonen i børnetilstand',
+  'kidSetup.ctaFor': 'Sæt denne telefon i børnetilstand for {name}',
 }
 
 export default d

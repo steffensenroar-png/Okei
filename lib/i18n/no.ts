@@ -649,6 +649,13 @@ const no: Record<string, string> = {
   'ld2.finalH': 'Gi barnet en trygg hjelper i hverdagen',
   'ld2.finalT': 'Gratis mens Okei er i beta. Sett opp familien på et par minutter.',
   'ld2.start': 'Kom i gang',
+  'kidSetup.titleFor': 'Barnemodus for {name}',
+  'kidSetup.step1': 'Velg hvilket barn telefonen er til',
+  'kidSetup.step1For': 'Telefonen sjekker mat mot {name} sin profil',
+  'kidSetup.step2': 'Lag en PIN-kode som bare voksne kan',
+  'kidSetup.step3': 'Gi telefonen til barnet. Store knapper, svar som leses opp og en knapp for å ringe deg',
+  'kidSetup.cta': 'Sett telefonen i barnemodus',
+  'kidSetup.ctaFor': 'Sett denne telefonen i barnemodus for {name}',
 }
 
 export default no

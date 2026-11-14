@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase-browser'
 import { squarePhoto, type FamilyProfile } from '@/lib/client'
 import type { Wishes } from '@/lib/wishes'
 import { getKidMode, hashPin, PinUnlock, setKidMode } from '@/components/KidMode'
-import { Animal, AnimalId, Avatar, animalFor } from '@/components/Art'
+import { Animal, AnimalId, Avatar, animalFor, Mascot } from '@/components/Art'
 import { useT } from '@/components/I18n'
 
 /** Ønsker: påvirker aldri flagget, bare informasjon og alternativer. */
@@ -117,9 +117,9 @@ export function ShareCard({ profileId, name }: { profileId: string; name: string
 }
 
 /** Barnemodus på denne telefonen. */
-export function KidModeSetup({ profiles }: { profiles: FamilyProfile[] }) {
+export function KidModeSetup({ profiles, fixedId, name }: { profiles: FamilyProfile[]; fixedId?: string; name?: string }) {
   const [open, setOpen] = useState(false)
-  const [profileId, setProfileId] = useState(profiles[0]?.id ?? '')
+  const [profileId, setProfileId] = useState(fixedId ?? profiles[0]?.id ?? '')
   const [pin, setPin] = useState('')
   const [phone, setPhone] = useState('')
   const { t } = useT()
@@ -134,23 +134,39 @@ export function KidModeSetup({ profiles }: { profiles: FamilyProfile[] }) {
     window.location.href = '/skann'
   }
 
-  if (!profiles.length) return null
+  if (!profiles.length && !fixedId) return null
+  const who = profiles.find((p) => p.id === profileId)
   return (
-    <div className="card stack" style={{ gap: 12 }}>
-      <div className="row" style={{ justifyContent: 'space-between' }}>
-        <h2>{t('kidSetup.title')}</h2>
-        {!open && <button type="button" className="btn btn-small" onClick={() => setOpen(true)}>{t('turnOn')}</button>}
+    <div className="card kid-setup stack" style={{ gap: 12 }}>
+      <div className="row" style={{ gap: 12, alignItems: 'center' }}>
+        <Mascot mood="happy" size={64} />
+        <div className="stack" style={{ gap: 2 }}>
+          <h2>{fixedId && name ? t('kidSetup.titleFor', { name }) : t('kidSetup.title')}</h2>
+          <p className="small" style={{ margin: 0 }}>{t('kidSetup.intro')}</p>
+        </div>
       </div>
-      <p className="small muted">{t('kidSetup.intro')}</p>
-      {open && (
+      {!open ? (
+        <>
+          <ol className="kid-steps">
+            <li>{fixedId ? t('kidSetup.step1For', { name: name ?? '' }) : t('kidSetup.step1')}</li>
+            <li>{t('kidSetup.step2')}</li>
+            <li>{t('kidSetup.step3')}</li>
+          </ol>
+          <button type="button" className="btn btn-primary" onClick={() => setOpen(true)}>
+            {fixedId && name ? t('kidSetup.ctaFor', { name }) : t('kidSetup.cta')}
+          </button>
+        </>
+      ) : (
         <form className="stack" onSubmit={start}>
-          <div className="row" style={{ flexWrap: 'wrap', gap: 8 }}>
-            {profiles.map((p, i) => (
-              <button type="button" key={p.id} className="profile-pill" aria-pressed={profileId === p.id} onClick={() => setProfileId(p.id)}>
-                <Avatar photo={p.photo} id={animalFor(p.avatar, i)} size={32} /> {p.name}
-              </button>
-            ))}
-          </div>
+          {!fixedId && (
+            <div className="row" style={{ flexWrap: 'wrap', gap: 8 }}>
+              {profiles.map((p, i) => (
+                <button type="button" key={p.id} className="profile-pill" aria-pressed={profileId === p.id} onClick={() => setProfileId(p.id)}>
+                  <Avatar photo={p.photo} id={animalFor(p.avatar, i)} size={32} /> {p.name}
+                </button>
+              ))}
+            </div>
+          )}
           <label className="field">
             {t('kidSetup.pin')}
             <input className="input" inputMode="numeric" autoComplete="off" value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))} maxLength={8} />
@@ -166,7 +182,10 @@ export function KidModeSetup({ profiles }: { profiles: FamilyProfile[] }) {
             </label>
           </div>
           {error && <div className="alert error" role="alert">{error}</div>}
-          <button className="btn btn-primary" type="submit">{t('kidSetup.start')}</button>
+          <button className="btn btn-primary" type="submit">
+            {t('kidSetup.start')}{who || name ? ` – ${who?.name ?? name}` : ''}
+          </button>
+          <button className="btn" type="button" onClick={() => setOpen(false)}>{t('cancel')}</button>
         </form>
       )}
     </div>
